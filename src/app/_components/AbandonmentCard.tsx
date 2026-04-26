@@ -6,8 +6,12 @@ import { Badge } from "./ui/badge";
 export default function AbandonmentCard({ ...pet }: IPet) {
   return (
     <Card className="h-[350px] sm:w-[250px] w-full hover:cursor-pointer">
-      <div className="h-[200px] rounded-md flex justify-center relative">
-        <Image src={pet.popfile} layout="fill" alt="abandonment pet image" className="rounded-t-lg object-cover" />
+      <div className="h-[200px] rounded-md flex justify-center relative bg-gray-100">
+        {pet.popfile ? (
+          <Image src={pet.popfile} layout="fill" alt="abandonment pet image" className="rounded-t-lg object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">사진 없음</div>
+        )}
       </div>
       <div className="p-2">
         <div className="flex gap-1 my-2">
