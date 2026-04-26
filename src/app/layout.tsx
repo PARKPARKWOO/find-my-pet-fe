@@ -8,6 +8,7 @@ import GoogleAnalytics from "@/lib/GoogleAnalytics";
 import AuthQueryCapture from "@/app/_components/auth/AuthQueryCapture";
 import AdSenseScript from "@/app/_components/ads/AdSenseScript";
 import AdFitScript from "@/app/_components/ads/AdFitScript";
+import KakaoMapScript from "@/app/_components/KakaoMapScript";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -47,6 +48,7 @@ export default function RootLayout({
         )}
         <AdSenseScript />
         <AdFitScript />
+        <KakaoMapScript />
         <AuthQueryCapture />
         <div className="w-full flex flex-col min-h-screen h-full">
           <Navigation />

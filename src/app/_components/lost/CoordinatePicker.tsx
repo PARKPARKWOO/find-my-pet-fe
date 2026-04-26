@@ -15,6 +15,7 @@ const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 
 export default function CoordinatePicker({ value, onChange, address, height = "300px" }: Props) {
   const userPickedRef = useRef<boolean>(false);
+  // Kakao Map SDK 는 layout 의 KakaoMapScript 가 전역 로드.
 
   useEffect(() => {
     if (!address || userPickedRef.current) return;
