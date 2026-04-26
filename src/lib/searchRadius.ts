@@ -13,15 +13,54 @@ export interface RadiusBands {
   possible: number;
 }
 
-const CAT_FIXED: RadiusBands = { core: 150, likely: 500, possible: 1500 };
-const CAT_POSSIBLE_MAX = 3000;
 const OTHER_FIXED: RadiusBands = { core: 30, likely: 100, possible: 300 };
-const DOG_CAPS = { minM: 100, maxM: 30_000 };
 
-const PHASE1_HOURS = 72;
-const PHASE2_DECAY = 0.15;
-const FALLBACK_DOG_SPEED = 2.5;
-const FALLBACK_DOG_FACTOR = 0.8;
+/**
+ * 시간(h) → likely(95% 발견 거리, m) 통계 lookup table.
+ * 출처: PetFBI / Missing Pet Partnership 실종 반려동물 발견 거리 통계.
+ * - 단순 누적 이동거리(speed×time) 가 아니라 **직선 변위 95% 분위수**.
+ * - 24h 중 활동시간 비율 + 배회 패턴(브라운 운동) 반영된 결과.
+ *
+ * DOG: 50% < 0.8km / 75% < 1.6km / 95% < 5km (3일).
+ * CAT: 60% < 100m, 7일+ 부터 천천히 확장.
+ */
+const DOG_LIKELY_TABLE: Array<[hours: number, meters: number]> = [
+  [1, 200],
+  [6, 800],
+  [24, 1500],
+  [72, 3000],
+  [168, 5000], // 7일
+  [336, 8000], // 14일
+  [720, 12000], // 30일
+];
+
+const CAT_LIKELY_TABLE: Array<[hours: number, meters: number]> = [
+  [1, 50],
+  [24, 100],
+  [72, 200],
+  [168, 300], // 7일
+  [336, 500],
+  [720, 800], // 30일
+];
+
+const DOG_CAP_M = 12_000;
+const CAT_CAP_M = 1_500;
+
+/** 두 (x,y) 점 사이 선형 보간. table 은 x 오름차순 가정. */
+function interpolate(table: Array<[number, number]>, x: number): number {
+  if (x <= table[0][0]) return table[0][1];
+  const last = table[table.length - 1];
+  if (x >= last[0]) return last[1];
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i];
+    const [x1, y1] = table[i + 1];
+    if (x >= x0 && x <= x1) {
+      const t = (x - x0) / (x1 - x0);
+      return y0 + (y1 - y0) * t;
+    }
+  }
+  return last[1];
+}
 
 export function elapsedHoursSince(iso: string): number {
   const diff = Date.now() - new Date(iso).getTime();
@@ -35,25 +74,22 @@ export function computeRadiusBands(params: {
 }): RadiusBands {
   const elapsedH = elapsedHoursSince(params.missingTimeISO);
 
-  if (params.animalType === "CAT") {
-    const daysOverWeek = Math.max(0, elapsedH / 24 - 7);
-    const possible = Math.min(CAT_POSSIBLE_MAX, CAT_FIXED.possible + daysOverWeek * 300);
-    return { ...CAT_FIXED, possible };
-  }
-
   if (params.animalType === "OTHER") return { ...OTHER_FIXED };
 
-  // DOG: 2-phase
-  const speed = params.breed?.baseSpeedKmh ?? FALLBACK_DOG_SPEED;
-  const factor = params.breed?.exploreFactor ?? FALLBACK_DOG_FACTOR;
-  const phase1 = Math.min(elapsedH, PHASE1_HOURS) * speed * factor;
-  const phase2 = Math.max(0, elapsedH - PHASE1_HOURS) * speed * factor * PHASE2_DECAY;
-  const baseM = (phase1 + phase2) * 1000;
-  const clamp = Math.max(DOG_CAPS.minM, Math.min(DOG_CAPS.maxM, baseM));
+  const table = params.animalType === "CAT" ? CAT_LIKELY_TABLE : DOG_LIKELY_TABLE;
+  const cap = params.animalType === "CAT" ? CAT_CAP_M : DOG_CAP_M;
+
+  // breed.exploreFactor (대략 0.5~1.3 분포) 를 ×0.7~1.3 multiplier 로 매핑.
+  // 작은/소심한 개는 통계 평균보다 좁게, 활동적 견종은 약간 넓게.
+  const factor = params.breed?.exploreFactor ?? 1.0;
+  const multiplier = Math.max(0.7, Math.min(1.3, 0.7 + (factor - 0.5) * 0.75));
+
+  const likely = Math.min(cap, interpolate(table, elapsedH) * multiplier);
+
   return {
-    core: clamp * 0.3,
-    likely: clamp * 1.0,
-    possible: Math.min(DOG_CAPS.maxM, clamp * 1.8),
+    core: likely * 0.3,
+    likely,
+    possible: Math.min(cap, likely * 1.6),
   };
 }
 
