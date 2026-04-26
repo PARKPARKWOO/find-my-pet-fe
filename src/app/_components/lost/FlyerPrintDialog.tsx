@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "@/app/_components/ui/button";
@@ -38,6 +38,33 @@ export default function FlyerPrintDialog(props: Props) {
       ? `${window.location.origin}/lost/${props.postId}`
       : `/lost/${props.postId}`;
 
+  // 한글 기본 카피 — 사용자가 입력 필드로 자유 편집 가능
+  const isSeen = props.missingAnimalStatus === "SEEN";
+  const defaults = useMemo(
+    () => ({
+      banner: isSeen ? "긴급 · 목격 제보 요청" : "긴급 · 실종 동물",
+      headline: isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다",
+      subHeadline: isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다",
+      title: props.title,
+      description: props.description,
+    }),
+    [isSeen, props.title, props.description],
+  );
+
+  const [banner, setBanner] = useState(defaults.banner);
+  const [headline, setHeadline] = useState(defaults.headline);
+  const [subHeadline, setSubHeadline] = useState(defaults.subHeadline);
+  const [title, setTitle] = useState(defaults.title);
+  const [description, setDescription] = useState(defaults.description);
+
+  const reset = () => {
+    setBanner(defaults.banner);
+    setHeadline(defaults.headline);
+    setSubHeadline(defaults.subHeadline);
+    setTitle(defaults.title);
+    setDescription(defaults.description);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
@@ -47,14 +74,40 @@ export default function FlyerPrintDialog(props: Props) {
         </DialogHeader>
 
         <p className="text-sm text-gray-500 mb-2">
-          A4 한 장 전단지로 출력됩니다. QR 은 스마트폰 카메라로 스캔하면 바로 이 실종 게시글로 연결됩니다.
+          A4 한 장 전단지로 출력됩니다. 아래 텍스트는 자유롭게 수정한 다음 인쇄하실 수 있어요.
         </p>
+
+        {/* 편집 폼 — 카피 / 제목 / 설명 직접 수정 */}
+        <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+          <FieldInput label="상단 배너" value={banner} onChange={setBanner} />
+          <FieldInput label="부제목" value={subHeadline} onChange={setSubHeadline} />
+          <FieldInput label="헤드라인" value={headline} onChange={setHeadline} />
+          <FieldInput label="제목" value={title} onChange={setTitle} />
+          <div className="col-span-2">
+            <label className="block text-xs text-gray-600 mb-1">특징 · 메모</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full border rounded px-2 py-1 text-sm resize-y"
+            />
+          </div>
+          <div className="col-span-2 flex justify-end">
+            <button
+              type="button"
+              onClick={reset}
+              className="text-xs text-gray-500 hover:underline"
+            >
+              ↺ 기본 문구로 되돌리기
+            </button>
+          </div>
+        </div>
 
         {/* 프리뷰: A4(210mm ≈ 794px) 가 다이얼로그보다 넓으므로 scale 로 축소.
             transform 은 인쇄 시 react-to-print 의 iframe 에 영향 없음. */}
         <div
           className="border rounded bg-gray-100 overflow-auto"
-          style={{ maxHeight: "70vh", padding: "12px" }}
+          style={{ maxHeight: "60vh", padding: "12px" }}
         >
           <div
             style={{
@@ -72,7 +125,15 @@ export default function FlyerPrintDialog(props: Props) {
                 width: "210mm",
               }}
             >
-              <FlyerSheet {...props} shareUrl={shareUrl} />
+              <FlyerSheet
+                {...props}
+                title={title}
+                description={description}
+                banner={banner}
+                headline={headline}
+                subHeadline={subHeadline}
+                shareUrl={shareUrl}
+              />
             </div>
           </div>
         </div>
@@ -89,10 +150,14 @@ export default function FlyerPrintDialog(props: Props) {
 }
 
 /** 실제 인쇄 대상 레이아웃 — A4 기준, 멀리서도 눈에 띄도록 강한 대비. */
-const FlyerSheet = (props: Props & { shareUrl: string }) => {
-  const isSeen = props.missingAnimalStatus === "SEEN";
-  const headline = isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다";
-  const subHeadline = isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다";
+const FlyerSheet = (
+  props: Props & {
+    shareUrl: string;
+    banner: string;
+    headline: string;
+    subHeadline: string;
+  },
+) => {
   const showReward = props.gratuity > 0;
   const rewardLabel = showReward
     ? parseGratuityValue(props.gratuity, props.missingAnimalStatus)
@@ -115,21 +180,23 @@ const FlyerSheet = (props: Props & { shareUrl: string }) => {
           className="inline-block px-6 py-2 mb-3"
           style={{ backgroundColor: "#B91C1C", color: "#fff", letterSpacing: "0.15em" }}
         >
-          <span className="text-sm font-bold">URGENT · LOST PET</span>
+          <span className="text-sm font-bold">{props.banner}</span>
         </div>
         <h1
           className="text-5xl font-extrabold mb-2"
           style={{ color: "#B91C1C", lineHeight: 1.1 }}
         >
-          🐾 {headline}
+          🐾 {props.headline}
         </h1>
-        <p className="text-lg text-gray-700">{subHeadline}</p>
+        <p className="text-lg text-gray-700">{props.subHeadline}</p>
       </div>
 
       {/* TITLE */}
-      <h2 className="text-3xl font-bold text-center mb-6 border-y-2 border-gray-900 py-3">
-        {props.title}
-      </h2>
+      {props.title?.trim() && (
+        <h2 className="text-3xl font-bold text-center mb-6 border-y-2 border-gray-900 py-3">
+          {props.title}
+        </h2>
+      )}
 
       {/* PHOTO + REWARD */}
       <div className="flex gap-6 mb-6">
@@ -255,6 +322,27 @@ const FlyerSheet = (props: Props & { shareUrl: string }) => {
     </div>
   );
 };
+
+/** 다이얼로그 편집용 입력 — 라벨 + input. */
+const FieldInput = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) => (
+  <div>
+    <label className="block text-xs text-gray-600 mb-1">{label}</label>
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full border rounded px-2 py-1 text-sm"
+    />
+  </div>
+);
 
 /** 인쇄용 강조 박스 — 라벨 + 값. */
 const InfoBox = ({ label, children }: { label: string; children: React.ReactNode }) => (
