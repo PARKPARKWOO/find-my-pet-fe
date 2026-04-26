@@ -30,7 +30,15 @@ export const metadata: Metadata = {
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: {
+      // 네이버 서치어드바이저 사이트 소유 확인 메타 태그
+      "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION ?? "",
+    },
   },
+  alternates: {
+    canonical: "https://findmypet.platformholder.site",
+  },
+  metadataBase: new URL("https://findmypet.platformholder.site"),
 };
 
 export default function RootLayout({
