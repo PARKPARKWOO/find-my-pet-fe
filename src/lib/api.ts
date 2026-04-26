@@ -46,8 +46,13 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         return Promise.reject(error);
       }
+      // Auth 서비스의 reissue 는 fmp 백엔드(animal/) 가 아니라 별도 auth 서비스에 위임됨.
+      // platform Auth REST: POST {AUTH_API_URL}/auth/token/reissue (RFC 6819 rotation 적용).
+      // NEXT_PUBLIC_AUTH_API_URL 미설정 시 운영 기본값으로 fallback.
+      const authApiUrl =
+        process.env.NEXT_PUBLIC_AUTH_API_URL ?? "https://auth.platformholder.site/api/v1";
       refreshedTokenPromise = axios
-        .post(`${BASE_URL}/auth/reissue`, { refreshToken }, { withCredentials: true })
+        .post(`${authApiUrl}/auth/token/reissue`, { refreshToken }, { withCredentials: true })
         .then((res) => {
           isRefreshing = false;
           const { accessToken, refreshToken: newRefresh } = res.data.data;
