@@ -6,6 +6,8 @@ import { PetListSkeleton } from "../skeleton/PetListSkeleton";
 import { useRouter } from "next/navigation";
 import AbandonmentPagination from "../AbandonmentPagination";
 import apiClient from "@/lib/api";
+import useIsLoginStore from "@/store/loginStore";
+import { Bell, BellOff } from "lucide-react";
 
 export interface IPet {
   desertionNo: string;
@@ -52,6 +54,49 @@ export default function AbandonmentList() {
   const [sigunguList, setSigunguList] = useState<RegionItem[]>([]);
   const [uprCd, setUprCd] = useState<string>(""); // 시도 코드
   const [orgCd, setOrgCd] = useState<string>(""); // 시군구 코드
+  const isLogin = useIsLoginStore((s) => s.isLogin);
+  const [subscriptions, setSubscriptions] = useState<Array<{ id: string; uprCd: string; orgCd: string | null; animalType: string | null }>>([]);
+  const [subBusy, setSubBusy] = useState(false);
+
+  const reloadSubscriptions = () => {
+    if (!isLogin) {
+      setSubscriptions([]);
+      return;
+    }
+    apiClient
+      .get("/me/abandoned-subscriptions")
+      .then((res) => setSubscriptions(res.data?.data ?? []))
+      .catch(() => setSubscriptions([]));
+  };
+
+  useEffect(reloadSubscriptions, [isLogin]);
+
+  const currentAnimalType = filter === "ALL" ? null : filter;
+  const matchedSub = subscriptions.find(
+    (s) =>
+      s.uprCd === uprCd &&
+      (s.orgCd ?? null) === (orgCd || null) &&
+      (s.animalType ?? null) === currentAnimalType,
+  );
+
+  const toggleSubscribe = async () => {
+    if (!isLogin || subBusy || !uprCd) return;
+    setSubBusy(true);
+    try {
+      if (matchedSub) {
+        await apiClient.delete(`/me/abandoned-subscriptions/${matchedSub.id}`);
+      } else {
+        await apiClient.post("/me/abandoned-subscriptions", {
+          uprCd,
+          orgCd: orgCd || null,
+          animalType: currentAnimalType,
+        });
+      }
+      reloadSubscriptions();
+    } finally {
+      setSubBusy(false);
+    }
+  };
 
   // 시도 목록 1회 로드
   useEffect(() => {
@@ -166,6 +211,22 @@ export default function AbandonmentList() {
             className="text-xs text-gray-500 hover:underline px-2"
           >
             지역 해제
+          </button>
+        )}
+        {uprCd && (
+          <button
+            type="button"
+            onClick={toggleSubscribe}
+            disabled={!isLogin || subBusy}
+            className={`text-xs px-3 py-1.5 rounded-md border flex items-center gap-1 ${
+              matchedSub
+                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            } disabled:opacity-50`}
+            title={!isLogin ? "로그인 후 사용 가능" : matchedSub ? "알림 해제" : "이 지역 신규 등록 시 알림 받기"}
+          >
+            {matchedSub ? <Bell size={14} /> : <BellOff size={14} />}
+            {matchedSub ? "알림 받는 중" : "이 지역 알림 받기"}
           </button>
         )}
       </div>
