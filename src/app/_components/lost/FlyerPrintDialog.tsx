@@ -41,7 +41,7 @@ export default function FlyerPrintDialog(props: Props) {
   return (
     <Dialog>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>📱 전단지 QR 만들기</DialogTitle>
         </DialogHeader>
@@ -50,9 +50,30 @@ export default function FlyerPrintDialog(props: Props) {
           A4 한 장 전단지로 출력됩니다. QR 은 스마트폰 카메라로 스캔하면 바로 이 실종 게시글로 연결됩니다.
         </p>
 
-        <div className="border rounded overflow-auto">
-          <div ref={printRef}>
-            <FlyerSheet {...props} shareUrl={shareUrl} />
+        {/* 프리뷰: A4(210mm ≈ 794px) 가 다이얼로그보다 넓으므로 scale 로 축소.
+            transform 은 인쇄 시 react-to-print 의 iframe 에 영향 없음. */}
+        <div
+          className="border rounded bg-gray-100 overflow-auto"
+          style={{ maxHeight: "70vh", padding: "12px" }}
+        >
+          <div
+            style={{
+              width: "calc(210mm * 0.6)",
+              height: "calc(297mm * 0.6)",
+              margin: "0 auto",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              ref={printRef}
+              style={{
+                transform: "scale(0.6)",
+                transformOrigin: "top left",
+                width: "210mm",
+              }}
+            >
+              <FlyerSheet {...props} shareUrl={shareUrl} />
+            </div>
           </div>
         </div>
 
@@ -208,13 +229,22 @@ const FlyerSheet = (props: Props & { shareUrl: string }) => {
         </div>
         <div
           style={{
+            flexShrink: 0,
             padding: "8px",
             backgroundColor: "#fff",
             border: "2px solid #111827",
             borderRadius: "4px",
+            // SVG 가 자식으로 들어갈 때 baseline 공백 제거
+            lineHeight: 0,
           }}
         >
-          <QRCodeSVG value={props.shareUrl} size={140} includeMargin={false} />
+          <QRCodeSVG
+            value={props.shareUrl}
+            size={140}
+            level="M"
+            includeMargin={true}
+            style={{ display: "block" }}
+          />
         </div>
       </div>
 
