@@ -12,6 +12,7 @@ import SimilarCandidatesSection from "@/app/_components/lost/SimilarCandidatesSe
 import FlyerManagementSection from "@/app/_components/lost/FlyerManagementSection";
 import SightingSection from "@/app/_components/lost/SightingSection";
 import FlyerPrintDialog from "@/app/_components/lost/FlyerPrintDialog";
+import BookmarkButton from "@/app/_components/lost/BookmarkButton";
 import type { AnimalType } from "@/types/breed";
 import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
 
@@ -78,6 +79,7 @@ export default function LostDetail({ params }: { params: { id: string } }) {
           </Button>
         </Link>
         <div className="flex gap-2 items-center">
+           {!post.isMine && <BookmarkButton postId={params.id} />}
            {post.openChatUrl !== null && <Link target="_blank" href={post.openChatUrl}><Button className="flex gap-2 items-center"><span>오픈 채팅</span> <SquareArrowOutUpRight size={16}/></Button></Link>}
           {
             post.isMine &&

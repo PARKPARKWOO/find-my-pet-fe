@@ -16,6 +16,7 @@ import {
   migrateLegacyLocalStorageTokens,
   removeCookie,
 } from "@/lib/cookieUtils";
+import NotificationBell from "@/app/_components/notification/NotificationBell";
 
 export default function Navigation() {
   const router = useRouter();
@@ -48,7 +49,9 @@ export default function Navigation() {
             <Link href="/posts">자료실</Link>
           </Button>
           {
-              isLogin ? 
+              isLogin ?
+              <>
+              <NotificationBell />
               <Popover>
                 <PopoverTrigger asChild>
                   <Avatar className="cursor-pointer p-2 border border-b-2">
@@ -71,6 +74,7 @@ export default function Navigation() {
                   </div>
                 </PopoverContent>
               </Popover>
+              </>
                 :
               <KakaoLoginDialog>
                 <Button variant="outline">로그인</Button>
