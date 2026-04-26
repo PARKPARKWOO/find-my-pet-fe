@@ -8,7 +8,7 @@ export default function AbandonmentCard({ ...pet }: IPet) {
     <Card className="h-[350px] sm:w-[250px] w-full hover:cursor-pointer">
       <div className="h-[200px] rounded-md flex justify-center relative bg-gray-100">
         {pet.popfile ? (
-          <Image src={pet.popfile} layout="fill" alt="abandonment pet image" className="rounded-t-lg object-cover" />
+          <Image src={pet.popfile} layout="fill" alt={`${pet.kindCd ?? "구조동물"} - ${pet.happenPlace ?? ""} 보호중`} className="rounded-t-lg object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">사진 없음</div>
         )}

@@ -33,7 +33,7 @@ export default function LostCard({ ...pet }: ILostPet) {
       <div className="h-[200px] rounded-md flex justify-center relative">
         {
             pet.thumbnail ? 
-            <Image src={pet.thumbnail} layout="fill" alt="abandonment pet image" className="rounded-t-lg object-cover" />
+            <Image src={pet.thumbnail} layout="fill" alt={`${pet.title} - ${pet.place} 실종 동물 사진`} className="rounded-t-lg object-cover" />
             :
             <div className="flex justify-center items-center font-bold">NO IMAGE</div>
         }
