@@ -2,8 +2,13 @@
 User-agent: *
 Allow: /
 
+# 인증/마이페이지/알림 등 개인 영역은 크롤 금지
+Disallow: /profile
+Disallow: /notifications
+Disallow: /auth/
+
 # Host
-Host: https://find-my-pet-frontend.vercel.app/
+Host: https://findmypet.platformholder.site
 
 # Sitemaps
-Sitemap: https://find-my-pet-frontend.vercel.app/sitemap.xml
+Sitemap: https://findmypet.platformholder.site/sitemap.xml
