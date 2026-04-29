@@ -27,6 +27,7 @@ export default function AuthQueryCapture() {
   const pathname = usePathname();
   const setLogin = useIsLoginStore((s) => s.setLogin);
 
+  // QUERY_PARAM redirect_type 흐름 — auth-server 가 ?accessToken=&refreshToken= 으로 redirect 한 케이스
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -46,19 +47,22 @@ export default function AuthQueryCapture() {
     );
     router.replace(cleaned.pathname + (cleaned.search ? `?${cleaned.searchParams}` : ""));
 
-    // 사용자 프로필 채우기 — 실패해도 로그인 상태는 유지
-    apiClient
-      .get("/user/me")
-      .then((res) => {
-        LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
-        LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
-        LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
-        console.info("[fmp:auth] user profile loaded");
-      })
-      .catch((e) => {
-        console.warn("[fmp:auth] /user/me failed (cookies 부착 확인 필요)", e);
-      });
+    fetchUserProfile("query-param");
   }, [pathname, router, setLogin]);
+
+  // REDIRECT_WITH_COOKIE 흐름 — auth-server 가 cookie 만 set 하고 단순 redirect 한 케이스
+  // (URL 에 query param 없음). cookie 가 존재하는데 프로필이 비어있으면 /user/me 호출.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasCookie = Boolean(getCookie(COOKIE_ACCESS_TOKEN));
+    if (!hasCookie) return;
+    // 이미 프로필 있으면 skip (중복 호출 방지)
+    if (LocalStorage.getItem("email")) return;
+
+    console.info("[fmp:auth] cookie present, fetching profile");
+    setLogin();
+    fetchUserProfile("cookie");
+  }, [setLogin]);
 
   // 확인용 상태 로그 — cookie 존재 여부
   useEffect(() => {
@@ -68,4 +72,18 @@ export default function AuthQueryCapture() {
   }, [pathname]);
 
   return null;
+}
+
+function fetchUserProfile(via: "query-param" | "cookie"): void {
+  apiClient
+    .get("/user/me")
+    .then((res) => {
+      LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
+      LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
+      LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
+      console.info(`[fmp:auth] user profile loaded (via ${via})`);
+    })
+    .catch((e) => {
+      console.warn(`[fmp:auth] /user/me failed (via ${via})`, e);
+    });
 }
