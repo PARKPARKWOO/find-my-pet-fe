@@ -8,7 +8,6 @@ import useIsLoginStore from "@/store/loginStore";
 import {
   COOKIE_ACCESS_TOKEN,
   COOKIE_REFRESH_TOKEN,
-  getCookie,
   setCookie,
 } from "@/lib/cookieUtils";
 
@@ -47,43 +46,46 @@ export default function AuthQueryCapture() {
     );
     router.replace(cleaned.pathname + (cleaned.search ? `?${cleaned.searchParams}` : ""));
 
-    fetchUserProfile("query-param");
+    fetchUserProfile("query-param", setLogin);
   }, [pathname, router, setLogin]);
 
-  // REDIRECT_WITH_COOKIE 흐름 — auth-server 가 cookie 만 set 하고 단순 redirect 한 케이스
-  // (URL 에 query param 없음). cookie 가 존재하는데 프로필이 비어있으면 /user/me 호출.
+  // REDIRECT_WITH_COOKIE 흐름 — auth-server 가 httpOnly cookie 만 set 한 케이스.
+  // JS 가 httpOnly cookie 를 읽을 수 없으므로 (document.cookie 접근 X), 로그인 여부는
+  // /user/me 200/401 응답으로 판정한다 (서버 응답이 SSOT). 쿠키는 axios withCredentials=true
+  // 로 자동 첨부됨.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const hasCookie = Boolean(getCookie(COOKIE_ACCESS_TOKEN));
-    if (!hasCookie) return;
-    // 이미 프로필 있으면 skip (중복 호출 방지)
-    if (LocalStorage.getItem("email")) return;
-
-    console.info("[fmp:auth] cookie present, fetching profile");
-    setLogin();
-    fetchUserProfile("cookie");
+    // 이미 프로필 있으면 skip (페이지 이동/새로고침 시 중복 호출 방지)
+    if (LocalStorage.getItem("email")) {
+      setLogin();
+      return;
+    }
+    fetchUserProfile("cookie", setLogin);
   }, [setLogin]);
 
-  // 확인용 상태 로그 — cookie 존재 여부
+  // 확인용 상태 로그 — LocalStorage 프로필 보유 여부 (httpOnly cookie 는 JS 가 못 읽으므로
+  // 로그인 상태는 LocalStorage 프로필 또는 /user/me 응답으로 판정).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const hasAt = Boolean(getCookie(COOKIE_ACCESS_TOKEN));
-    console.info(`[fmp:auth] mount check pathname=${pathname} hasAccessCookie=${hasAt}`);
+    const hasProfile = Boolean(LocalStorage.getItem("email"));
+    console.info(`[fmp:auth] mount check pathname=${pathname} hasProfile=${hasProfile}`);
   }, [pathname]);
 
   return null;
 }
 
-function fetchUserProfile(via: "query-param" | "cookie"): void {
+function fetchUserProfile(via: "query-param" | "cookie", setLogin: () => void): void {
   apiClient
     .get("/user/me")
     .then((res) => {
       LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
       LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
       LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
+      setLogin();
       console.info(`[fmp:auth] user profile loaded (via ${via})`);
     })
-    .catch((e) => {
-      console.warn(`[fmp:auth] /user/me failed (via ${via})`, e);
+    .catch(() => {
+      // 미인증 (cookie 미보유 또는 만료) — 사용자가 로그인 안 한 정상 상태일 수 있어 silent.
+      console.info(`[fmp:auth] not logged in (via ${via})`);
     });
 }
