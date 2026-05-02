@@ -10,6 +10,7 @@ import AbandonmentList from "./_components/main/AbandonmentList";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import LostList from "./_components/main/LostList";
+import SearchBar from "./_components/layout/SearchBar";
 import LocalStorage from "@/lib/localStorage";
 import useIsLoginStore from "@/store/loginStore";
 import {
@@ -57,6 +58,11 @@ export default function Home() {
   
   return (
     <div className="flex flex-col  w-full items-center gap-6">
+      <div className="w-full flex justify-center px-4">
+        <div className="w-full max-w-2xl">
+          <SearchBar variant="hero" />
+        </div>
+      </div>
       <div className="w-full flex justify-center">
         <div className="sm:w-[60%] w-[90%] h-[250px] rounded-md border flex">
           <div className="flex justify-center items-center relative w-full h-full ">
