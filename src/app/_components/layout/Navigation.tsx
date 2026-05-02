@@ -17,6 +17,7 @@ import {
   removeCookie,
 } from "@/lib/cookieUtils";
 import NotificationBell from "@/app/_components/notification/NotificationBell";
+import SearchBar from "@/app/_components/layout/SearchBar";
 
 export default function Navigation() {
   const router = useRouter();
@@ -44,7 +45,8 @@ export default function Navigation() {
         <div className="font-bold hover:cursor-pointer" onClick={() => router.push("/")}>
           Find My Pet
         </div>
-        <div className="flex gap-6">
+        <div className="flex gap-3 items-center">
+          <SearchBar />
           <Button variant="outline">
             <Link href="/posts">자료실</Link>
           </Button>
