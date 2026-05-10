@@ -7,11 +7,13 @@ import { Search } from "lucide-react";
 interface Props {
   /** 'compact' = 헤더용 작은 입력 / 'hero' = 메인 / 모바일 전용 큰 입력 */
   variant?: "compact" | "hero";
+  /** 결과 페이지에서 현재 검색어 prefill — 재검색 편의 */
+  defaultQ?: string;
 }
 
-export default function SearchBar({ variant = "compact" }: Props) {
+export default function SearchBar({ variant = "compact", defaultQ = "" }: Props) {
   const router = useRouter();
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(defaultQ);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

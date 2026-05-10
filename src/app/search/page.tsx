@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { BASE_URL } from "@/app/constant/api";
+import SearchBar from "@/app/_components/layout/SearchBar";
 
 const SITE_DOMAIN = "https://findmypet.platformholder.site";
 
@@ -67,10 +68,15 @@ export default async function SearchPage({
 
   return (
     <div className="w-full max-w-4xl mx-auto py-6 px-2">
-      <h1 className="text-xl font-bold mb-2">🔎 통합 검색</h1>
+      <h1 className="text-xl font-bold mb-3">🔎 통합 검색</h1>
+
+      {/* 결과 페이지 자체 검색창 — 재검색 편의 (현재 검색어 prefill) */}
+      <div className="mb-4">
+        <SearchBar variant="hero" defaultQ={q} />
+      </div>
 
       {!q && (
-        <p className="text-sm text-gray-500">상단 검색창에 키워드를 입력해 주세요.</p>
+        <p className="text-sm text-gray-500">검색창에 키워드를 입력해 주세요.</p>
       )}
 
       {q && !data && (

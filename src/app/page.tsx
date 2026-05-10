@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/app/_components/ui/tabs";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import image from "../static/image/banner.jpg";
@@ -21,9 +20,12 @@ import {
   removeCookie,
 } from "@/lib/cookieUtils";
 
+type FeedView = "all" | "lost" | "abandonment";
+
 export default function Home() {
-  const [activeTabValue, setActiveTabValue] = useState<"lost" | "abandonment">("lost");
-  const router = useRouter();  
+  // 통합 피드 — 두 리스트를 chip으로 분리/통합 표시. default는 전체 노출이라 컨텐츠 풍성.
+  const [view, setView] = useState<FeedView>("all");
+  const router = useRouter();
   const {toast} = useToast()
   const setLogout = useIsLoginStore((state) => state.setLogout)
   const isLogin = useIsLoginStore((state) => state.isLogin)
@@ -55,7 +57,17 @@ export default function Home() {
       })
     }
   }, [])
-  
+
+  const chipClass = (key: FeedView) =>
+    `px-4 py-2 text-sm rounded-full transition-colors ${
+      view === key
+        ? "bg-blue-500 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`;
+
+  const showLost = view === "all" || view === "lost";
+  const showAbandonment = view === "all" || view === "abandonment";
+
   return (
     <div className="flex flex-col  w-full items-center gap-6">
       <div className="w-full flex justify-center px-4">
@@ -85,22 +97,38 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="relative flex xs:flex-row flex-col-reverse gap-3 w-full justify-center items-center">
-        <Tabs defaultValue={activeTabValue} className="flex justify-center">
-          <TabsList>
-            <TabsTrigger value="lost" onClick={() => setActiveTabValue("lost")} className="xs:text-base text-sm">
-              실종 동물
-            </TabsTrigger>
-            <TabsTrigger value="abandonment" onClick={() => setActiveTabValue("abandonment")} className="xs:text-base text-sm">
-              유기 동물
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        {activeTabValue === "lost" && (
-          <Button size="default" className="xs:absolute xs:right-0 xs:text-base text-sm" onClick={() => handleRegisterClick()}>실종 동물 등록</Button>
+      <div className="relative flex xs:flex-row flex-col-reverse gap-3 w-full justify-center items-center px-4">
+        <div className="flex gap-2 flex-wrap justify-center">
+          <button className={chipClass("all")} onClick={() => setView("all")}>
+            전체
+          </button>
+          <button className={chipClass("lost")} onClick={() => setView("lost")}>
+            집을 잃었어요
+          </button>
+          <button className={chipClass("abandonment")} onClick={() => setView("abandonment")}>
+            가족을 기다려요
+          </button>
+        </div>
+        {showLost && (
+          <Button size="default" className="xs:absolute xs:right-4 xs:text-base text-sm" onClick={() => handleRegisterClick()}>실종 동물 등록</Button>
         )}
       </div>
-      {activeTabValue === "abandonment" ? <AbandonmentList /> : <LostList/>}
+      {showLost && (
+        <section className="w-full">
+          {view === "all" && (
+            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1">집을 잃었어요</h2>
+          )}
+          <LostList />
+        </section>
+      )}
+      {showAbandonment && (
+        <section className="w-full">
+          {view === "all" && (
+            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">가족을 기다려요</h2>
+          )}
+          <AbandonmentList />
+        </section>
+      )}
     </div>
   );
 }
