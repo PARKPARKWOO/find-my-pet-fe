@@ -5,39 +5,17 @@ import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
-import LocalStorage from "@/lib/localStorage";
-import { useEffect } from "react";
 import useIsLoginStore from "@/store/loginStore";
 import Link from "next/link";
-import {
-  COOKIE_ACCESS_TOKEN,
-  COOKIE_REFRESH_TOKEN,
-  getCookie,
-  migrateLegacyLocalStorageTokens,
-  removeCookie,
-} from "@/lib/cookieUtils";
+import { requestLogout } from "@/lib/auth";
 import NotificationBell from "@/app/_components/notification/NotificationBell";
 
 export default function Navigation() {
   const router = useRouter();
   const isLogin = useIsLoginStore((state) => state.isLogin)
-  const setLogin = useIsLoginStore((state) => state.setLogin)
   const setLogout = useIsLoginStore((state) => state.setLogout)
 
- useEffect(() => {
-  // Cookie 전환 이전 LocalStorage 토큰을 1회성 이관
-  migrateLegacyLocalStorageTokens()
-
-  if(getCookie(COOKIE_ACCESS_TOKEN)) {
-    setLogin()
-  }
-  else {
-    setLogout()
-    LocalStorage.removeItem('email')
-    LocalStorage.removeItem('name')
-    LocalStorage.removeItem('role')
-  }
- }, [])
+  // 로그인 상태 판정은 전역 AuthQueryCapture(/user/me)가 담당한다.
   return (
     <div className="w-full flex justify-center border-b px-6">
       <nav className="flex items-center h-16 max-w-[1280px] w-full justify-between">
@@ -62,12 +40,9 @@ export default function Navigation() {
                 <PopoverContent className="border-1 z-50">
                   <div className="w-[120px] p-3 shadow-lg z-50 rounded-md bg-gray-50 flex flex-col gap-3">
                     <Button variant="outline" className="font-bold"><Link href="/profile">마이페이지</Link></Button>
-                    <Button variant="outline" className="font-bold" onClick={() => {
-                      removeCookie(COOKIE_ACCESS_TOKEN)
-                      removeCookie(COOKIE_REFRESH_TOKEN)
-                      LocalStorage.removeItem('email')
-                      LocalStorage.removeItem('name')
-                      LocalStorage.removeItem('role')
+                    <Button variant="outline" className="font-bold" onClick={async () => {
+                      // HttpOnly 쿠키는 JS 로 못 지운다 → revoke API 로 서버가 쿠키/Redis 정리.
+                      await requestLogout()
                       setLogout()
                       router.push('/')
                     }}>로그아웃</Button>

@@ -2,7 +2,7 @@
 
 import { Button } from "@/app/_components/ui/button";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import image from "../static/image/banner.jpg";
 import { ChevronRight } from "lucide-react";
 import AbandonmentList from "./_components/main/AbandonmentList";
@@ -10,15 +10,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import LostList from "./_components/main/LostList";
 import SearchBar from "./_components/layout/SearchBar";
-import LocalStorage from "@/lib/localStorage";
 import useIsLoginStore from "@/store/loginStore";
-import {
-  COOKIE_ACCESS_TOKEN,
-  COOKIE_REFRESH_TOKEN,
-  getCookie,
-  migrateLegacyLocalStorageTokens,
-  removeCookie,
-} from "@/lib/cookieUtils";
 
 type FeedView = "all" | "lost" | "abandonment";
 
@@ -27,8 +19,8 @@ export default function Home() {
   const [view, setView] = useState<FeedView>("all");
   const router = useRouter();
   const {toast} = useToast()
-  const setLogout = useIsLoginStore((state) => state.setLogout)
   const isLogin = useIsLoginStore((state) => state.isLogin)
+  // 로그인 상태 판정은 전역 AuthQueryCapture(/user/me)가 담당. 여기서 쿠키를 직접 보지 않는다.
   const handleRegisterClick = () => {
     if(isLogin){
       router.push('/register')
@@ -39,24 +31,6 @@ export default function Home() {
       })
     }
   }
-
-  useEffect(() => {
-    // Cookie 전환 이전 LocalStorage 토큰을 1회성 이관
-    migrateLegacyLocalStorageTokens()
-
-    if(!getCookie(COOKIE_REFRESH_TOKEN)){
-      setLogout()
-      removeCookie(COOKIE_ACCESS_TOKEN)
-      removeCookie(COOKIE_REFRESH_TOKEN)
-      LocalStorage.removeItem('email')
-      LocalStorage.removeItem('name')
-      LocalStorage.removeItem('role')
-      toast({
-        title: "로그인이 만료되었습니다.",
-        description: "로그인이 필요합니다.",
-      })
-    }
-  }, [])
 
   const chipClass = (key: FeedView) =>
     `px-4 py-2 text-sm rounded-full transition-colors ${

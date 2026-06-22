@@ -10,34 +10,27 @@ import LocalStorage from "@/lib/localStorage";
 import useIsLoginStore from "@/store/loginStore";
 import { Spinner } from "@/components/ui/spinner";
 import apiClient from "@/lib/api";
-import {
-  COOKIE_ACCESS_TOKEN,
-  COOKIE_REFRESH_TOKEN,
-  setCookie,
-} from "@/lib/cookieUtils";
 
 
-const Auth = ({accessToken, refreshToken}: {accessToken: string; refreshToken: string;}) => {
+const Auth = () => {
   const router = useRouter()
   const setLogin = useIsLoginStore((state) => state.setLogin)
 
   useEffect(() => {
-          // 토큰은 쿠키로 저장 (withCredentials + Authorization 양쪽 전송)
-          setCookie(COOKIE_ACCESS_TOKEN, accessToken)
-          setCookie(COOKIE_REFRESH_TOKEN, refreshToken)
-          const getUserInfo = async () => {
-             await apiClient.get('/user/me').then((res) => {
-              // 사용자 프로필은 민감정보 아니므로 LocalStorage 유지
-              LocalStorage.setItem('email', JSON.stringify(res.data.data.email))
-              LocalStorage.setItem('name', JSON.stringify(res.data.data.name))
-              LocalStorage.setItem('role', JSON.stringify(res.data.data.role))
-             })
-          }
-
-          getUserInfo()
-          setLogin()
-          router.push('/')
-    }, []);
+    // HttpOnly 쿠키는 OAuth 성공 시 auth-server 가 이미 심었다(REDIRECT_WITH_COOKIE).
+    // JS 는 토큰을 만지지 않고, /user/me 로 세션을 확인한 뒤 프로필만 적재한다.
+    apiClient
+      .get("/user/me")
+      .then((res) => {
+        LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
+        LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
+        LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
+        setLogin();
+      })
+      .finally(() => {
+        router.push("/");
+      });
+  }, [router, setLogin]);
 
   return (
   <div className="flex flex-col  w-full items-center gap-6">

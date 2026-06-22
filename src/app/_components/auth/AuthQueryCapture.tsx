@@ -1,91 +1,52 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import apiClient from "@/lib/api";
+import apiClient, { UNAUTHORIZED_EVENT } from "@/lib/api";
 import LocalStorage from "@/lib/localStorage";
 import useIsLoginStore from "@/store/loginStore";
-import {
-  COOKIE_ACCESS_TOKEN,
-  COOKIE_REFRESH_TOKEN,
-  setCookie,
-} from "@/lib/cookieUtils";
 
 /**
- * 전역 Kakao 로그인 콜백 캐처.
+ * 전역 로그인 상태 결정자 (HttpOnly 쿠키 모델).
  *
- * auth 서버 `redirectType=QUERY_PARAM` 은 사용자가 지정한 `redirectUrl` 에
- * `?accessToken=...&refreshToken=...` 를 붙여 리다이렉트한다. redirectUrl 이
- * `/auth/kakao` 처럼 특정 경로가 아니라 루트(`/`) 로 설정돼있을 수 있으므로,
- * **어느 페이지에서든** URL 의 토큰 파라미터를 감지해 쿠키에 저장하고 URL 을 정리한다.
+ * 토큰은 `.platformholder.site` HttpOnly 쿠키로 서버가 관리하므로 JS 가 읽을 수 없다.
+ * 따라서 로그인 여부는 `/user/me` 200/401 응답(서버가 SSOT)으로 판정한다.
+ * 쿠키는 axios withCredentials=true 로 자동 첨부되고, access 만료는 게이트웨이가 회전한다.
  *
- * 기존 전용 페이지(`/auth/kakao/page.tsx`) 는 그대로 두되 이 컴포넌트가 보험 역할.
+ * (구 QUERY_PARAM 흐름 — URL 의 ?accessToken=&refreshToken= 을 JS 쿠키로 저장 — 은
+ *  게이트웨이 자동 회전과 충돌해 로그인이 풀리던 원인이라 제거했다. 백엔드 redirectType 은
+ *  REDIRECT_WITH_COOKIE 를 전제로 한다.)
  */
 export default function AuthQueryCapture() {
-  const router = useRouter();
-  const pathname = usePathname();
   const setLogin = useIsLoginStore((s) => s.setLogin);
+  const setLogout = useIsLoginStore((s) => s.setLogout);
 
-  // QUERY_PARAM redirect_type 흐름 — auth-server 가 ?accessToken=&refreshToken= 으로 redirect 한 케이스
+  // 페이지 로드 시 1회 세션 확인 (서버 응답이 SSOT)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("accessToken");
-    const refreshToken = params.get("refreshToken");
-    if (!accessToken || !refreshToken) return;
+    apiClient
+      .get("/user/me")
+      .then((res) => {
+        LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
+        LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
+        LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
+        setLogin();
+      })
+      .catch(() => {
+        // 미인증(미로그인 또는 refresh 만료) — 정상 상태일 수 있어 silent.
+        LocalStorage.removeItem("email");
+        LocalStorage.removeItem("name");
+        LocalStorage.removeItem("role");
+        setLogout();
+      });
+  }, [setLogin, setLogout]);
 
-    console.info("[fmp:auth] capturing tokens from URL", { pathname });
-    setCookie(COOKIE_ACCESS_TOKEN, accessToken);
-    setCookie(COOKIE_REFRESH_TOKEN, refreshToken);
-    setLogin();
-
-    // 민감 쿼리 제거 — 이후 새로고침·공유 시 URL 에 토큰 안 남게
-    const cleaned = new URL(window.location.href);
-    ["accessToken", "refreshToken", "accessTokenExpiresIn", "refreshTokenExpiresIn"].forEach((k) =>
-      cleaned.searchParams.delete(k),
-    );
-    router.replace(cleaned.pathname + (cleaned.search ? `?${cleaned.searchParams}` : ""));
-
-    fetchUserProfile("query-param", setLogin);
-  }, [pathname, router, setLogin]);
-
-  // REDIRECT_WITH_COOKIE 흐름 — auth-server 가 httpOnly cookie 만 set 한 케이스.
-  // JS 가 httpOnly cookie 를 읽을 수 없으므로 (document.cookie 접근 X), 로그인 여부는
-  // /user/me 200/401 응답으로 판정한다 (서버 응답이 SSOT). 쿠키는 axios withCredentials=true
-  // 로 자동 첨부됨.
+  // 사용 중 세션 만료(api 인터셉터의 401/403) 를 전역 로그아웃으로 반영
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // 이미 프로필 있으면 skip (페이지 이동/새로고침 시 중복 호출 방지)
-    if (LocalStorage.getItem("email")) {
-      setLogin();
-      return;
-    }
-    fetchUserProfile("cookie", setLogin);
-  }, [setLogin]);
-
-  // 확인용 상태 로그 — LocalStorage 프로필 보유 여부 (httpOnly cookie 는 JS 가 못 읽으므로
-  // 로그인 상태는 LocalStorage 프로필 또는 /user/me 응답으로 판정).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hasProfile = Boolean(LocalStorage.getItem("email"));
-    console.info(`[fmp:auth] mount check pathname=${pathname} hasProfile=${hasProfile}`);
-  }, [pathname]);
+    const onUnauthorized = () => setLogout();
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, [setLogout]);
 
   return null;
-}
-
-function fetchUserProfile(via: "query-param" | "cookie", setLogin: () => void): void {
-  apiClient
-    .get("/user/me")
-    .then((res) => {
-      LocalStorage.setItem("email", JSON.stringify(res.data.data.email));
-      LocalStorage.setItem("name", JSON.stringify(res.data.data.name));
-      LocalStorage.setItem("role", JSON.stringify(res.data.data.role));
-      setLogin();
-      console.info(`[fmp:auth] user profile loaded (via ${via})`);
-    })
-    .catch(() => {
-      // 미인증 (cookie 미보유 또는 만료) — 사용자가 로그인 안 한 정상 상태일 수 있어 silent.
-      console.info(`[fmp:auth] not logged in (via ${via})`);
-    });
 }
