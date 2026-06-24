@@ -1,14 +1,29 @@
-# *
-User-agent: *
-Allow: /
+# 파인드마이펫 robots.txt
+# 일반 검색엔진 + 생성형(LLM) 크롤러를 함께 허용한다.
+# "실종동물 찾는법" 같은 질의에서 생성형 검색에 노출되도록 AI 크롤러를 명시적으로 허용.
+# (연속된 User-agent 줄은 아래 규칙 블록을 공유한다 — 개인영역은 모든 크롤러에 동일하게 차단)
 
-# 인증/마이페이지/알림 등 개인 영역은 크롤 금지
+User-agent: *
+User-agent: Googlebot
+User-agent: Yeti
+User-agent: Bingbot
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: CCBot
+Allow: /
+# 개인/유틸 영역 — 색인 가치 없음 (인증 필요 또는 thin/중복)
 Disallow: /profile
 Disallow: /notifications
 Disallow: /auth/
+Disallow: /edit/
+Disallow: /leaflet
+Disallow: /search
 
-# Host
 Host: https://findmypet.platformholder.site
-
-# Sitemaps
 Sitemap: https://findmypet.platformholder.site/sitemap.xml
