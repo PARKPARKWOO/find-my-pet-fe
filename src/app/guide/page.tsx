@@ -220,6 +220,17 @@ export default function Guide() {
             <p>강아지를 잃어버린 상황에서 신속하게 행동하면 반려견을 찾을 가능성이 훨씬 높아집니다. 평소에도 실종에 대비해 강아지의 현재 위치를 확인할 수 있는 GPS 기기를 착용하게 하거나, 반려동물 등록제에 가입하여 관리하는 것이 안전한 방법입니다. 또한, 반려견이 실종되지 않도록 목줄을 잘 챙기고, 외출 시 환경을 주의하는 것이 반려견의 안전을 지키는 중요한 방법임을 잊지 마세요.</p>
           </div>
 
+          <div className="rounded-md border p-4 text-sm mb-10">
+            <p className="font-bold">더 찾아보기</p>
+            <p className="mt-1">
+              보호 공고 기간·동물등록·입양 절차 등 제도가 궁금하다면{" "}
+              <Link href="/faq" className="underline">자주 묻는 질문</Link>,
+              우리 동네 보호소에 들어온 아이들은{" "}
+              <Link href="/abandonment/region" className="underline">지역별 유기동물 보호 공고</Link>
+              에서 확인하세요.
+            </p>
+          </div>
+
         </div>
       </section>
     </div>

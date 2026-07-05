@@ -71,11 +71,48 @@ async function safeGetAllPosts(): Promise<Array<{ slug: string }>> {
   }
 }
 
+/** 지역별 공고 페이지(/abandonment/region/*) — 시도 + 전체 시군구. 실패 시 빈 배열. */
+async function fetchRegionUrls(): Promise<string[]> {
+  try {
+    const sidoRes = await fetch(`${BASE_URL}/abandoned-animals/sido`, {
+      next: { revalidate: 86_400 },
+    });
+    if (!sidoRes.ok) return [];
+    const sidoList: Array<{ orgCd: string; orgdownNm: string }> =
+      (await sidoRes.json())?.data ?? [];
+
+    const urls: string[] = [`${DOMAIN_URL}/abandonment/region`];
+    for (const sido of sidoList) {
+      const sidoSlug = encodeURIComponent(sido.orgdownNm);
+      urls.push(`${DOMAIN_URL}/abandonment/region/${sidoSlug}`);
+      try {
+        const sggRes = await fetch(
+          `${BASE_URL}/abandoned-animals/sigungu?uprCd=${sido.orgCd}`,
+          { next: { revalidate: 86_400 } },
+        );
+        if (!sggRes.ok) continue;
+        const sggList: Array<{ orgdownNm: string }> = (await sggRes.json())?.data ?? [];
+        for (const sgg of sggList) {
+          urls.push(
+            `${DOMAIN_URL}/abandonment/region/${sidoSlug}/${encodeURIComponent(sgg.orgdownNm)}`,
+          );
+        }
+      } catch {
+        // 시군구 하나 실패해도 나머지는 계속
+      }
+    }
+    return urls;
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [posts, abandoned, mdxPosts] = await Promise.all([
+  const [posts, abandoned, mdxPosts, regionUrls] = await Promise.all([
     fetchAllPosts(),
     fetchAllAbandoned(),
     safeGetAllPosts(),
+    fetchRegionUrls(),
   ]);
 
   const lostPosts: MetadataRoute.Sitemap = posts.map((p: ApiPostSummary) => ({
@@ -103,8 +140,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: DOMAIN_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
     { url: `${DOMAIN_URL}/posts`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
     { url: `${DOMAIN_URL}/guide`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${DOMAIN_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${DOMAIN_URL}/register`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  return [...staticPages, ...lostPosts, ...abandonedPages, ...mdxEntries];
+  const regionPages: MetadataRoute.Sitemap = regionUrls.map((url) => ({
+    url,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPages, ...regionPages, ...lostPosts, ...abandonedPages, ...mdxEntries];
 }

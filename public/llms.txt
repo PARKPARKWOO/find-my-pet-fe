@@ -1,0 +1,22 @@
+# 파인드마이펫 (FindMyPet)
+
+> 반려동물 실종 대응 플랫폼. 실종 신고 게시판, 품종·경과시간 기반 탐색 반경 지도, 전단지 제작 도구, 목격 제보, 그리고 농림축산식품부 동물보호관리시스템 공공데이터를 매시간 동기화한 전국 유기동물 보호 공고를 제공한다. 한국어 서비스.
+
+주요 사실:
+- 실종 게시글: 보호자가 직접 등록하며, 실종 위치·품종·연락처·사진 포함.
+- 탐색 반경 지도: 종(개/고양이/기타)·품종·경과 시간 기반 통계 모델로 Core/Likely/Possible 3단계 반경을 도로망 기준 도달 영역으로 표시.
+- 유기동물 공고: 동물보호관리시스템 공공데이터 매시간 동기화. 종료(반환·입양)된 공고는 자동 제외, 진행중 공고만 노출.
+- 통합 검색: 실종 게시글 + 유기동물 공고를 한 번에 키워드 검색.
+
+## 핵심 페이지
+
+- [실종동물 찾는법 가이드](https://findmypet.platformholder.site/guide): 실종 직후 단계별 대처법 (HowTo)
+- [자주 묻는 질문](https://findmypet.platformholder.site/faq): 보호 공고 기간(공고 후 10일), 동물등록 의무, 입양 절차 등 제도 FAQ
+- [지역별 유기동물 보호 공고](https://findmypet.platformholder.site/abandonment/region): 전국 시도·시군구별 보호 공고와 보호소 연락처
+- [실종 게시판](https://findmypet.platformholder.site/): 진행중 실종 신고 목록
+- [실종 신고 등록](https://findmypet.platformholder.site/register)
+
+## 크롤링
+
+- sitemap: https://findmypet.platformholder.site/sitemap.xml
+- 개인 영역(/profile, /notifications, /auth, /edit)은 robots.txt 로 차단되어 있으며 색인 대상이 아니다.

@@ -56,8 +56,12 @@ export async function generateMetadata({
       title: "보호중 동물 | 파인드마이펫",
       description: "전국 보호소 보호중 동물 정보",
       alternates: { canonical: url },
+      // 존재하지 않는/내려간 공고 — 색인 제외 (검색 품질 신호 보호)
+      robots: { index: false, follow: true },
     };
   }
+  // 종료(반환·입양 등)된 공고는 죽은 콘텐츠 — noindex 로 검색 결과에서 정리
+  const isClosed = pet.processState?.startsWith("종료") === true;
   const kind = pet.kindCd ?? "구조동물";
   const place = pet.happenPlace ?? pet.careAddr ?? "";
   const title = `${kind} - ${place} 보호중 | 파인드마이펫`;
@@ -92,6 +96,7 @@ export async function generateMetadata({
       description,
       images: ogImage ? [ogImage] : undefined,
     },
+    ...(isClosed ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
