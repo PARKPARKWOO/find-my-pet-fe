@@ -13,6 +13,7 @@ import FlyerManagementSection from "@/app/_components/lost/FlyerManagementSectio
 import SightingSection from "@/app/_components/lost/SightingSection";
 import FlyerPrintDialog from "@/app/_components/lost/FlyerPrintDialog";
 import BookmarkButton from "@/app/_components/lost/BookmarkButton";
+import ShareButtons from "@/app/_components/share/ShareButtons";
 import type { AnimalType } from "@/types/breed";
 import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
 
@@ -104,6 +105,27 @@ export default function LostDetail({ params }: { params: { id: string } }) {
         </div>
       </div>
       {post.missingAnimalStatus === "FOUND" && <div className="w-full flex justify-center items-center bg-gray-300 py-4 my-4 rounded-md font-bold">완료된 게시물입니다.</div>}
+      {post.missingAnimalStatus !== "FOUND" && (
+        <div className="mb-4">
+          <ShareButtons
+            title={`🚨 실종동물을 찾습니다 — ${post.title}`}
+            description={`${post.place} · ${formatDateToKorean(post.time)} 실종. ${post.description}`}
+            url={`https://findmypet.platformholder.site/lost/${params.id}`}
+            imageUrl={post.imageUrls?.[0]?.image}
+            daangnText={[
+              `🚨 실종동물을 찾습니다`,
+              `🐾 ${post.title}`,
+              `📍 실종 장소: ${post.place}`,
+              `🕐 실종 시각: ${formatDateToKorean(post.time)}`,
+              ``,
+              post.description.slice(0, 150),
+              ``,
+              `목격하셨다면 링크에서 제보 부탁드립니다 🙏`,
+              `https://findmypet.platformholder.site/lost/${params.id}`,
+            ].join("\n")}
+          />
+        </div>
+      )}
       <div className="flex flex-col w-full h-full gap-10">
         <div className="flex w-full sm:justify-between sm:flex-row sm:items-start items-center flex-col gap-6">
           {

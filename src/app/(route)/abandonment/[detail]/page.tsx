@@ -6,6 +6,7 @@ import { BASE_URL } from "@/app/constant/api";
 import { Button } from "@/app/_components/ui/button";
 import { formatDate } from "@/lib/utils";
 import AbandonmentMaps, { ShelterMap } from "./AbandonmentMaps";
+import ShareButtons from "@/app/_components/share/ShareButtons";
 
 const SITE_DOMAIN = "https://findmypet.platformholder.site";
 
@@ -144,6 +145,15 @@ export default async function AbandonmentDetailPage({
               <ArrowLeft />
             </Button>
           </Link>
+        </div>
+
+        <div className="mb-4">
+          <ShareButtons
+            title={`${pet.kindCd ?? "구조동물"} — ${pet.careNm ?? "보호소"}에서 보호중`}
+            description={`발견: ${pet.happenPlace ?? ""}${pet.happenDt ? ` (${formatDate(pet.happenDt)})` : ""}. ${pet.specialMark ?? ""}`}
+            url={`${SITE_DOMAIN}/abandonment/${params.detail}`}
+            imageUrl={pet.popfile ?? pet.filename}
+          />
         </div>
 
         <div className="flex flex-col w-full h-full gap-10">
