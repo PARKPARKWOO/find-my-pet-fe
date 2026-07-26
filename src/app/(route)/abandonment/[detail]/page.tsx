@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { BASE_URL } from "@/app/constant/api";
 import { Button } from "@/app/_components/ui/button";
 import { formatDate } from "@/lib/utils";
+import { isClosedNotice } from "@/lib/abandonment";
 import AbandonmentMaps, { ShelterMap } from "./AbandonmentMaps";
 import ShareButtons from "@/app/_components/share/ShareButtons";
 
@@ -61,8 +62,9 @@ export async function generateMetadata({
       robots: { index: false, follow: true },
     };
   }
-  // 종료(반환·입양 등)된 공고는 죽은 콘텐츠 — noindex 로 검색 결과에서 정리
-  const isClosed = pet.processState?.startsWith("종료") === true;
+  // 종료(반환·입양 등)된 공고는 죽은 콘텐츠 — noindex 로 검색 결과에서 정리.
+  // 판정은 sitemap 과 동일 기준을 쓰기 위해 @/lib/abandonment 한 곳에서만 한다.
+  const isClosed = isClosedNotice(pet.processState);
   const kind = pet.kindCd ?? "구조동물";
   const place = pet.happenPlace ?? pet.careAddr ?? "";
   const title = `${kind} - ${place} 보호중 | 파인드마이펫`;
