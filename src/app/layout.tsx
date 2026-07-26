@@ -8,6 +8,7 @@ import GoogleAnalytics from "@/lib/GoogleAnalytics";
 import AuthQueryCapture from "@/app/_components/auth/AuthQueryCapture";
 import AdSenseScript from "@/app/_components/ads/AdSenseScript";
 import AdFitScript from "@/app/_components/ads/AdFitScript";
+import { ADSENSE_CLIENT } from "@/app/_components/ads/adsenseClient";
 import KakaoMapScript from "@/app/_components/KakaoMapScript";
 
 const geistSans = localFont({
@@ -47,6 +48,12 @@ export const metadata: Metadata = {
       // 네이버 서치어드바이저 사이트 소유 확인 메타 태그
       "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION ?? "",
     },
+  },
+  other: {
+    // AdSense 사이트 소유 확인 수단. 광고 로더가 body 끝에 붙는 것과 무관하게 <head> 에 들어가므로
+    // 심사 초기(광고를 아직 띄우지 않는 상태)에도 소유권 확인이 통과된다. ID 가 없으면 빈 태그를
+    // 남기지 않기 위해 조건부로 넣는다.
+    ...(ADSENSE_CLIENT ? { "google-adsense-account": ADSENSE_CLIENT } : {}),
   },
   alternates: {
     canonical: "https://findmypet.platformholder.site",

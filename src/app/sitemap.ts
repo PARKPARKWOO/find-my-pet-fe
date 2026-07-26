@@ -369,6 +369,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${DOMAIN_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${DOMAIN_URL}/flyer`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${DOMAIN_URL}/register`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: `${DOMAIN_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: `${DOMAIN_URL}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const regionPages: MetadataRoute.Sitemap = regionUrls.map((url) => ({

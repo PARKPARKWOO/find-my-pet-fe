@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ADSENSE_CLIENT } from "./adsenseClient";
 
 interface Props {
   /** AdSense 광고 단위 슬롯 ID (예: "1234567890"). 환경변수에 두고 주입 권장. */
@@ -15,8 +16,9 @@ interface Props {
 }
 
 /**
- * 단일 AdSense 슬롯. `NEXT_PUBLIC_ADSENSE_CLIENT_ID` 미설정 시 placeholder 로 대체되므로
- * 개발/프리뷰 환경에서 레이아웃만 확인 가능.
+ * 단일 AdSense 슬롯. 게시자 ID 미설정 시 placeholder 로 대체되므로 개발/프리뷰 환경에서
+ * 레이아웃만 확인 가능. 게시자 ID 는 로더·`/ads.txt` 와 같은 값을 봐야 하므로
+ * {@link ADSENSE_CLIENT} 에서만 읽는다.
  */
 export default function AdSlot({
   slot,
@@ -25,11 +27,14 @@ export default function AdSlot({
   minHeight = 180,
   className,
 }: Props) {
-  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+  const clientId = ADSENSE_CLIENT;
   const insRef = useRef<HTMLModElement | null>(null);
 
   useEffect(() => {
-    if (!clientId) return;
+    // 슬롯 ID 도 함께 본다. 광고 단위는 AdSense **승인 후에만** 만들 수 있으므로
+    // "게시자 ID 는 있고 슬롯은 아직 없는" 구간이 반드시 존재한다. 그때 push 하면
+    // data-ad-slot="" 인 잘못된 광고 요청이 나간다.
+    if (!clientId || !slot) return;
     if (typeof window === "undefined") return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,16 +45,9 @@ export default function AdSlot({
     }
   }, [clientId, slot]);
 
-  if (!clientId) {
-    return (
-      <div
-        className={`flex items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400 ${className ?? ""}`}
-        style={{ minHeight }}
-      >
-        광고 자리 (AdSense 연동 전)
-      </div>
-    );
-  }
+  // 게시자 ID 든 슬롯이든 하나라도 없으면 광고를 만들 수 없다. 점선 박스를 그리지 않고 아예
+  // 렌더하지 않는다 — 심사 중 홈 피드에 6장마다 "광고 자리" 박스가 반복되면 미완성 사이트로 읽힌다.
+  if (!clientId || !slot) return null;
 
   return (
     <ins
