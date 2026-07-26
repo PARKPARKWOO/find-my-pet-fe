@@ -27,6 +27,72 @@ const POSTS_MAX_PAGES = 10; // 최대 1000건만 sitemap 에 포함 (그 이상�
  */
 const ABANDONED_FRESHNESS_DAYS = 90;
 
+/**
+ * 수집 전체에 거는 벽시계 예산(ms).
+ *
+ * sitemap 은 정적 생성되고, Next 는 **한 페이지가 60초를 넘기면 워커에 SIGTERM 을 보내고 3회 재시도
+ * 뒤 빌드 전체를 실패**시킨다. 이 파일은 최대 160+18 회의 원격 요청을 하므로 백엔드가 조금만 느려도
+ * 그 한계를 넘는다 — 실제로 2026-07-26 프로덕션 배포가 이 이유로 연속 실패했다.
+ *
+ * 그래서 "가능한 만큼 모으고 시간이 다 되면 멈춘다" 로 바꾼다. **줄어든 sitemap 은 다음 빌드가
+ * 복구하지만, 실패한 빌드는 아무것도 배포하지 못한다.** 60초에서 페이지 직렬화 등 나머지 작업 몫을
+ * 빼고 잡는다.
+ */
+const COLLECT_BUDGET_MS = 35_000;
+
+/** 개별 요청 상한. 하나가 멈춰도 전체 예산을 혼자 다 먹지 못하게 한다. */
+const REQUEST_TIMEOUT_MS = 8_000;
+
+/**
+ * 유기동물 목록을 한 번에 몇 페이지씩 가져올지.
+ *
+ * 직렬 160회는 왕복 지연만으로 예산을 넘긴다. 페이지 단위 조기 종료 조건(아래 {@link fetchAllAbandoned}
+ * 참고)은 그대로 유지하고, 종료 지점을 지나친 페이지는 버린다 — 최대 {@link ABANDONED_BATCH} - 1
+ * 페이지를 헛읽지만 그 대가로 수집 시간이 배수로 줄어든다.
+ */
+const ABANDONED_BATCH = 8;
+
+interface Deadline {
+  expired(): boolean;
+  remaining(): number;
+}
+
+function makeDeadline(budgetMs: number): Deadline {
+  const end = Date.now() + budgetMs;
+  return {
+    expired: () => Date.now() >= end,
+    remaining: () => Math.max(0, end - Date.now()),
+  };
+}
+
+/**
+ * 예산을 지키는 JSON fetch. 실패·타임아웃·예산 소진은 모두 `null`.
+ *
+ * `AbortSignal` 대신 타이머 경주를 쓰는 이유: `signal` 을 넘기면 Next 의 Data Cache 를 우회하게 되어
+ * `next: { revalidate }` 로 얻던 빌드 간 캐시가 사라진다. 그러면 느려서 생긴 문제를 더 느리게 만든다.
+ * 여기서 필요한 건 요청 취소가 아니라 **기다림의 상한**이므로 경주로 충분하다.
+ */
+async function fetchJson(url: string, revalidate: number, deadline: Deadline): Promise<any | null> {
+  const budget = Math.min(REQUEST_TIMEOUT_MS, deadline.remaining());
+  if (budget <= 0) return null;
+
+  return new Promise<any | null>((resolve) => {
+    const timer = setTimeout(() => resolve(null), budget);
+    fetch(url, { next: { revalidate } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (json) => {
+          clearTimeout(timer);
+          resolve(json);
+        },
+        () => {
+          clearTimeout(timer);
+          resolve(null);
+        },
+      );
+  });
+}
+
 interface ApiPostSummary {
   id: string;
   time?: string;
@@ -39,23 +105,20 @@ interface ApiAbandonedSummary {
 }
 
 /** 백엔드에서 실종 게시글 ID + 작성 시간 listing. 실패 시 빈 배열로 fallback (sitemap 자체는 빌드 됨). */
-async function fetchAllPosts(): Promise<ApiPostSummary[]> {
+async function fetchAllPosts(deadline: Deadline): Promise<ApiPostSummary[]> {
   const result: ApiPostSummary[] = [];
   for (let page = 0; page < POSTS_MAX_PAGES; page++) {
-    try {
-      const res = await fetch(
-        `${BASE_URL}/posts?pageSize=${POSTS_PAGE_SIZE}&pageOffset=${page}&orderBy=CREATED_AT_DESC`,
-        { next: { revalidate: 600 } },
-      );
-      if (!res.ok) break;
-      const json = await res.json();
-      const contents: ApiPostSummary[] = json?.data?.contents ?? [];
-      if (contents.length === 0) break;
-      result.push(...contents);
-      if (!json?.data?.hasNextPage) break;
-    } catch {
-      break;
-    }
+    if (deadline.expired()) break;
+    const json = await fetchJson(
+      `${BASE_URL}/posts?pageSize=${POSTS_PAGE_SIZE}&pageOffset=${page}&orderBy=CREATED_AT_DESC`,
+      600,
+      deadline,
+    );
+    if (!json) break;
+    const contents: ApiPostSummary[] = json?.data?.contents ?? [];
+    if (contents.length === 0) break;
+    result.push(...contents);
+    if (!json?.data?.hasNextPage) break;
   }
   return result;
 }
@@ -94,23 +157,43 @@ const ABANDONED_MIN_EXPECTED = 2_000;
  * `MAX_PAGES` 는 정책이 아니라 무한루프/폭주 방어용 안전장치다. 정상 동작에서는 날짜 조건이 먼저 걸린다
  * (실측 유입량 약 274건/일 → 90일 ≈ 124페이지 < MAX_PAGES).
  */
-async function fetchAllAbandoned(): Promise<ApiAbandonedSummary[]> {
+async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummary[]> {
   const result: ApiAbandonedSummary[] = [];
   const PAGE = 200;
   const MAX_PAGES = 160; // 안전장치: 200 × 160 = 32,000건 상한
   const cutoff = happenDtCutoff(ABANDONED_FRESHNESS_DAYS); // "YYYYMMDD"
   let outOfOrderSkipped = 0;
+  let stopped = false;
+  let ranOutOfTime = false;
 
-  for (let pageNo = 1; pageNo <= MAX_PAGES; pageNo++) {
-    try {
-      const res = await fetch(
-        `${BASE_URL}/abandoned-animals?pageNo=${pageNo}&numOfRows=${PAGE}`,
-        { next: { revalidate: 1800 } },
-      );
-      if (!res.ok) break;
-      const json = await res.json();
+  for (let start = 1; start <= MAX_PAGES && !stopped; start += ABANDONED_BATCH) {
+    if (deadline.expired()) {
+      ranOutOfTime = true;
+      break;
+    }
+
+    const pageNos: number[] = [];
+    for (let p = start; p < start + ABANDONED_BATCH && p <= MAX_PAGES; p++) pageNos.push(p);
+    const batch = await Promise.all(
+      pageNos.map((pageNo) =>
+        fetchJson(`${BASE_URL}/abandoned-animals?pageNo=${pageNo}&numOfRows=${PAGE}`, 1800, deadline),
+      ),
+    );
+
+    // 배치는 병렬로 받았지만 판정은 반드시 페이지 순서대로 한다 — 종료 지점 뒤의 페이지를
+    // 결과에 섞으면 신선도 윈도우가 무의미해진다.
+    for (let i = 0; i < batch.length; i++) {
+      const json = batch[i];
+      const pageNo = pageNos[i];
+      if (!json) {
+        stopped = true;
+        break;
+      }
       const contents: ApiAbandonedSummary[] = json?.data?.contents ?? [];
-      if (contents.length === 0) break;
+      if (contents.length === 0) {
+        stopped = true;
+        break;
+      }
 
       // 이 페이지에서 마지막으로 만난 "판정 가능한" happenDt.
       // 페이지 경계 판정에만 쓰므로 형식 불량/누락 항목은 갱신하지 않는다.
@@ -152,12 +235,22 @@ async function fetchAllAbandoned(): Promise<ApiAbandonedSummary[]> {
               `happenDt 내림차순 전제가 깨졌을 수 있음(mirror 미동기화 → fetchDirect fallback 의심).`,
           );
         }
+        stopped = true;
         break;
       }
-      if (!json?.data?.hasNextPage) break;
-    } catch {
-      break;
+      if (!json?.data?.hasNextPage) {
+        stopped = true;
+        break;
+      }
     }
+  }
+
+  if (ranOutOfTime) {
+    // 조용한 절단은 "다 담았다" 로 읽힌다. 남기지 않으면 sitemap 이 줄어든 걸 아무도 모른다.
+    console.warn(
+      `[sitemap] 수집 예산 ${COLLECT_BUDGET_MS}ms 를 소진해 abandoned 수집을 ${result.length}건에서 중단했다. ` +
+        `백엔드 응답이 느려졌는지 확인할 것.`,
+    );
   }
 
   if (outOfOrderSkipped > 0) {
@@ -186,43 +279,41 @@ function regionSlug(orgdownNm: string | null | undefined): string | null {
 }
 
 /** 지역별 공고 페이지(/abandonment/region/*) — 시도 + 전체 시군구. 실패 시 빈 배열. */
-async function fetchRegionUrls(): Promise<string[]> {
-  try {
-    const sidoRes = await fetch(`${BASE_URL}/abandoned-animals/sido`, {
-      next: { revalidate: 86_400 },
-    });
-    if (!sidoRes.ok) return [];
-    const sidoList: Array<{ orgCd: string | null; orgdownNm: string | null }> =
-      (await sidoRes.json())?.data ?? [];
+async function fetchRegionUrls(deadline: Deadline): Promise<string[]> {
+  const sidoJson = await fetchJson(`${BASE_URL}/abandoned-animals/sido`, 86_400, deadline);
+  if (!sidoJson) return [];
+  const sidoList: Array<{ orgCd: string | null; orgdownNm: string | null }> = sidoJson?.data ?? [];
 
-    const urls: string[] = [`${DOMAIN_URL}/abandonment/region`];
-    for (const sido of sidoList) {
-      const sidoSlug = regionSlug(sido?.orgdownNm);
-      // orgdownNm 이 null 인 시도는 라우트 자체가 성립하지 않는다 → 건너뜀
-      if (!sidoSlug || !sido?.orgCd) continue;
-      urls.push(`${DOMAIN_URL}/abandonment/region/${sidoSlug}`);
-      try {
-        const sggRes = await fetch(
-          `${BASE_URL}/abandoned-animals/sigungu?uprCd=${encodeURIComponent(sido.orgCd)}`,
-          { next: { revalidate: 86_400 } },
-        );
-        if (!sggRes.ok) continue;
-        const sggList: Array<{ orgdownNm: string | null }> = (await sggRes.json())?.data ?? [];
-        for (const sgg of sggList) {
-          // 인천/경남 등 일부 시군구는 orgdownNm 이 null 로 내려온다.
-          // 그대로 두면 `/region/{sido}/null` 404 URL 이 sitemap 에 실린다.
-          const sggSlug = regionSlug(sgg?.orgdownNm);
-          if (!sggSlug) continue;
-          urls.push(`${DOMAIN_URL}/abandonment/region/${sidoSlug}/${sggSlug}`);
-        }
-      } catch {
-        // 시군구 하나 실패해도 나머지는 계속
-      }
+  const valid = sidoList
+    .map((sido) => ({ slug: regionSlug(sido?.orgdownNm), orgCd: sido?.orgCd }))
+    // orgdownNm 이 null 인 시도는 라우트 자체가 성립하지 않는다 → 건너뜀
+    .filter((s): s is { slug: string; orgCd: string } => Boolean(s.slug && s.orgCd));
+
+  // 시도는 17개뿐이라 한 번에 병렬로 받는다 — 직렬로 돌리면 왕복 지연만으로 예산을 갉아먹는다.
+  const sigungu = await Promise.all(
+    valid.map((s) =>
+      fetchJson(
+        `${BASE_URL}/abandoned-animals/sigungu?uprCd=${encodeURIComponent(s.orgCd)}`,
+        86_400,
+        deadline,
+      ),
+    ),
+  );
+
+  const urls: string[] = [`${DOMAIN_URL}/abandonment/region`];
+  valid.forEach((sido, i) => {
+    urls.push(`${DOMAIN_URL}/abandonment/region/${sido.slug}`);
+    // 시군구 하나 실패해도 시도 페이지와 나머지는 계속 살린다.
+    const sggList: Array<{ orgdownNm: string | null }> = sigungu[i]?.data ?? [];
+    for (const sgg of sggList) {
+      // 인천/경남 등 일부 시군구는 orgdownNm 이 null 로 내려온다.
+      // 그대로 두면 `/region/{sido}/null` 404 URL 이 sitemap 에 실린다.
+      const sggSlug = regionSlug(sgg?.orgdownNm);
+      if (!sggSlug) continue;
+      urls.push(`${DOMAIN_URL}/abandonment/region/${sido.slug}/${sggSlug}`);
     }
-    return urls;
-  } catch {
-    return [];
-  }
+  });
+  return urls;
 }
 
 /** URL 중복 제거 — 먼저 등장한 엔트리를 유지(정적 > 지역 > 실종 > 유기 > MDX 우선순위). */
@@ -238,11 +329,13 @@ function dedupeByUrl(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // 예산은 네 수집기가 공유한다 — 전체가 60초 안에 끝나야 하지 개별이 아니다.
+  const deadline = makeDeadline(COLLECT_BUDGET_MS);
   const [posts, abandoned, mdxPosts, regionUrls] = await Promise.all([
-    fetchAllPosts(),
-    fetchAllAbandoned(),
+    fetchAllPosts(deadline),
+    fetchAllAbandoned(deadline),
     safeGetAllPosts(),
-    fetchRegionUrls(),
+    fetchRegionUrls(deadline),
   ]);
 
   const lostPosts: MetadataRoute.Sitemap = posts.map((p: ApiPostSummary) => ({
