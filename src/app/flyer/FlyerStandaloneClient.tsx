@@ -15,6 +15,7 @@ import { Input } from "@/app/_components/ui/input";
 import { Label } from "@/app/_components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FlyerPrintDialog, {
+  DEFAULT_COMPOSITION,
   FlyerSheet,
   TEMPLATES,
   getDefaultFlyerCopy,
@@ -30,6 +31,21 @@ const PANEL_SHADOW =
 
 /** A4(210mm) 를 96dpi css px 로 환산한 값 — 미리보기 scale 계산 기준. */
 const A4_WIDTH_PX = 793.7;
+
+/** 실종 직후 "가장 급한" 이 화면에서 새로고침 한 번에 입력이 날아가지 않도록 초안을 저장한다.
+ * 사진(object URL)은 여기 포함하지 않는다 — 새로고침을 못 버티는 값을 저장해 봐야
+ * 복원 시 깨진 이미지만 남기 때문에, 아예 이 목록에 넣지 않는 편이 "빈 드롭존으로 복원"을
+ * 보장하는 가장 단순한 방법이다. */
+const FLYER_DRAFT_STORAGE_KEY = "fmp:flyer:draft:v1";
+
+interface FlyerDraft {
+  title: string;
+  place: string;
+  time: string;
+  phoneNum: string;
+  gratuity: string;
+  description: string;
+}
 
 /**
  * 게시글 없이 전단지만 만드는 화면.
@@ -72,6 +88,38 @@ export default function FlyerStandaloneClient() {
     };
   }, []);
 
+  // 마운트 시 초안 복원, 이후 변경될 때마다 저장. thumbnail 은 절대 다루지 않는다 — 그래서
+  // 복원 시에도 항상 빈 드롭존으로 시작하고, 깨진 이미지가 나타날 여지 자체가 없다.
+  const [draftRestored, setDraftRestored] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FLYER_DRAFT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<FlyerDraft>;
+        if (typeof parsed.title === "string") setTitle(parsed.title);
+        if (typeof parsed.place === "string") setPlace(parsed.place);
+        if (typeof parsed.time === "string") setTime(parsed.time);
+        if (typeof parsed.phoneNum === "string") setPhoneNum(parsed.phoneNum);
+        if (typeof parsed.gratuity === "string") setGratuity(parsed.gratuity);
+        if (typeof parsed.description === "string") setDescription(parsed.description);
+      }
+    } catch {
+      // 손상된 값은 무시하고 빈 폼으로 시작한다.
+    } finally {
+      setDraftRestored(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!draftRestored) return;
+    const draft: FlyerDraft = { title, place, time, phoneNum, gratuity, description };
+    try {
+      localStorage.setItem(FLYER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch {
+      // 저장 공간이 없거나 프라이빗 모드면 조용히 무시 — 화면의 입력 자체는 그대로 유지된다.
+    }
+  }, [draftRestored, title, place, time, phoneNum, gratuity, description]);
+
   const missingTitle = title.trim().length === 0;
   const missingPhone = phoneNum.trim().length === 0;
   const ready = !missingTitle && !missingPhone;
@@ -111,6 +159,9 @@ export default function FlyerStandaloneClient() {
     headline: copy.headline,
     subHeadline: copy.subHeadline,
     theme: TEMPLATES.URGENT,
+    // 이 화면의 미리보기는 실제 구성 편집기가 아니라 인쇄 다이얼로그로 넘어가기 전 "감"만
+    // 잡는 용도라 항상 전체 켜짐 기본 구성을 쓴다 — 실제 구성 편집은 다이얼로그 안에서 한다.
+    composition: DEFAULT_COMPOSITION,
   };
 
   return (
