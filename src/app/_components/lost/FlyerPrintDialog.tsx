@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { ImageOff } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "@/app/_components/ui/button";
@@ -13,7 +14,7 @@ import {
 } from "@/app/_components/ui/dialog";
 import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
 
-interface Props {
+export interface Props {
   /**
    * 실종 게시글 id. 게시글 없이 전단지만 만드는 경우(/flyer)에는 없다 —
    * 그때 QR 은 서비스 제보 오픈채팅으로 간다.
@@ -34,11 +35,11 @@ interface Props {
  * 게시글 없이 만든 전단지의 QR 목적지 — Find-My-Pet 제보 오픈채팅.
  * 게시글이 있으면 그 상세 페이지가 더 많은 정보를 주므로 이 값은 쓰이지 않는다.
  */
-const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
+export const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
 
-type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
+export type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
 
-interface ThemeConfig {
+export interface ThemeConfig {
   label: string;
   caption: string;
   /** A4 sheet 외곽 테두리 css */
@@ -68,7 +69,7 @@ interface ThemeConfig {
   qrBorder: string;
 }
 
-const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
+export const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
   URGENT: {
     label: "URGENT",
     caption: "강한 빨강 · 멀리서도 눈에 띔",
@@ -128,6 +129,35 @@ const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
   },
 };
 
+/**
+ * 헤드라인/배너/부제목 기본 카피 — missingAnimalStatus 에 따라 갈린다.
+ * 다이얼로그(FlyerPrintDialog) 와 게시글 없는 상시 미리보기(/flyer) 가 같은 기본값을
+ * 쓰도록 export 해서 문구가 두 곳에서 따로 굳어(drift) 지 않게 한다.
+ */
+export function getDefaultFlyerCopy(
+  missingAnimalStatus: Props["missingAnimalStatus"],
+  title: string,
+  description: string,
+) {
+  const isSeen = missingAnimalStatus === "SEEN";
+  return {
+    banner: isSeen ? "긴급 · 목격 제보 요청" : "긴급 · 실종 동물",
+    headline: isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다",
+    subHeadline: isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다",
+    title,
+    description,
+  };
+}
+
+/** 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. */
+export function getFlyerShareUrl(postId: string | undefined): string {
+  return postId
+    ? typeof window !== "undefined"
+      ? `${window.location.origin}/lost/${postId}`
+      : `/lost/${postId}`
+    : REPORT_OPEN_CHAT_URL;
+}
+
 export default function FlyerPrintDialog(props: Props) {
   const printRef = useRef<HTMLDivElement | null>(null);
   const handlePrint = useReactToPrint({
@@ -137,25 +167,15 @@ export default function FlyerPrintDialog(props: Props) {
 
   // 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. 게시글 없는 전단지는 QR 이 가리킬
   // 상세 페이지 자체가 없으므로, 주운 사람이 곧바로 연락할 수 있는 창구가 유일하게 의미 있는 목적지다.
-  const shareUrl = props.postId
-    ? typeof window !== "undefined"
-      ? `${window.location.origin}/lost/${props.postId}`
-      : `/lost/${props.postId}`
-    : REPORT_OPEN_CHAT_URL;
+  const shareUrl = getFlyerShareUrl(props.postId);
 
   // 한글 기본 카피 — 사용자가 입력 필드로 자유 편집 가능
-  const isSeen = props.missingAnimalStatus === "SEEN";
   const defaults = useMemo(
-    () => ({
-      banner: isSeen ? "긴급 · 목격 제보 요청" : "긴급 · 실종 동물",
-      headline: isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다",
-      subHeadline: isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다",
-      title: props.title,
-      description: props.description,
-    }),
-    [isSeen, props.title, props.description],
+    () => getDefaultFlyerCopy(props.missingAnimalStatus, props.title, props.description),
+    [props.missingAnimalStatus, props.title, props.description],
   );
 
+  const [open, setOpen] = useState(false);
   const [banner, setBanner] = useState(defaults.banner);
   const [headline, setHeadline] = useState(defaults.headline);
   const [subHeadline, setSubHeadline] = useState(defaults.subHeadline);
@@ -171,8 +191,17 @@ export default function FlyerPrintDialog(props: Props) {
     setDescription(defaults.description);
   };
 
+  // 트리거(children)는 이 컴포넌트가 마운트되자마자 화면에 있지만, 그 시점의 title/description 은
+  // 아직 비어 있을 수 있다(특히 게시글 없이 바로 쓰는 /flyer). useState 초기값은 마운트 시점 한
+  // 번만 반영되므로, 그대로 두면 다이얼로그를 열었을 때 사용자가 그 사이 입력한 내용이 아니라
+  // 마운트 당시의 빈 값이 인쇄물에 남는다. 다이얼로그를 "열 때마다" 최신 props 로 다시 맞춘다.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) reset();
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
@@ -240,7 +269,7 @@ export default function FlyerPrintDialog(props: Props) {
         {/* 프리뷰: A4(210mm ≈ 794px) 가 다이얼로그보다 넓으므로 scale 로 축소.
             transform 은 인쇄 시 react-to-print 의 iframe 에 영향 없음. */}
         <div
-          className="border rounded bg-gray-100 overflow-auto"
+          className="rounded-md bg-muted/40 overflow-auto shadow-[0px_0px_0px_1px_rgba(0,0,0,0.06),0px_1px_1px_-0.5px_rgba(0,0,0,0.06),0px_3px_3px_-1.5px_rgba(0,0,0,0.06),_0px_6px_6px_-3px_rgba(0,0,0,0.06),0px_12px_12px_-6px_rgba(0,0,0,0.06),0px_24px_24px_-12px_rgba(0,0,0,0.06)]"
           style={{ maxHeight: "60vh", padding: "12px" }}
         >
           <div
@@ -284,196 +313,265 @@ export default function FlyerPrintDialog(props: Props) {
   );
 }
 
-/** 실제 인쇄 대상 레이아웃 — A4 기준, theme 에 따라 색상 변형. */
-const FlyerSheet = (
-  props: Props & {
-    shareUrl: string;
-    banner: string;
-    headline: string;
-    subHeadline: string;
-    theme: ThemeConfig;
-  },
-) => {
+/** FlyerSheet 가 실제로 쓰는 콘텐츠 필드 — 다이얼로그 트리거용 children 은 제외. */
+export type FlyerSheetContentProps = Omit<Props, "children">;
+
+export interface FlyerSheetProps extends FlyerSheetContentProps {
+  shareUrl: string;
+  banner: string;
+  headline: string;
+  subHeadline: string;
+  theme: ThemeConfig;
+}
+
+/**
+ * 실제 인쇄 대상 레이아웃 — A4 기준, theme 에 따라 색상 변형.
+ *
+ * /flyer 의 실시간 미리보기와 다이얼로그의 인쇄 대상이 반드시 이 컴포넌트 하나를 공유한다 —
+ * 별도의 "닮은꼴" 미리보기를 만들면 미리보기와 실제 인쇄물이 어긋날 수 있기 때문.
+ *
+ * 3m 밖에서 2초 안에 읽는 사람을 기준으로 순서를 짰다: 사진 → 무슨 상황인지 → 전화번호 →
+ * 사례금 → 장소·시각 → 특징 → QR. 이모지는 인쇄물에서 멀리서 보면 뭉개지고 흑백 인쇄에 약해
+ * 화면 UI 와 달리 여기서는 쓰지 않는다.
+ */
+export const FlyerSheet = (props: FlyerSheetProps) => {
   const showReward = props.gratuity > 0;
   const rewardLabel = showReward
     ? parseGratuityValue(props.gratuity, props.missingAnimalStatus)
     : null;
   const t = props.theme;
+  const placeTimeLine = buildPlaceTimeLine(props.place, props.time);
 
   return (
     <div
-      className="bg-white text-black mx-auto relative"
+      data-testid="flyer-sheet"
+      className="bg-white text-black mx-auto flex flex-col"
       style={{
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
-        padding: "16mm",
+        padding: "8mm",
         border: t.frame,
       }}
     >
-      {/* HEADER */}
-      <div className="text-center mb-6">
-        <div
-          className="inline-block px-6 py-2 mb-3"
-          style={{ backgroundColor: t.bannerBg, color: t.bannerText, letterSpacing: "0.15em" }}
+      {/* 1. 사진 — 시트 높이의 절반 가까이. 낯선 사람은 글이 아니라 사진으로 알아본다. */}
+      <div
+        className="relative w-full flex-shrink-0 overflow-hidden"
+        style={{ height: "120mm", borderRadius: "6px", border: t.photoBorder }}
+      >
+        <span
+          className="absolute left-0 top-0 z-10 font-bold"
+          style={{
+            backgroundColor: t.bannerBg,
+            color: t.bannerText,
+            letterSpacing: "0.12em",
+            fontSize: "11px",
+            padding: "2.5mm 5mm",
+            borderBottomRightRadius: "6px",
+          }}
         >
-          <span className="text-sm font-bold">{props.banner}</span>
-        </div>
-        <h1
-          className="text-5xl font-extrabold mb-2"
-          style={{ color: t.primary, lineHeight: 1.1 }}
-        >
-          🐾 {props.headline}
-        </h1>
-        <p className="text-lg text-gray-700">{props.subHeadline}</p>
+          {props.banner}
+        </span>
+        {props.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={props.thumbnail}
+            alt={props.title || "실종동물 사진"}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div
+            className="flex h-full w-full flex-col items-center justify-center gap-2"
+            style={{ backgroundColor: "#F3F4F6", color: "#9CA3AF" }}
+          >
+            <ImageOff size={48} strokeWidth={1.5} />
+            <span className="text-sm font-medium">사진 없음</span>
+          </div>
+        )}
       </div>
 
-      {/* TITLE */}
+      {/* 2. 무슨 상황인지 — 헤드라인 + 부제목을 한 덩어리로, 제목은 그 아래 한 줄. */}
+      <div className="mb-2 mt-3 text-center">
+        <h1
+          className="font-extrabold"
+          style={{ color: t.primary, fontSize: "32px", lineHeight: 1.15 }}
+        >
+          {props.headline}
+        </h1>
+        <p className="mt-1 text-gray-700" style={{ fontSize: "15px" }}>
+          {props.subHeadline}
+        </p>
+      </div>
+
       {props.title?.trim() && (
         <h2
-          className="text-3xl font-bold text-center mb-6 py-3"
-          style={{ borderTop: `2px solid ${t.titleBorder}`, borderBottom: `2px solid ${t.titleBorder}` }}
+          className="mb-2 text-center font-bold"
+          style={{
+            fontSize: "21px",
+            lineHeight: 1.3,
+            padding: "2.5mm 0",
+            borderTop: `2px solid ${t.titleBorder}`,
+            borderBottom: `2px solid ${t.titleBorder}`,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
         >
           {props.title}
         </h2>
       )}
 
-      {/* PHOTO + REWARD */}
-      <div className="flex gap-6 mb-6">
-        <div className="flex-1 flex justify-center">
-          {props.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={props.thumbnail}
-              alt={props.title}
-              style={{
-                width: "100%",
-                maxWidth: "260px",
-                aspectRatio: "1 / 1",
-                objectFit: "cover",
-                border: t.photoBorder,
-                borderRadius: "4px",
-              }}
-            />
-          ) : (
-            <div
-              className="flex items-center justify-center text-gray-400"
-              style={{ width: "260px", height: "260px", border: t.photoBorder, borderRadius: "4px" }}
-            >
-              사진 없음
-            </div>
-          )}
-        </div>
-        {showReward && (
-          <div
-            className="flex flex-col items-center justify-center px-4"
-            style={{
-              minWidth: "150px",
-              backgroundColor: t.rewardBg,
-              border: t.rewardBorder,
-              borderRadius: "8px",
-            }}
-          >
-            <span className="text-sm font-semibold" style={{ color: t.rewardLabelText }}>
-              사례금
-            </span>
-            <span
-              className="text-3xl font-extrabold mt-1 text-center"
-              style={{ color: t.rewardText, lineHeight: 1.1 }}
-            >
-              {rewardLabel}
-            </span>
-            <span className="text-xs mt-2 text-gray-600 text-center">
-              결정적 제보 시
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* INFO GRID */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <InfoBox label="📍 실종 장소">{props.place}</InfoBox>
-        <InfoBox label="🕒 실종 시간">{formatDateToKorean(props.time)}</InfoBox>
-      </div>
-
-      {/* PHONE */}
+      {/* 3. 전화번호 — 헤드라인 다음으로 시트에서 가장 큰 글자. 흑백 인쇄에서도 또렷하도록
+          어두운 배경 + 흰 글자 대비를 쓴다. */}
       <div
-        className="text-center py-4 mb-6"
-        style={{ backgroundColor: t.phoneBg, color: t.phoneText, borderRadius: "8px" }}
+        className="mb-2 text-center"
+        style={{ backgroundColor: t.phoneBg, color: t.phoneText, borderRadius: "8px", padding: "3mm 0" }}
       >
-        <p className="text-sm tracking-widest mb-1">📞 연락처</p>
-        <p className="text-4xl font-extrabold tracking-wide">{formatPhone(props.phoneNum)}</p>
+        <p className="tracking-widest" style={{ fontSize: "11px" }}>
+          연락처
+        </p>
+        <p className="mt-1 font-extrabold tracking-wide" style={{ fontSize: "30px" }}>
+          {formatPhone(props.phoneNum)}
+        </p>
       </div>
 
-      {/* DESCRIPTION */}
+      {/* 4. 사례금 */}
+      {showReward && (
+        <div
+          className="mb-2 flex items-center justify-between"
+          style={{ backgroundColor: t.rewardBg, border: t.rewardBorder, borderRadius: "8px", padding: "2.5mm 4mm" }}
+        >
+          <span className="font-semibold" style={{ color: t.rewardLabelText, fontSize: "13px" }}>
+            사례금 · 결정적 제보 시
+          </span>
+          <span className="font-extrabold" style={{ color: t.rewardText, fontSize: "24px" }}>
+            {rewardLabel}
+          </span>
+        </div>
+      )}
+
+      {/* 5. 장소 · 실종 시각 — 박스 그리드가 아니라 조용한 한 줄(최대 2줄로 제한해 아주 긴
+          주소가 들어와도 QR 이 시트 밖으로 밀려나지 않게 한다). */}
+      {placeTimeLine && (
+        <p
+          className="mb-2 text-gray-600"
+          style={{
+            fontSize: "13px",
+            lineHeight: 1.4,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {placeTimeLine}
+        </p>
+      )}
+
+      {/* 6. 특징 · 메모 */}
       {props.description?.trim() && (
-        <div className="mb-6">
+        <div className="mb-2">
           <p
-            className="text-xs font-bold mb-2"
-            style={{ color: t.descLabel, letterSpacing: "0.15em" }}
+            className="mb-1 font-bold"
+            style={{ color: t.descLabel, letterSpacing: "0.12em", fontSize: "11px" }}
           >
             특징 · 메모
           </p>
           <p
-            className="text-base whitespace-pre-wrap leading-relaxed pl-3"
-            style={{ borderLeft: t.descLine }}
+            className="whitespace-pre-wrap pl-3"
+            style={{
+              borderLeft: t.descLine,
+              fontSize: "13px",
+              lineHeight: 1.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
           >
             {props.description}
           </p>
         </div>
       )}
 
-      {/* QR */}
-      <div className="border-t-2 border-gray-300 pt-5 flex items-center justify-between gap-6">
-        <div className="text-sm flex-1">
-          <p className="font-bold text-base mb-1">
-            {props.postId ? "📱 QR 로 상세 정보 확인" : "📱 QR 로 목격 제보하기"}
-          </p>
-          <p className="text-gray-700 leading-relaxed">
-            {props.postId ? (
-              <>
-                사진을 더 보거나 오픈채팅·전화로
-                <br />
-                바로 제보할 수 있어요.
-              </>
-            ) : (
-              <>
-                제보 오픈채팅으로 연결돼요.
-                <br />
-                전화가 어려우면 여기로 알려 주세요.
-              </>
-            )}
-          </p>
-          <p className="text-xs text-gray-400 mt-2 break-all">{props.shareUrl}</p>
-        </div>
+      {/* 7. QR — 항상 시트 맨 아래에 붙는다(짧은 내용이어도 QR 이 붕 뜨지 않도록). */}
+      <div className="mt-auto">
         <div
-          style={{
-            flexShrink: 0,
-            padding: "8px",
-            backgroundColor: "#fff",
-            border: t.qrBorder,
-            borderRadius: "4px",
-            // SVG 가 자식으로 들어갈 때 baseline 공백 제거
-            lineHeight: 0,
-          }}
+          className="flex items-center justify-between gap-4"
+          style={{ borderTop: "2px solid #D1D5DB", paddingTop: "4mm" }}
         >
-          <QRCodeSVG
-            value={props.shareUrl}
-            size={140}
-            level="M"
-            includeMargin={true}
-            style={{ display: "block" }}
-          />
+          <div className="flex-1" style={{ fontSize: "13px" }}>
+            <p className="mb-1 font-bold" style={{ fontSize: "14px" }}>
+              {props.postId ? "QR 로 상세 정보 확인" : "QR 로 목격 제보하기"}
+            </p>
+            <p className="leading-relaxed text-gray-700">
+              {props.postId ? (
+                <>
+                  사진을 더 보거나 오픈채팅·전화로
+                  <br />
+                  바로 제보할 수 있어요.
+                </>
+              ) : (
+                <>
+                  제보 오픈채팅으로 연결돼요.
+                  <br />
+                  전화가 어려우면 여기로 알려 주세요.
+                </>
+              )}
+            </p>
+            <p className="mt-1 break-all text-gray-400" style={{ fontSize: "10px" }}>
+              {props.shareUrl}
+            </p>
+          </div>
+          <div
+            style={{
+              flexShrink: 0,
+              padding: "6px",
+              backgroundColor: "#fff",
+              border: t.qrBorder,
+              borderRadius: "4px",
+              // SVG 가 자식으로 들어갈 때 baseline 공백 제거
+              lineHeight: 0,
+            }}
+          >
+            <QRCodeSVG value={props.shareUrl} size={92} level="M" includeMargin style={{ display: "block" }} />
+          </div>
         </div>
-      </div>
 
-      {/* FOOTER */}
-      <p className="text-center text-xs text-gray-400 mt-6">
-        🐶 파인드마이펫 · findmypet.platformholder.site
-      </p>
+        {/* FOOTER */}
+        <p className="mt-2 text-center text-gray-400" style={{ fontSize: "9px" }}>
+          파인드마이펫 · findmypet.platformholder.site
+        </p>
+      </div>
     </div>
   );
 };
+
+/**
+ * 실종 시각 입력값을 사람이 읽을 수 있는 형태로 바꾼다.
+ *
+ * 게시글 기반 전단지의 time 은 ISO 날짜 문자열이라 formatDateToKorean 이 그대로 통하지만,
+ * 게시글 없이 만드는 /flyer 는 "2026년 7월 26일 오후 3시쯤" 같은 자유 텍스트를 그대로 받는다.
+ * new Date(...) 가 못 읽는 값이면 "Invalid Date" 를 찍는 대신 입력한 텍스트를 그대로 쓴다.
+ */
+function formatFlyerTime(raw: string): string {
+  const trimmed = raw?.trim();
+  if (!trimmed) return "";
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) return formatDateToKorean(trimmed);
+  return trimmed;
+}
+
+/** 장소·실종 시각을 한 줄로 합친다. 둘 다 비어 있으면 아예 렌더링하지 않는다. */
+function buildPlaceTimeLine(place: string, time: string): string {
+  const parts: string[] = [];
+  if (place?.trim()) parts.push(`장소 ${place.trim()}`);
+  const formattedTime = formatFlyerTime(time ?? "");
+  if (formattedTime) parts.push(`시각 ${formattedTime}`);
+  return parts.join("   ·   ");
+}
 
 /** 다이얼로그 편집용 입력 — 라벨 + input. */
 const FieldInput = ({
@@ -493,17 +591,6 @@ const FieldInput = ({
       onChange={(e) => onChange(e.target.value)}
       className="w-full border rounded px-2 py-1 text-sm"
     />
-  </div>
-);
-
-/** 인쇄용 강조 박스 — 라벨 + 값. */
-const InfoBox = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div
-    className="px-4 py-3"
-    style={{ backgroundColor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "6px" }}
-  >
-    <p className="text-xs font-bold text-gray-500 mb-1">{label}</p>
-    <p className="text-base font-semibold leading-tight">{children}</p>
   </div>
 );
 

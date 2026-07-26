@@ -61,13 +61,35 @@ async function fetchAllPosts(): Promise<ApiPostSummary[]> {
 }
 
 /**
+ * 조기 종료가 정상 동작이라면 최소 이 정도는 모였어야 한다는 하한선.
+ *
+ * 실측 유입량 약 274건/일 × 90일 ≈ 24,700건이 기대치다. 여기서 한 자릿수 % 수준으로
+ * 떨어진 채로 컷오프 break 가 걸렸다면 정렬 전제가 깨졌다는 신호이므로 경고를 남긴다
+ * (넉넉히 잡아 약 1주치 유입량 = 2,000건).
+ */
+const ABANDONED_MIN_EXPECTED = 2_000;
+
+/**
  * 진행중 유기동물 desertionNo listing — sitemap 의 /abandonment 페이지용.
  *
  * 수집 정책 (2건 모두 클라이언트 필터. 백엔드가 `bgnde`/`endde`(happen_dt 인덱스 부재로 무시됨) 와
  * `processState` 필터를 지원하지 않아 서버사이드로 내릴 수 없다):
  *  1) `종료*` 공고 제외 — 상세 페이지가 noindex 로 내보내는 페이지를 sitemap 이 색인 요청하던 모순 제거.
- *  2) 발견일 기준 최근 {@link ABANDONED_FRESHNESS_DAYS} 일만 포함 — 목록이 happenDt 내림차순이므로
- *     컷오프보다 오래된 건을 만나면 그 페이지까지만 처리하고 페이지네이션을 조기 종료한다.
+ *  2) 발견일 기준 최근 {@link ABANDONED_FRESHNESS_DAYS} 일만 포함.
+ *
+ * ⚠️ 조기 종료의 정렬 전제와 그 유일한 보장원:
+ *   - 내림차순을 보장하는 곳은 **mirror 경로 단 하나**다 —
+ *     `AbandonedAnimalRepository.findOpenByFilters` 의 `ORDER BY a.happenDt DESC, a.createdAt DESC`.
+ *   - 백엔드 `AbandonedAnimalService.findAbandonedAnimals` 는 mirror 가 비어 있으면
+ *     (`repository.count() == 0L`, 부팅 직후 sync 이전) `fetchDirect` 로 data.go.kr 을 그대로
+ *     프록시한다. **이 경로에는 정렬 보장이 없다.**
+ *   - 따라서 "항목 하나라도 오래되면 즉시 break" 는 위험하다. backdated 1건이 앞 페이지에
+ *     섞이기만 해도 전체 수집이 붕괴하고, 에러도 없이 그 결과가 ISR 로 캐시된다.
+ *
+ * 그래서 **항목 단위가 아니라 페이지 경계**로 끊는다: 페이지의 마지막 유효 항목이 컷오프보다
+ * 오래된 경우에만 중단하고, 중간에 낀 이상치 1건은 그 항목만 제외한다. 정렬이 정상인
+ * mirror 경로에서는 두 방식의 종료 지점이 동일하다(내림차순이면 첫 stale 항목이 나온 페이지의
+ * 마지막 항목도 반드시 stale). 정렬이 깨진 경우에만 동작이 갈린다.
  *
  * `MAX_PAGES` 는 정책이 아니라 무한루프/폭주 방어용 안전장치다. 정상 동작에서는 날짜 조건이 먼저 걸린다
  * (실측 유입량 약 274건/일 → 90일 ≈ 124페이지 < MAX_PAGES).
@@ -77,6 +99,7 @@ async function fetchAllAbandoned(): Promise<ApiAbandonedSummary[]> {
   const PAGE = 200;
   const MAX_PAGES = 160; // 안전장치: 200 × 160 = 32,000건 상한
   const cutoff = happenDtCutoff(ABANDONED_FRESHNESS_DAYS); // "YYYYMMDD"
+  let outOfOrderSkipped = 0;
 
   for (let pageNo = 1; pageNo <= MAX_PAGES; pageNo++) {
     try {
@@ -89,15 +112,22 @@ async function fetchAllAbandoned(): Promise<ApiAbandonedSummary[]> {
       const contents: ApiAbandonedSummary[] = json?.data?.contents ?? [];
       if (contents.length === 0) break;
 
-      let reachedCutoff = false;
+      // 이 페이지에서 마지막으로 만난 "판정 가능한" happenDt.
+      // 페이지 경계 판정에만 쓰므로 형식 불량/누락 항목은 갱신하지 않는다.
+      let lastDatedHappenDt: string | null = null;
+      let staleInPage = 0;
+
       for (const item of contents) {
         if (!item?.desertionNo) continue;
         const happenDt = normalizeHappenDt(item.happenDt);
-        // 고정폭 "YYYYMMDD" 라 문자열 사전순 비교로 안전하게 대소 판정 가능.
-        if (happenDt !== null && happenDt < cutoff) {
-          // 내림차순 목록이므로 이후 항목은 전부 더 오래됐다 → 이 페이지 처리 후 중단.
-          reachedCutoff = true;
-          continue;
+        if (happenDt !== null) {
+          lastDatedHappenDt = happenDt;
+          // 고정폭 "YYYYMMDD" 라 문자열 사전순 비교로 안전하게 대소 판정 가능.
+          if (happenDt < cutoff) {
+            // 윈도우 밖 → 이 항목만 제외. 중단 여부는 페이지 끝에서 판단한다.
+            staleInPage++;
+            continue;
+          }
         }
         // happenDt 가 형식 불량/누락이면 신선도를 판정할 수 없다.
         // 조기 종료 판단에는 쓰지 않고(잘못 끊으면 유효 공고를 대량 유실) 포함만 시킨다.
@@ -105,11 +135,36 @@ async function fetchAllAbandoned(): Promise<ApiAbandonedSummary[]> {
         result.push(item);
       }
 
-      if (reachedCutoff) break;
+      // 페이지 경계 판정: 마지막 유효 항목이 컷오프보다 오래되면 이후 페이지는 전부 윈도우 밖.
+      const reachedCutoff = lastDatedHappenDt !== null && lastDatedHappenDt < cutoff;
+      if (!reachedCutoff) {
+        // 끊지 않았는데 stale 이 섞여 있었다 = 내림차순 전제가 깨진 구간(fetchDirect fallback 등).
+        outOfOrderSkipped += staleInPage;
+      }
+
+      if (reachedCutoff) {
+        if (result.length < ABANDONED_MIN_EXPECTED) {
+          // 하한 sanity check: 조기 종료가 걸렸는데 수확이 기대치보다 급감했다.
+          // 정렬 보장이 없는 fetchDirect fallback 을 타고 있을 가능성이 높다.
+          console.warn(
+            `[sitemap] abandoned 조기 종료(page ${pageNo}, cutoff ${cutoff})인데 수집량이 ` +
+              `${result.length}건으로 하한 ${ABANDONED_MIN_EXPECTED}건 미만. ` +
+              `happenDt 내림차순 전제가 깨졌을 수 있음(mirror 미동기화 → fetchDirect fallback 의심).`,
+          );
+        }
+        break;
+      }
       if (!json?.data?.hasNextPage) break;
     } catch {
       break;
     }
+  }
+
+  if (outOfOrderSkipped > 0) {
+    console.warn(
+      `[sitemap] abandoned 목록에서 순서를 벗어난 과거 항목 ${outOfOrderSkipped}건을 개별 제외했다. ` +
+        `happenDt 내림차순이 보장되지 않는 응답(fetchDirect fallback 등)일 수 있음.`,
+    );
   }
   return result;
 }

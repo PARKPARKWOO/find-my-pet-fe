@@ -28,21 +28,24 @@ export const metadata: Metadata = {
  *
  * 폼 자체는 client 컴포넌트로 분리하고 이 파일은 서버 컴포넌트로 남겨 metadata 와 안내 문구를
  * 크롤러에 노출한다 — "실종동물 전단지 양식" 류 검색이 실제로 있는 질의라 색인 대상이다.
- * (게시글이 있는 사용자는 실종 상세의 전단지 버튼이 더 낫다는 안내를 아래에 둔다.)
+ *
+ * 하단 안내는 게시글을 등록하면 무엇이 더 좋아지는지(QR 이 사진·목격 제보가 있는 상세 페이지로
+ * 연결됨)를 설명하고 /register 로 보낸다. 로그인도, 게시글도 없는 사람이 대상이므로 로그인이
+ * 필요한 /profile(마이페이지) 로 보내지 않는다 — 그건 이 사람에게는 막다른 길이다.
  */
 export default function FlyerPage() {
   return (
     <main>
       <FlyerStandaloneClient />
       <section className="mx-auto w-full max-w-2xl px-4 pb-12 text-sm text-gray-600">
-        <h2 className="font-semibold text-gray-800">이미 실종 소식을 올리셨나요?</h2>
+        <h2 className="font-semibold text-gray-800">전단지를 붙인 다음엔?</h2>
         <p className="mt-2 leading-relaxed">
-          게시글이 있다면{" "}
-          <Link href="/profile" className="underline">
-            내 게시글
-          </Link>{" "}
-          에서 전단지를 만드는 쪽이 좋아요. 그때는 QR 이 실종 소식 상세로 연결돼 사진과 목격 제보를
-          함께 보여줄 수 있어요.
+          실종 소식을{" "}
+          <Link href="/register" className="underline">
+            게시글로도 등록
+          </Link>
+          해 두면 전단지 QR 이 오픈채팅 대신 사진과 목격 제보를 함께 보여주는 상세 페이지로
+          연결돼요. 회원가입 없이 카카오 로그인만으로 등록할 수 있어요.
         </p>
         <p className="mt-3 leading-relaxed">
           전단지를 붙인 뒤에는{" "}
