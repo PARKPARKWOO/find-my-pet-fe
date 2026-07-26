@@ -35,4 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# indexnow — 제출 이력 상태 파일(--state). 키 파일(public/*.txt)은 커밋 대상이다.
+.indexnow-state.json
+
 .env

@@ -1,0 +1,54 @@
+name: IndexNow ping
+
+# 유기동물 공고는 배포와 무관하게 백엔드 공공데이터 동기화(1시간 주기)로 계속 늘어난다.
+# 배포 훅만으로는 신규 공고가 통보되지 않으므로 주기 실행을 따로 둔다.
+# Google 은 IndexNow 미참여 — Google 경로는 sitemap + lastmod 가 그대로 담당한다.
+
+on:
+  schedule:
+    # 6시간마다 (UTC). 상태 파일로 중복 제출을 막으므로 창을 겹쳐도 안전하다.
+    - cron: "20 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "며칠 이내 공고를 대상으로 할지"
+        required: false
+        default: "2"
+      dry_run:
+        description: "제출 없이 대상만 출력"
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 이전 실행에서 제출한 URL 목록을 이어받아 같은 공고를 반복 제출하지 않는다.
+      - name: Restore submission state
+        uses: actions/cache@v4
+        with:
+          path: .indexnow-state.json
+          key: indexnow-state-${{ github.run_id }}
+          restore-keys: indexnow-state-
+
+      # 시크릿 불필요 — 키는 public/{key}.txt 로 공개 호스팅되는 소유 증명용이다.
+      - name: Submit changed URLs
+        run: |
+          node scripts/indexnow.mjs \
+            --since=${{ github.event.inputs.since || 2 }} \
+            --state=.indexnow-state.json \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
