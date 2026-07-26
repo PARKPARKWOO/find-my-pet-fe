@@ -22,7 +22,6 @@ Disallow: /profile
 Disallow: /notifications
 Disallow: /auth/
 Disallow: /edit/
-Disallow: /leaflet
 Disallow: /search
 
 Host: https://findmypet.platformholder.site

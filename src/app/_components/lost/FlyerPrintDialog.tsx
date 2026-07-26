@@ -14,7 +14,11 @@ import {
 import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
 
 interface Props {
-  postId: string;
+  /**
+   * 실종 게시글 id. 게시글 없이 전단지만 만드는 경우(/flyer)에는 없다 —
+   * 그때 QR 은 서비스 제보 오픈채팅으로 간다.
+   */
+  postId?: string;
   title: string;
   description: string;
   phoneNum: string;
@@ -25,6 +29,12 @@ interface Props {
   missingAnimalStatus: "SEARCHING" | "FOUND" | "SEEN";
   children: React.ReactNode; // trigger
 }
+
+/**
+ * 게시글 없이 만든 전단지의 QR 목적지 — Find-My-Pet 제보 오픈채팅.
+ * 게시글이 있으면 그 상세 페이지가 더 많은 정보를 주므로 이 값은 쓰이지 않는다.
+ */
+const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
 
 type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
 
@@ -125,10 +135,13 @@ export default function FlyerPrintDialog(props: Props) {
     documentTitle: `${props.title} - 전단지`,
   });
 
-  const shareUrl =
-    typeof window !== "undefined"
+  // 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. 게시글 없는 전단지는 QR 이 가리킬
+  // 상세 페이지 자체가 없으므로, 주운 사람이 곧바로 연락할 수 있는 창구가 유일하게 의미 있는 목적지다.
+  const shareUrl = props.postId
+    ? typeof window !== "undefined"
       ? `${window.location.origin}/lost/${props.postId}`
-      : `/lost/${props.postId}`;
+      : `/lost/${props.postId}`
+    : REPORT_OPEN_CHAT_URL;
 
   // 한글 기본 카피 — 사용자가 입력 필드로 자유 편집 가능
   const isSeen = props.missingAnimalStatus === "SEEN";
@@ -413,11 +426,23 @@ const FlyerSheet = (
       {/* QR */}
       <div className="border-t-2 border-gray-300 pt-5 flex items-center justify-between gap-6">
         <div className="text-sm flex-1">
-          <p className="font-bold text-base mb-1">📱 QR 로 상세 정보 확인</p>
+          <p className="font-bold text-base mb-1">
+            {props.postId ? "📱 QR 로 상세 정보 확인" : "📱 QR 로 목격 제보하기"}
+          </p>
           <p className="text-gray-700 leading-relaxed">
-            사진을 더 보거나 오픈채팅·전화로
-            <br />
-            바로 제보할 수 있어요.
+            {props.postId ? (
+              <>
+                사진을 더 보거나 오픈채팅·전화로
+                <br />
+                바로 제보할 수 있어요.
+              </>
+            ) : (
+              <>
+                제보 오픈채팅으로 연결돼요.
+                <br />
+                전화가 어려우면 여기로 알려 주세요.
+              </>
+            )}
           </p>
           <p className="text-xs text-gray-400 mt-2 break-all">{props.shareUrl}</p>
         </div>
