@@ -45,7 +45,23 @@ export interface Props {
  */
 export const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
 
-export type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
+/**
+ * 템플릿은 취향이 아니라 **붙일 장소와 인쇄 조건**으로 나뉜다.
+ *
+ * 전단지는 화면이 아니라 종이로 소비된다. 전봇대냐 아파트 게시판이냐, 컬러 프린터냐 흑백
+ * 복사기냐에 따라 잘 보이는 배색이 다르다. 그래서 각 템플릿의 caption 에 "어디에 쓰는 것인지"를
+ * 적는다 — 색 이름만 나열하면 고를 근거가 없다.
+ *
+ * 배경은 어느 템플릿이든 흰 종이 그대로다. 전면을 색으로 채우면 잉크가 많이 들고, 사례금·전화번호
+ * 같은 검은 글자의 대비가 오히려 떨어진다. 색은 테두리·배너·강조에만 쓴다.
+ */
+export type FlyerTemplate =
+  | "URGENT"
+  | "WARM"
+  | "NIGHT"
+  | "FOREST"
+  | "MINIMAL"
+  | "COPY";
 
 export interface ThemeConfig {
   label: string;
@@ -116,6 +132,47 @@ export const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
     descLabel: "#B45309",
     qrBorder: "2px solid #B45309",
   },
+  // 가로등·지하주차장처럼 조도가 낮은 곳. 남색은 어두운 배경 앞에서도 형태가 살고, 노란 배너는
+  // 흰 종이 위에서 가장 멀리서 읽히는 조합 중 하나다(도로 표지판이 이 대비를 쓴다).
+  NIGHT: {
+    label: "NIGHT",
+    caption: "남색+노랑 · 어두운 곳·가로등 아래",
+    frame: "8px solid #1E3A8A",
+    primary: "#1E3A8A",
+    bannerBg: "#FACC15",
+    bannerText: "#1E3A8A",
+    photoBorder: "4px solid #1E3A8A",
+    rewardBg: "#FEF9C3",
+    rewardBorder: "3px solid #1E3A8A",
+    rewardText: "#1E3A8A",
+    rewardLabelText: "#1E40AF",
+    phoneBg: "#1E3A8A",
+    phoneText: "#FACC15",
+    titleBorder: "#1E3A8A",
+    descLine: "3px solid #FACC15",
+    descLabel: "#1E3A8A",
+    qrBorder: "2px solid #1E3A8A",
+  },
+  // 공원·산책로·동물병원 게시판. 경고색이 부담스러운 자리에서 오래 붙여두기 좋다.
+  FOREST: {
+    label: "FOREST",
+    caption: "초록 · 공원·산책로·동물병원 게시판",
+    frame: "6px solid #15803D",
+    primary: "#15803D",
+    bannerBg: "#15803D",
+    bannerText: "#F0FDF4",
+    photoBorder: "4px solid #166534",
+    rewardBg: "#DCFCE7",
+    rewardBorder: "3px solid #15803D",
+    rewardText: "#14532D",
+    rewardLabelText: "#166534",
+    phoneBg: "#14532D",
+    phoneText: "#F0FDF4",
+    titleBorder: "#15803D",
+    descLine: "3px solid #15803D",
+    descLabel: "#15803D",
+    qrBorder: "2px solid #15803D",
+  },
   MINIMAL: {
     label: "MINIMAL",
     caption: "흑백 · 잉크 절약 · 빠른 인쇄",
@@ -134,6 +191,27 @@ export const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
     descLine: "2px solid #111827",
     descLabel: "#111827",
     qrBorder: "2px solid #111827",
+  },
+  // 흑백 복사기로 수십 장 뽑을 때. MINIMAL 과 색은 같지만 선을 굵게 잡는다 — 복사를 거치면
+  // 얇은 선과 회색이 먼저 뭉개져서, 원본에서 멀쩡하던 전단지가 복사본에서 흐려진다.
+  COPY: {
+    label: "COPY",
+    caption: "굵은 흑백 · 복사기로 여러 장 뽑을 때",
+    frame: "10px solid #000",
+    primary: "#000",
+    bannerBg: "#000",
+    bannerText: "#fff",
+    photoBorder: "6px solid #000",
+    rewardBg: "#fff",
+    rewardBorder: "5px solid #000",
+    rewardText: "#000",
+    rewardLabelText: "#000",
+    phoneBg: "#000",
+    phoneText: "#fff",
+    titleBorder: "#000",
+    descLine: "5px solid #000",
+    descLabel: "#000",
+    qrBorder: "3px solid #000",
   },
 };
 
@@ -396,7 +474,15 @@ export default function FlyerPrintDialog(props: Props) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
-      <DialogContent className="max-w-4xl">
+      {/*
+        `max-h` + `overflow-y-auto` 가 없으면 다이얼로그를 아예 쓸 수 없다.
+        shadcn DialogContent 는 `fixed top-1/2 -translate-y-1/2` 로 화면 중앙에 고정된다. 내용이
+        뷰포트보다 길어지면 위아래로 똑같이 삐져나가는데, `fixed` 라서 페이지 스크롤로는 닿지 않는다.
+        여기 내용은 템플릿 선택 + 구성 편집기 + 입력 6개 + 미리보기(60vh) + 버튼이라 노트북에서도
+        넘긴다 — 그 결과 하단 인쇄 버튼에 손이 닿지 않아 "창이 떴는데 아무것도 못 하는" 상태가 됐다.
+        `dvh` 인 이유: 모바일 브라우저 주소창이 접히면 `vh` 는 갱신되지 않아 잘린 채로 남는다.
+      */}
+      <DialogContent className="max-w-4xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>📱 전단지 QR 만들기</DialogTitle>
         </DialogHeader>
@@ -408,7 +494,9 @@ export default function FlyerPrintDialog(props: Props) {
         {/* 템플릿 선택 */}
         <div className="mb-3">
           <p className="text-xs text-gray-600 mb-1">템플릿</p>
-          <div className="flex gap-2">
+          {/* flex-1 한 줄이 아니라 그리드인 이유: 템플릿이 6개라 한 줄에 밀어 넣으면 caption 이
+              한 글자씩 끊긴다. caption 은 "어디에 붙일 것인가"를 알려주는 유일한 단서라 잘리면 안 된다. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {(Object.keys(TEMPLATES) as FlyerTemplate[]).map((key) => {
               const t = TEMPLATES[key];
               const active = template === key;
@@ -417,7 +505,8 @@ export default function FlyerPrintDialog(props: Props) {
                   key={key}
                   type="button"
                   onClick={() => setTemplate(key)}
-                  className={`flex-1 text-left p-2 rounded border text-xs ${
+                  aria-pressed={active}
+                  className={`text-left p-2 rounded border text-xs transition-colors ${
                     active ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
                   }`}
                 >
@@ -480,25 +569,29 @@ export default function FlyerPrintDialog(props: Props) {
               overflow: "hidden",
             }}
           >
+            {/* 축소는 이 바깥 div 가 맡고, printRef 는 그 **안쪽** 에 둔다.
+                react-to-print 는 대상 노드를 cloneNode 로 복제하므로 인라인 style 이 그대로 따라간다.
+                printRef 에 scale(0.6) 이 걸려 있으면 인쇄물까지 60% 로 줄어 A4 왼쪽 위에 작게 찍힌다. */}
             <div
-              ref={printRef}
               style={{
                 transform: "scale(0.6)",
                 transformOrigin: "top left",
                 width: "210mm",
               }}
             >
-              <FlyerSheet
-                {...props}
-                title={title}
-                description={description}
-                banner={banner}
-                headline={headline}
-                subHeadline={subHeadline}
-                shareUrl={shareUrl}
-                theme={TEMPLATES[template]}
-                composition={composition}
-              />
+              <div ref={printRef}>
+                <FlyerSheet
+                  {...props}
+                  title={title}
+                  description={description}
+                  banner={banner}
+                  headline={headline}
+                  subHeadline={subHeadline}
+                  shareUrl={shareUrl}
+                  theme={TEMPLATES[template]}
+                  composition={composition}
+                />
+              </div>
             </div>
           </div>
         </div>
