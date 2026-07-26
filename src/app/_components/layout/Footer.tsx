@@ -1,8 +1,11 @@
 import Link from "next/link";
+import FooterAd from "@/app/_components/ads/FooterAd";
 
 export default function Footer() {
   return (
-    <div className="flex justify-center bg-gray-100">
+    <div className="flex flex-col items-center bg-gray-100">
+      {/* 본문과 푸터 링크 사이. 읽던 흐름은 끊지 않으면서 스크롤 끝에서 실제로 보이는 자리다. */}
+      <FooterAd />
       <footer className="w-[1280px] flex justify-center">
         <div className="w-[80%]  justify-between flex py-8 ">
           <div className="flex flex-col gap-2">
