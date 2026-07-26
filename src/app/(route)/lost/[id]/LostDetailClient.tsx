@@ -108,6 +108,7 @@ export default function LostDetail({ params }: { params: { id: string } }) {
       {post.missingAnimalStatus !== "FOUND" && (
         <div className="mb-4">
           <ShareButtons
+            contentType="LOST"
             title={`🚨 실종동물을 찾습니다 — ${post.title}`}
             description={`${post.place} · ${formatDateToKorean(post.time)} 실종. ${post.description}`}
             url={`https://findmypet.platformholder.site/lost/${params.id}`}

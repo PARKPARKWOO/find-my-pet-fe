@@ -151,6 +151,7 @@ export default async function AbandonmentDetailPage({
 
         <div className="mb-4">
           <ShareButtons
+            contentType="ABANDONED"
             title={`${pet.kindCd ?? "구조동물"} — ${pet.careNm ?? "보호소"}에서 보호중`}
             description={`발견: ${pet.happenPlace ?? ""}${pet.happenDt ? ` (${formatDate(pet.happenDt)})` : ""}. ${pet.specialMark ?? ""}`}
             url={`${SITE_DOMAIN}/abandonment/${params.detail}`}

@@ -1,6 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { ImageOff } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "@/app/_components/ui/button";
@@ -12,9 +20,14 @@ import {
   DialogTrigger,
 } from "@/app/_components/ui/dialog";
 import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
+import FlyerBlockComposer from "@/app/_components/lost/FlyerBlockComposer";
 
-interface Props {
-  postId: string;
+export interface Props {
+  /**
+   * 실종 게시글 id. 게시글 없이 전단지만 만드는 경우(/flyer)에는 없다 —
+   * 그때 QR 은 서비스 제보 오픈채팅으로 간다.
+   */
+  postId?: string;
   title: string;
   description: string;
   phoneNum: string;
@@ -26,9 +39,15 @@ interface Props {
   children: React.ReactNode; // trigger
 }
 
-type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
+/**
+ * 게시글 없이 만든 전단지의 QR 목적지 — Find-My-Pet 제보 오픈채팅.
+ * 게시글이 있으면 그 상세 페이지가 더 많은 정보를 주므로 이 값은 쓰이지 않는다.
+ */
+export const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
 
-interface ThemeConfig {
+export type FlyerTemplate = "URGENT" | "WARM" | "MINIMAL";
+
+export interface ThemeConfig {
   label: string;
   caption: string;
   /** A4 sheet 외곽 테두리 css */
@@ -58,7 +77,7 @@ interface ThemeConfig {
   qrBorder: string;
 }
 
-const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
+export const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
   URGENT: {
     label: "URGENT",
     caption: "강한 빨강 · 멀리서도 눈에 띔",
@@ -118,6 +137,194 @@ const TEMPLATES: Record<FlyerTemplate, ThemeConfig> = {
   },
 };
 
+/* ------------------------------------------------------------------ */
+/* 블록 구성 — 사용자가 어떤 블록을 넣고 어떤 순서로 배치할지 고른다.               */
+/* ------------------------------------------------------------------ */
+
+/** 시트를 구성하는 블록 단위. 배너/헤드라인/부제목은 템플릿 정체성이라 구성 대상이 아니다. */
+export type FlyerBlockId =
+  | "photo"
+  | "title"
+  | "contact"
+  | "reward"
+  | "placeTime"
+  | "description"
+  | "qr";
+
+/** 항상 켜져 있어야 하는 블록과 그 이유 — 체크박스를 비활성 + 이유 문구로 보여준다. */
+export const ALWAYS_ON_BLOCKS: Partial<Record<FlyerBlockId, string>> = {
+  title: "이름 없는 전단지는 알아볼 수 없어요",
+  contact: "연락할 방법이 없으면 제보를 받을 수 없어요",
+};
+
+export const BLOCK_LABELS: Record<FlyerBlockId, string> = {
+  photo: "사진",
+  title: "제목",
+  contact: "연락처",
+  reward: "사례금",
+  placeTime: "실종 장소·시각",
+  description: "특징",
+  qr: "QR",
+};
+
+/** photo 를 제외한, 사용자가 순서를 바꿀 수 있는 "중간 영역" 기본 순서. */
+export const MIDDLE_BLOCKS: FlyerBlockId[] = [
+  "title",
+  "contact",
+  "reward",
+  "placeTime",
+  "description",
+  "qr",
+];
+
+export interface FlyerComposition {
+  enabled: Record<FlyerBlockId, boolean>;
+  /** MIDDLE_BLOCKS 의 순열 — photo 는 남는 공간을 흡수하는 유일한 유연 블록이라
+   * 항상 맨 위에 고정하고 여기(순서 대상)에는 포함하지 않는다. */
+  order: FlyerBlockId[];
+}
+
+export const DEFAULT_COMPOSITION: FlyerComposition = {
+  enabled: {
+    photo: true,
+    title: true,
+    contact: true,
+    reward: true,
+    placeTime: true,
+    description: true,
+    qr: true,
+  },
+  order: [...MIDDLE_BLOCKS],
+};
+
+/**
+ * "절대로 깨지면 안 됨" 을 측정이 아니라 구조로 보장하기 위한 산수.
+ *
+ * 시트는 297mm 고정 높이 + overflow:hidden 인 flex column 이고, 사진 블록만
+ * flex: 1 1 auto 로 남는 공간을 흡수한다(최소 PHOTO_FLOOR_MM 은 유지). 나머지 블록은
+ * flex: 0 0 auto + line-clamp 로 상한이 걸려 있어 "최악의 경우 높이(mm)" 를 미리 알 수
+ * 있다 — 아래 상수가 그 값이다. (96dpi 기준 1px = 0.2646mm 로, 각 블록 JSX 의 실제
+ * padding/line-height/line-clamp 값에서 역산한 뒤 올림했다 — FlyerSheet 의 스타일과
+ * 반드시 같이 바뀌어야 한다.)
+ *
+ *   제목(2줄 clamp)        ≈ 22.6mm → 24mm
+ *   연락처(1줄 clamp)      ≈ 21.4mm → 23mm
+ *   사례금(1줄 clamp)      ≈ 15.7mm → 17mm
+ *   장소·시각(1줄 clamp)   ≈  6.9mm →  8mm
+ *   특징(3줄 clamp)        ≈ 22.1mm → 23mm
+ *   QR + 하단 브랜딩 문구  ≈ 38.3mm → 40mm
+ *
+ * 구성 대상이 아니라 항상 켜져 있는 헤드라인+부제목(각 2줄/1줄 clamp) ≈ 31.8mm → 32mm 와
+ * 시트 padding(8mm×2) + 최악 템플릿 테두리(URGENT 8px×2 ≈ 4.2mm→5mm)를 더한 값이
+ * PERMANENT_OVERHEAD_MM 이다.
+ */
+export const BLOCK_HEIGHT_MM: Record<Exclude<FlyerBlockId, "photo">, number> = {
+  title: 24,
+  contact: 23,
+  reward: 17,
+  placeTime: 8,
+  description: 23,
+  qr: 40,
+};
+
+/** 사진 블록이 아무리 눌려도 이 아래로는 줄어들지 않는 최소 높이. */
+export const PHOTO_FLOOR_MM = 60;
+
+/** padding(8mm×2) + 최악 템플릿 테두리(≈4.2mm→5mm) + 항상 켜진 헤드라인 블록(≈32mm). */
+export const PERMANENT_OVERHEAD_MM = 16 + 5 + 32;
+
+const SHEET_HEIGHT_MM = 297;
+
+/**
+ * 주어진 조합(사진 on/off + 중간 블록 on/off)이 297mm 안에 들어가는지 계산한다.
+ * DOM 을 재는 게 아니라 위 상수들의 산수이므로 폰트 로딩·긴 CJK 문자열·프린터 DPI 와
+ * 무관하게 항상 같은 답을 낸다 — "측정 후 경고"가 아니라 "애초에 불가능한 조합을 못 만들게" 하는
+ * 축.
+ */
+export function compositionFits(enabled: Record<FlyerBlockId, boolean>): boolean {
+  const fixedSum = MIDDLE_BLOCKS.reduce(
+    (sum, id) => sum + (enabled[id] ? BLOCK_HEIGHT_MM[id as Exclude<FlyerBlockId, "photo">] : 0),
+    0,
+  );
+  const overhead = PERMANENT_OVERHEAD_MM + (enabled.photo ? PHOTO_FLOOR_MM : 0);
+  return fixedSum + overhead <= SHEET_HEIGHT_MM;
+}
+
+/** enabled 를 유지한 채 blockId 만 켰을 때도 여전히 들어가는지 — 토글 활성화 가능 여부에 쓴다. */
+export function canToggleBlock(
+  enabled: Record<FlyerBlockId, boolean>,
+  blockId: FlyerBlockId,
+): boolean {
+  if (enabled[blockId]) return true; // 끄는 것은 항상 허용 — 공간이 늘어날 뿐이다.
+  return compositionFits({ ...enabled, [blockId]: true });
+}
+
+/** localStorage 에서 복원한 값이 최신 블록 목록과 어긋나 있어도 항상 유효한 구성으로 만든다. */
+export function sanitizeComposition(input: unknown): FlyerComposition {
+  const fallback = DEFAULT_COMPOSITION;
+  if (!input || typeof input !== "object") return fallback;
+  const candidate = input as Partial<FlyerComposition>;
+
+  const enabled: Record<FlyerBlockId, boolean> = { ...fallback.enabled };
+  if (candidate.enabled && typeof candidate.enabled === "object") {
+    (Object.keys(enabled) as FlyerBlockId[]).forEach((id) => {
+      const v = (candidate.enabled as Record<string, unknown>)[id];
+      if (typeof v === "boolean") enabled[id] = v;
+    });
+  }
+  // 항상 켜진 블록은 저장된 값과 무관하게 강제로 켠다.
+  (Object.keys(ALWAYS_ON_BLOCKS) as FlyerBlockId[]).forEach((id) => {
+    enabled[id] = true;
+  });
+
+  const savedOrder = Array.isArray(candidate.order) ? candidate.order : [];
+  const known = new Set(MIDDLE_BLOCKS);
+  const seen = new Set<FlyerBlockId>();
+  const deduped: FlyerBlockId[] = [];
+  savedOrder.forEach((id) => {
+    if (known.has(id as FlyerBlockId) && !seen.has(id as FlyerBlockId)) {
+      seen.add(id as FlyerBlockId);
+      deduped.push(id as FlyerBlockId);
+    }
+  });
+  const missing = MIDDLE_BLOCKS.filter((id) => !seen.has(id));
+
+  return { enabled, order: [...deduped, ...missing] };
+}
+
+/**
+ * 헤드라인/배너/부제목 기본 카피 — missingAnimalStatus 에 따라 갈린다.
+ * 다이얼로그(FlyerPrintDialog) 와 게시글 없는 상시 미리보기(/flyer) 가 같은 기본값을
+ * 쓰도록 export 해서 문구가 두 곳에서 따로 굳어(drift) 지 않게 한다.
+ */
+export function getDefaultFlyerCopy(
+  missingAnimalStatus: Props["missingAnimalStatus"],
+  title: string,
+  description: string,
+) {
+  const isSeen = missingAnimalStatus === "SEEN";
+  return {
+    banner: isSeen ? "긴급 · 목격 제보 요청" : "긴급 · 실종 동물",
+    headline: isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다",
+    subHeadline: isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다",
+    title,
+    description,
+  };
+}
+
+/** 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. */
+export function getFlyerShareUrl(postId: string | undefined): string {
+  return postId
+    ? typeof window !== "undefined"
+      ? `${window.location.origin}/lost/${postId}`
+      : `/lost/${postId}`
+    : REPORT_OPEN_CHAT_URL;
+}
+
+/** 블록 구성은 게시글/사진과 달리 "이 사람이 전단지를 어떻게 짜는지" 취향에 가까워
+ * postId 유무와 무관하게 하나의 키로 공유해서 저장한다. */
+const FLYER_COMPOSITION_STORAGE_KEY = "fmp:flyer:composition:v1";
+
 export default function FlyerPrintDialog(props: Props) {
   const printRef = useRef<HTMLDivElement | null>(null);
   const handlePrint = useReactToPrint({
@@ -125,30 +332,49 @@ export default function FlyerPrintDialog(props: Props) {
     documentTitle: `${props.title} - 전단지`,
   });
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/lost/${props.postId}`
-      : `/lost/${props.postId}`;
+  // 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. 게시글 없는 전단지는 QR 이 가리킬
+  // 상세 페이지 자체가 없으므로, 주운 사람이 곧바로 연락할 수 있는 창구가 유일하게 의미 있는 목적지다.
+  const shareUrl = getFlyerShareUrl(props.postId);
 
   // 한글 기본 카피 — 사용자가 입력 필드로 자유 편집 가능
-  const isSeen = props.missingAnimalStatus === "SEEN";
   const defaults = useMemo(
-    () => ({
-      banner: isSeen ? "긴급 · 목격 제보 요청" : "긴급 · 실종 동물",
-      headline: isSeen ? "이 아이를 본 적 있나요?" : "가족을 찾습니다",
-      subHeadline: isSeen ? "목격 정보를 알려 주세요" : "도움이 절실합니다",
-      title: props.title,
-      description: props.description,
-    }),
-    [isSeen, props.title, props.description],
+    () => getDefaultFlyerCopy(props.missingAnimalStatus, props.title, props.description),
+    [props.missingAnimalStatus, props.title, props.description],
   );
 
+  const [open, setOpen] = useState(false);
   const [banner, setBanner] = useState(defaults.banner);
   const [headline, setHeadline] = useState(defaults.headline);
   const [subHeadline, setSubHeadline] = useState(defaults.subHeadline);
   const [title, setTitle] = useState(defaults.title);
   const [description, setDescription] = useState(defaults.description);
   const [template, setTemplate] = useState<FlyerTemplate>("URGENT");
+
+  // 블록 구성(어떤 블록을 넣고 어떤 순서로 보일지) — 사진은 절대 여기 저장하지 않는다
+  // (object URL 은 새로고침을 못 버틴다). 기본값은 항상 "전체 켜짐"이라 게시글 기반
+  // 흐름에서도, 게시글 없는 흐름에서도 처음엔 완전한 전단지가 보인다.
+  const [composition, setComposition] = useState<FlyerComposition>(DEFAULT_COMPOSITION);
+  const [compositionRestored, setCompositionRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FLYER_COMPOSITION_STORAGE_KEY);
+      if (raw) setComposition(sanitizeComposition(JSON.parse(raw)));
+    } catch {
+      // 손상된 값은 무시하고 기본 구성(전체 켜짐)을 쓴다.
+    } finally {
+      setCompositionRestored(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!compositionRestored) return;
+    try {
+      localStorage.setItem(FLYER_COMPOSITION_STORAGE_KEY, JSON.stringify(composition));
+    } catch {
+      // 저장 공간이 없거나 프라이빗 모드면 조용히 무시 — 구성 자체는 세션 동안 계속 동작한다.
+    }
+  }, [composition, compositionRestored]);
 
   const reset = () => {
     setBanner(defaults.banner);
@@ -158,8 +384,17 @@ export default function FlyerPrintDialog(props: Props) {
     setDescription(defaults.description);
   };
 
+  // 트리거(children)는 이 컴포넌트가 마운트되자마자 화면에 있지만, 그 시점의 title/description 은
+  // 아직 비어 있을 수 있다(특히 게시글 없이 바로 쓰는 /flyer). useState 초기값은 마운트 시점 한
+  // 번만 반영되므로, 그대로 두면 다이얼로그를 열었을 때 사용자가 그 사이 입력한 내용이 아니라
+  // 마운트 당시의 빈 값이 인쇄물에 남는다. 다이얼로그를 "열 때마다" 최신 props 로 다시 맞춘다.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) reset();
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
@@ -198,6 +433,13 @@ export default function FlyerPrintDialog(props: Props) {
           </div>
         </div>
 
+        {/* 블록 구성 — 어떤 블록을 넣고 어떤 순서로 보일지. 체크박스 + 위/아래 버튼만 쓰는
+            이유와 297mm 산수는 FlyerBlockComposer/compositionFits 주석 참고. */}
+        <div className="mb-3">
+          <p className="text-xs text-gray-600 mb-1">구성</p>
+          <FlyerBlockComposer composition={composition} onChange={setComposition} />
+        </div>
+
         {/* 편집 폼 — 카피 / 제목 / 설명 직접 수정 */}
         <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
           <FieldInput label="상단 배너" value={banner} onChange={setBanner} />
@@ -227,7 +469,7 @@ export default function FlyerPrintDialog(props: Props) {
         {/* 프리뷰: A4(210mm ≈ 794px) 가 다이얼로그보다 넓으므로 scale 로 축소.
             transform 은 인쇄 시 react-to-print 의 iframe 에 영향 없음. */}
         <div
-          className="border rounded bg-gray-100 overflow-auto"
+          className="rounded-md bg-muted/40 overflow-auto shadow-[0px_0px_0px_1px_rgba(0,0,0,0.06),0px_1px_1px_-0.5px_rgba(0,0,0,0.06),0px_3px_3px_-1.5px_rgba(0,0,0,0.06),_0px_6px_6px_-3px_rgba(0,0,0,0.06),0px_12px_12px_-6px_rgba(0,0,0,0.06),0px_24px_24px_-12px_rgba(0,0,0,0.06)]"
           style={{ maxHeight: "60vh", padding: "12px" }}
         >
           <div
@@ -255,6 +497,7 @@ export default function FlyerPrintDialog(props: Props) {
                 subHeadline={subHeadline}
                 shareUrl={shareUrl}
                 theme={TEMPLATES[template]}
+                composition={composition}
               />
             </div>
           </div>
@@ -271,184 +514,301 @@ export default function FlyerPrintDialog(props: Props) {
   );
 }
 
-/** 실제 인쇄 대상 레이아웃 — A4 기준, theme 에 따라 색상 변형. */
-const FlyerSheet = (
-  props: Props & {
-    shareUrl: string;
-    banner: string;
-    headline: string;
-    subHeadline: string;
-    theme: ThemeConfig;
-  },
-) => {
+/** FlyerSheet 가 실제로 쓰는 콘텐츠 필드 — 다이얼로그 트리거용 children 은 제외. */
+export type FlyerSheetContentProps = Omit<Props, "children">;
+
+export interface FlyerSheetProps extends FlyerSheetContentProps {
+  shareUrl: string;
+  banner: string;
+  headline: string;
+  subHeadline: string;
+  theme: ThemeConfig;
+  composition: FlyerComposition;
+}
+
+/**
+ * 실제 인쇄 대상 레이아웃 — A4 기준, theme 에 따라 색상 변형.
+ *
+ * /flyer 의 실시간 미리보기와 다이얼로그의 인쇄 대상이 반드시 이 컴포넌트 하나를 공유한다 —
+ * 별도의 "닮은꼴" 미리보기를 만들면 미리보기와 실제 인쇄물이 어긋날 수 있기 때문.
+ *
+ * 3m 밖에서 2초 안에 읽는 사람을 기준으로 순서를 짰다: 사진 → 무슨 상황인지 → 전화번호 →
+ * 사례금 → 장소·시각 → 특징 → QR. 이모지는 인쇄물에서 멀리서 보면 뭉개지고 흑백 인쇄에 약해
+ * 화면 UI 와 달리 여기서는 쓰지 않는다.
+ */
+export const FlyerSheet = (props: FlyerSheetProps) => {
   const showReward = props.gratuity > 0;
   const rewardLabel = showReward
     ? parseGratuityValue(props.gratuity, props.missingAnimalStatus)
     : null;
   const t = props.theme;
+  const placeTimeLine = buildPlaceTimeLine(props.place, props.time);
+  const { enabled, order } = props.composition;
+
+  /** line-clamp N — 입력 길이가 얼마든 이 블록의 높이 상한을 못 넘게 막는다.
+   * "측정 후 줄이기"가 아니라 "애초에 그 이상 자라지 못하게" 하는 쪽. */
+  const clamp = (lines: number): CSSProperties => ({
+    display: "-webkit-box",
+    WebkitLineClamp: lines,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    wordBreak: "break-word",
+  });
+
+  // 각 블록은 flex: 0 0 auto(Tailwind flex-none) 로 고정 — 사진(flex: 1 1 auto)만 유연하다.
+  // BLOCK_HEIGHT_MM/compositionFits 의 산수가 바로 이 clamp 값들에서 나온 것이라, 여길
+  // 고치면 그 상수도 같이 고쳐야 한다.
+  const blockNodes: Partial<Record<FlyerBlockId, ReactNode>> = {
+    title: props.title?.trim() ? (
+      <h2
+        key="title"
+        className="mb-2 flex-none text-center font-bold"
+        style={{
+          fontSize: "21px",
+          lineHeight: 1.3,
+          padding: "2.5mm 0",
+          borderTop: `2px solid ${t.titleBorder}`,
+          borderBottom: `2px solid ${t.titleBorder}`,
+          ...clamp(2),
+        }}
+      >
+        {props.title}
+      </h2>
+    ) : null,
+
+    contact: (
+      <div
+        key="contact"
+        className="mb-2 flex-none text-center"
+        style={{
+          backgroundColor: t.phoneBg,
+          color: t.phoneText,
+          borderRadius: "8px",
+          padding: "3mm 0",
+        }}
+      >
+        <p className="tracking-widest" style={{ fontSize: "11px", lineHeight: 1.2, ...clamp(1) }}>
+          연락처
+        </p>
+        <p
+          className="mt-1 font-extrabold tracking-wide"
+          style={{ fontSize: "30px", lineHeight: 1.1, ...clamp(1) }}
+        >
+          {formatPhone(props.phoneNum)}
+        </p>
+      </div>
+    ),
+
+    reward: showReward ? (
+      <div
+        key="reward"
+        className="mb-2 flex flex-none items-center justify-between gap-3"
+        style={{
+          backgroundColor: t.rewardBg,
+          border: t.rewardBorder,
+          borderRadius: "8px",
+          padding: "2.5mm 4mm",
+        }}
+      >
+        <span
+          className="font-semibold"
+          style={{ color: t.rewardLabelText, fontSize: "13px", lineHeight: 1.2, ...clamp(1) }}
+        >
+          사례금 · 결정적 제보 시
+        </span>
+        <span
+          className="shrink-0 font-extrabold"
+          style={{ color: t.rewardText, fontSize: "24px", lineHeight: 1.1, ...clamp(1) }}
+        >
+          {rewardLabel}
+        </span>
+      </div>
+    ) : null,
+
+    // 아주 긴 주소가 들어와도 1줄 clamp 라 QR 이 시트 밖으로 밀려나지 않는다.
+    placeTime: placeTimeLine ? (
+      <p
+        key="placeTime"
+        className="mb-2 flex-none text-gray-600"
+        style={{ fontSize: "13px", lineHeight: 1.4, ...clamp(1) }}
+      >
+        {placeTimeLine}
+      </p>
+    ) : null,
+
+    description: props.description?.trim() ? (
+      <div key="description" className="mb-2 flex-none">
+        <p
+          className="mb-1 font-bold"
+          style={{
+            color: t.descLabel,
+            letterSpacing: "0.12em",
+            fontSize: "11px",
+            lineHeight: 1.2,
+            ...clamp(1),
+          }}
+        >
+          특징 · 메모
+        </p>
+        <p
+          className="whitespace-pre-wrap pl-3"
+          style={{ borderLeft: t.descLine, fontSize: "13px", lineHeight: 1.5, ...clamp(3) }}
+        >
+          {props.description}
+        </p>
+      </div>
+    ) : null,
+
+    qr: (
+      <div key="qr" className="flex-none">
+        <div
+          className="flex items-center justify-between gap-4"
+          style={{ borderTop: "2px solid #D1D5DB", paddingTop: "4mm" }}
+        >
+          <div className="min-w-0 flex-1" style={{ fontSize: "13px" }}>
+            <p className="mb-1 font-bold" style={{ fontSize: "14px", lineHeight: 1.3, ...clamp(1) }}>
+              {props.postId ? "QR 로 상세 정보 확인" : "QR 로 목격 제보하기"}
+            </p>
+            <p className="leading-relaxed text-gray-700" style={clamp(2)}>
+              {props.postId
+                ? "사진을 더 보거나 오픈채팅·전화로 바로 제보할 수 있어요."
+                : "제보 오픈채팅으로 연결돼요. 전화가 어려우면 여기로 알려 주세요."}
+            </p>
+            <p
+              className="mt-1 break-all text-gray-400"
+              style={{ fontSize: "10px", lineHeight: 1.3, ...clamp(1) }}
+            >
+              {props.shareUrl}
+            </p>
+          </div>
+          <div
+            style={{
+              flexShrink: 0,
+              padding: "6px",
+              backgroundColor: "#fff",
+              border: t.qrBorder,
+              borderRadius: "4px",
+              // SVG 가 자식으로 들어갈 때 baseline 공백 제거
+              lineHeight: 0,
+            }}
+          >
+            <QRCodeSVG value={props.shareUrl} size={92} level="M" includeMargin style={{ display: "block" }} />
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <p
+          className="mt-2 text-center text-gray-400"
+          style={{ fontSize: "9px", lineHeight: 1.3, ...clamp(1) }}
+        >
+          파인드마이펫 · findmypet.platformholder.site
+        </p>
+      </div>
+    ),
+  };
 
   return (
     <div
-      className="bg-white text-black mx-auto relative"
+      data-testid="flyer-sheet"
+      className="bg-white text-black mx-auto flex flex-col overflow-hidden"
       style={{
         width: "210mm",
-        minHeight: "297mm",
+        height: "297mm",
         boxSizing: "border-box",
-        padding: "16mm",
+        padding: "8mm",
         border: t.frame,
       }}
     >
-      {/* HEADER */}
-      <div className="text-center mb-6">
+      {/* 1. 사진 — 유일한 유연 블록. flex: 1 1 auto 로 남는 공간을 전부 흡수하고, 다른
+          블록이 켜질수록 스스로 줄어든다(최소 PHOTO_FLOOR_MM=60mm 은 항상 유지). 사진이
+          없어도(파일을 아직 안 골랐어도) 자리 자체는 그대로 지켜 구도가 튀지 않게 한다. */}
+      {enabled.photo && (
         <div
-          className="inline-block px-6 py-2 mb-3"
-          style={{ backgroundColor: t.bannerBg, color: t.bannerText, letterSpacing: "0.15em" }}
+          className="relative w-full overflow-hidden"
+          style={{
+            flex: "1 1 auto",
+            minHeight: `${PHOTO_FLOOR_MM}mm`,
+            borderRadius: "6px",
+            border: t.photoBorder,
+          }}
         >
-          <span className="text-sm font-bold">{props.banner}</span>
-        </div>
-        <h1
-          className="text-5xl font-extrabold mb-2"
-          style={{ color: t.primary, lineHeight: 1.1 }}
-        >
-          🐾 {props.headline}
-        </h1>
-        <p className="text-lg text-gray-700">{props.subHeadline}</p>
-      </div>
-
-      {/* TITLE */}
-      {props.title?.trim() && (
-        <h2
-          className="text-3xl font-bold text-center mb-6 py-3"
-          style={{ borderTop: `2px solid ${t.titleBorder}`, borderBottom: `2px solid ${t.titleBorder}` }}
-        >
-          {props.title}
-        </h2>
-      )}
-
-      {/* PHOTO + REWARD */}
-      <div className="flex gap-6 mb-6">
-        <div className="flex-1 flex justify-center">
+          <span
+            className="absolute left-0 top-0 z-10 font-bold"
+            style={{
+              backgroundColor: t.bannerBg,
+              color: t.bannerText,
+              letterSpacing: "0.12em",
+              fontSize: "11px",
+              padding: "2.5mm 5mm",
+              borderBottomRightRadius: "6px",
+            }}
+          >
+            {props.banner}
+          </span>
           {props.thumbnail ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={props.thumbnail}
-              alt={props.title}
-              style={{
-                width: "100%",
-                maxWidth: "260px",
-                aspectRatio: "1 / 1",
-                objectFit: "cover",
-                border: t.photoBorder,
-                borderRadius: "4px",
-              }}
+              alt={props.title || "실종동물 사진"}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           ) : (
             <div
-              className="flex items-center justify-center text-gray-400"
-              style={{ width: "260px", height: "260px", border: t.photoBorder, borderRadius: "4px" }}
+              className="flex h-full w-full flex-col items-center justify-center gap-2"
+              style={{ backgroundColor: "#F3F4F6", color: "#9CA3AF" }}
             >
-              사진 없음
+              <ImageOff size={48} strokeWidth={1.5} />
+              <span className="text-sm font-medium">사진 없음</span>
             </div>
           )}
         </div>
-        {showReward && (
-          <div
-            className="flex flex-col items-center justify-center px-4"
-            style={{
-              minWidth: "150px",
-              backgroundColor: t.rewardBg,
-              border: t.rewardBorder,
-              borderRadius: "8px",
-            }}
-          >
-            <span className="text-sm font-semibold" style={{ color: t.rewardLabelText }}>
-              사례금
-            </span>
-            <span
-              className="text-3xl font-extrabold mt-1 text-center"
-              style={{ color: t.rewardText, lineHeight: 1.1 }}
-            >
-              {rewardLabel}
-            </span>
-            <span className="text-xs mt-2 text-gray-600 text-center">
-              결정적 제보 시
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* INFO GRID */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <InfoBox label="📍 실종 장소">{props.place}</InfoBox>
-        <InfoBox label="🕒 실종 시간">{formatDateToKorean(props.time)}</InfoBox>
-      </div>
-
-      {/* PHONE */}
-      <div
-        className="text-center py-4 mb-6"
-        style={{ backgroundColor: t.phoneBg, color: t.phoneText, borderRadius: "8px" }}
-      >
-        <p className="text-sm tracking-widest mb-1">📞 연락처</p>
-        <p className="text-4xl font-extrabold tracking-wide">{formatPhone(props.phoneNum)}</p>
-      </div>
-
-      {/* DESCRIPTION */}
-      {props.description?.trim() && (
-        <div className="mb-6">
-          <p
-            className="text-xs font-bold mb-2"
-            style={{ color: t.descLabel, letterSpacing: "0.15em" }}
-          >
-            특징 · 메모
-          </p>
-          <p
-            className="text-base whitespace-pre-wrap leading-relaxed pl-3"
-            style={{ borderLeft: t.descLine }}
-          >
-            {props.description}
-          </p>
-        </div>
       )}
 
-      {/* QR */}
-      <div className="border-t-2 border-gray-300 pt-5 flex items-center justify-between gap-6">
-        <div className="text-sm flex-1">
-          <p className="font-bold text-base mb-1">📱 QR 로 상세 정보 확인</p>
-          <p className="text-gray-700 leading-relaxed">
-            사진을 더 보거나 오픈채팅·전화로
-            <br />
-            바로 제보할 수 있어요.
-          </p>
-          <p className="text-xs text-gray-400 mt-2 break-all">{props.shareUrl}</p>
-        </div>
-        <div
-          style={{
-            flexShrink: 0,
-            padding: "8px",
-            backgroundColor: "#fff",
-            border: t.qrBorder,
-            borderRadius: "4px",
-            // SVG 가 자식으로 들어갈 때 baseline 공백 제거
-            lineHeight: 0,
-          }}
+      {/* 2. 무슨 상황인지 — 구성 대상이 아니라 항상 켜져 있다(템플릿 정체성의 일부). 자유
+          입력 텍스트라 여기도 line-clamp 로 상한을 건다. */}
+      <div className="mb-2 mt-3 flex-none text-center">
+        <h1
+          className="font-extrabold"
+          style={{ color: t.primary, fontSize: "32px", lineHeight: 1.15, ...clamp(2) }}
         >
-          <QRCodeSVG
-            value={props.shareUrl}
-            size={140}
-            level="M"
-            includeMargin={true}
-            style={{ display: "block" }}
-          />
-        </div>
+          {props.headline}
+        </h1>
+        <p className="mt-1 text-gray-700" style={{ fontSize: "15px", lineHeight: 1.4, ...clamp(1) }}>
+          {props.subHeadline}
+        </p>
       </div>
 
-      {/* FOOTER */}
-      <p className="text-center text-xs text-gray-400 mt-6">
-        🐶 파인드마이펫 · findmypet.platformholder.site
-      </p>
+      {/* 3~7. 나머지 블록 — 사용자가 고른 순서 그대로 렌더링한다. 프리뷰와 인쇄가 이 컴포넌트
+          하나를 공유하므로 여기서 갈리는 순서가 곧 인쇄되는 순서다. */}
+      {order.map((id) => (enabled[id] ? blockNodes[id] : null))}
     </div>
   );
 };
+
+/**
+ * 실종 시각 입력값을 사람이 읽을 수 있는 형태로 바꾼다.
+ *
+ * 게시글 기반 전단지의 time 은 ISO 날짜 문자열이라 formatDateToKorean 이 그대로 통하지만,
+ * 게시글 없이 만드는 /flyer 는 "2026년 7월 26일 오후 3시쯤" 같은 자유 텍스트를 그대로 받는다.
+ * new Date(...) 가 못 읽는 값이면 "Invalid Date" 를 찍는 대신 입력한 텍스트를 그대로 쓴다.
+ */
+function formatFlyerTime(raw: string): string {
+  const trimmed = raw?.trim();
+  if (!trimmed) return "";
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) return formatDateToKorean(trimmed);
+  return trimmed;
+}
+
+/** 장소·실종 시각을 한 줄로 합친다. 둘 다 비어 있으면 아예 렌더링하지 않는다. */
+function buildPlaceTimeLine(place: string, time: string): string {
+  const parts: string[] = [];
+  if (place?.trim()) parts.push(`장소 ${place.trim()}`);
+  const formattedTime = formatFlyerTime(time ?? "");
+  if (formattedTime) parts.push(`시각 ${formattedTime}`);
+  return parts.join("   ·   ");
+}
 
 /** 다이얼로그 편집용 입력 — 라벨 + input. */
 const FieldInput = ({
@@ -468,17 +828,6 @@ const FieldInput = ({
       onChange={(e) => onChange(e.target.value)}
       className="w-full border rounded px-2 py-1 text-sm"
     />
-  </div>
-);
-
-/** 인쇄용 강조 박스 — 라벨 + 값. */
-const InfoBox = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div
-    className="px-4 py-3"
-    style={{ backgroundColor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "6px" }}
-  >
-    <p className="text-xs font-bold text-gray-500 mb-1">{label}</p>
-    <p className="text-base font-semibold leading-tight">{children}</p>
   </div>
 );
 

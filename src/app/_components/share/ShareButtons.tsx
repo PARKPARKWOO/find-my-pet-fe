@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Copy, Link as LinkIcon, Share2 } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { trackShare, type ShareContentType } from "@/lib/shareMetrics";
 
 /**
  * 상세 페이지 공유 버튼 세트.
@@ -11,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
  * - 공유하기: Web Share API — 모바일 시스템 공유 시트 (당근·인스타 등 설치 앱 전부)
  * - 링크 복사
  * - 당근 문구 복사: 당근은 공유 API 가 없어 동네생활 붙여넣기용 본문을 복사해준다 (daangnText 전달 시 노출)
+ *
+ * 각 버튼은 누를 때 `trackShare` 로 집계 비콘을 쏜다(실패해도 공유는 그대로 진행).
  */
 interface ShareButtonsProps {
   title: string;
@@ -18,6 +21,8 @@ interface ShareButtonsProps {
   url: string;
   imageUrl?: string | null;
   daangnText?: string;
+  /** 무엇을 공유하는지 — 집계 라벨로만 쓰인다. */
+  contentType: ShareContentType;
 }
 
 const KAKAO_SDK_URL = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js";
@@ -59,6 +64,7 @@ export default function ShareButtons({
   url,
   imageUrl,
   daangnText,
+  contentType,
 }: ShareButtonsProps) {
   const { toast } = useToast();
   const [canNativeShare, setCanNativeShare] = useState(false);
@@ -77,6 +83,7 @@ export default function ShareButtons({
   }
 
   async function shareKakao() {
+    trackShare("KAKAO", contentType);
     const appKey = process.env.NEXT_PUBLIC_KAKAO_JS_API_KEY;
     if (!appKey) {
       copy(url, "링크를 복사했어요.");
@@ -105,6 +112,7 @@ export default function ShareButtons({
   }
 
   async function shareNative() {
+    trackShare("NATIVE", contentType);
     try {
       await navigator.share({ title, text: `${title}\n${description.slice(0, 80)}`, url });
     } catch {
@@ -145,7 +153,10 @@ export default function ShareButtons({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => copy(url, "링크를 복사했어요.")}
+        onClick={() => {
+          trackShare("LINK_COPY", contentType);
+          copy(url, "링크를 복사했어요.");
+        }}
         className="flex items-center gap-1.5"
       >
         <LinkIcon size={15} />
@@ -155,12 +166,13 @@ export default function ShareButtons({
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
+          onClick={() => {
+            trackShare("DAANGN_TEXT", contentType);
             copy(
               daangnText,
               "당근 동네생활용 문구를 복사했어요. 당근 앱 > 동네생활에 붙여넣어 주세요.",
-            )
-          }
+            );
+          }}
           className="flex items-center gap-1.5"
         >
           <Copy size={15} />
