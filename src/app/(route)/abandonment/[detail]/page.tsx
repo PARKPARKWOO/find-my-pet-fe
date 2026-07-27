@@ -190,6 +190,7 @@ export default async function AbandonmentDetailPage({
           <div className="mb-4">
             <ClosedNoticeBanner
               noticeEdt={pet.noticeEdt}
+              processState={pet.processState}
               careNm={pet.careNm}
               careTel={pet.careTel}
             />
