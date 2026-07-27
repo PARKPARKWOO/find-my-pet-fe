@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
+import { formatKindLeadingText } from "@/lib/animalType";
 import {
   Popover,
   PopoverContent,
@@ -137,8 +138,11 @@ export default function NotificationBell() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{it.title}</p>
+                    {/* 알림 body 는 백엔드가 kindFullNm("[개] 말티즈 (발견장소)")로 조립한다. */}
                     {it.body && (
-                      <p className="text-xs text-gray-600 line-clamp-2">{it.body}</p>
+                      <p className="text-xs text-gray-600 line-clamp-2">
+                        {formatKindLeadingText(it.body)}
+                      </p>
                     )}
                     <p className="text-xs text-gray-400 mt-0.5">
                       {formatRelative(it.createdAt)}

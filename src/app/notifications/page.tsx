@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
+import { formatKindLeadingText } from "@/lib/animalType";
 
 interface NotificationItem {
   id: string;
@@ -99,8 +100,11 @@ export default function NotificationsPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold">{it.title}</p>
+                  {/* 알림 body 는 백엔드가 kindFullNm("[개] 말티즈 (발견장소)")로 조립한다. */}
                   {it.body && (
-                    <p className="text-sm text-gray-700 mt-1">{it.body}</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      {formatKindLeadingText(it.body)}
+                    </p>
                   )}
                   <p className="text-xs text-gray-400 mt-2">
                     {new Date(it.createdAt).toLocaleString("ko-KR")}

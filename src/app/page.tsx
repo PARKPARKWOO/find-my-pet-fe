@@ -2,7 +2,7 @@
 
 import { Button } from "@/app/_components/ui/button";
 import Image from "next/image";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import image from "../static/image/banner.jpg";
 import { ChevronRight } from "lucide-react";
 import AbandonmentList from "./_components/main/AbandonmentList";
@@ -100,7 +100,12 @@ export default function Home() {
           {view === "all" && (
             <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">가족을 기다려요</h2>
           )}
-          <AbandonmentList />
+          {/* AbandonmentList 가 필터 상태를 URL 쿼리(useSearchParams)로 들고 있다.
+              정적 프리렌더 시점에는 쿼리를 알 수 없으므로 Suspense 경계가 반드시 필요하다
+              (없으면 Next 빌드가 "useSearchParams should be wrapped in a suspense boundary" 로 실패). */}
+          <Suspense fallback={<div className="h-[400px]" />}>
+            <AbandonmentList />
+          </Suspense>
         </section>
       )}
     </div>

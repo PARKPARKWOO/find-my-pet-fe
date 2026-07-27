@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BASE_URL } from "@/app/constant/api";
 import SearchBar from "@/app/_components/layout/SearchBar";
+import { formatKindLabel } from "@/lib/animalType";
 
 const SITE_DOMAIN = "https://findmypet.platformholder.site";
 
@@ -15,6 +16,14 @@ interface SearchItem {
   thumbnail: string | null;
   date: string | null;
   link: string;
+  /**
+   * 공고 기간이 끝났는지 (ABANDONED 만 해당).
+   *
+   * 검색은 목록과 달리 **종료분도 함께 돌려준다.** 공고가 끝났다고 그 아이가 보호소에서 사라진 게
+   * 아니고, 여기서 숨기면 보호자가 "보호소에 없구나" 하고 포기한다 — 재결합 경로를 스스로 끊는 셈이다.
+   * 대신 뱃지로 구분해, 헛걸음 대신 "보호소에 확인해 보라" 는 신호를 준다.
+   */
+  noticeClosed?: boolean;
 }
 
 interface SearchResponse {
@@ -90,7 +99,9 @@ export default async function SearchPage({
           <div className="flex gap-2 mb-4 text-sm">
             <FilterTab q={q} current={type} target="ALL" label={`전체 ${data.totalLost + data.totalAbandoned}`} />
             <FilterTab q={q} current={type} target="LOST" label={`실종 ${data.totalLost}`} />
-            <FilterTab q={q} current={type} target="ABANDONED" label={`보호중 ${data.totalAbandoned}`} />
+            {/* "보호중" 이 아니라 "유기동물" 인 이유: 검색은 공고 종료분까지 함께 돌려주므로
+                이 숫자에 종료된 아이도 들어간다. 라벨이 상태를 단정하면 카드 뱃지와 어긋난다. */}
+            <FilterTab q={q} current={type} target="ABANDONED" label={`유기동물 ${data.totalAbandoned}`} />
           </div>
 
           {data.items.length === 0 ? (
@@ -125,12 +136,24 @@ export default async function SearchPage({
                           className={`text-xs px-1.5 py-0.5 rounded font-bold ${
                             item.type === "LOST"
                               ? "bg-red-100 text-red-700"
-                              : "bg-blue-100 text-blue-700"
+                              : item.noticeClosed
+                                ? "bg-gray-200 text-gray-600"
+                                : "bg-blue-100 text-blue-700"
                           }`}
                         >
-                          {item.type === "LOST" ? "실종" : "보호중"}
+                          {item.type === "LOST"
+                            ? "실종"
+                            : item.noticeClosed
+                              ? "공고 종료"
+                              : "보호중"}
                         </span>
-                        <span className="font-semibold truncate">{item.title}</span>
+                        {/* ABANDONED 의 title 은 백엔드가 kindFullNm("[개] 말티즈")로 채운다.
+                            LOST 는 사용자가 쓴 제목이라 절대 손대지 않는다. */}
+                        <span className="font-semibold truncate">
+                          {item.type === "ABANDONED"
+                            ? formatKindLabel(item.title) ?? item.title
+                            : item.title}
+                        </span>
                       </div>
                       {item.place && (
                         <p className="text-xs text-gray-600 mb-0.5">📍 {item.place}</p>

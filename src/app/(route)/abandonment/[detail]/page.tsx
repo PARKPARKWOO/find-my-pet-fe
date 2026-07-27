@@ -5,9 +5,11 @@ import { ArrowLeft } from "lucide-react";
 import { BASE_URL } from "@/app/constant/api";
 import { Button } from "@/app/_components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { isClosedNotice } from "@/lib/abandonment";
+import { formatYyyyMmDdKo, happenDtToDate, isNoticeClosed } from "@/lib/abandonment";
+import { formatKindLabel } from "@/lib/animalType";
 import AbandonmentMaps, { ShelterMap } from "./AbandonmentMaps";
 import ShareButtons from "@/app/_components/share/ShareButtons";
+import ClosedNoticeBanner from "@/app/_components/abandonment/ClosedNoticeBanner";
 
 const SITE_DOMAIN = "https://findmypet.platformholder.site";
 
@@ -31,8 +33,16 @@ interface AbandonedPet {
   noticeEdt: string | null;
   animalType: string | null;
   orgNm?: string | null;
+  /** 백엔드가 `closed_at` 기준으로 채우는 공고 종료 여부 (mirror 경로에서만 채워진다). */
+  noticeClosed?: boolean | null;
+  noticeClosedAt?: string | null;
 }
 
+/**
+ * 공고가 종료돼도 이 엔드포인트는 **200 을 반환한다** (백엔드가 `closed_at` 을 필터하지 않는다).
+ * 이미 색인·공유된 URL 을 404 로 만들지 않기 위한 의도된 동작이고, 그래서 종료 안내 배너를
+ * 띄울 페이지가 실제로 살아 있다.
+ */
 async function fetchByDesertionNo(no: string): Promise<AbandonedPet | null> {
   try {
     const res = await fetch(`${BASE_URL}/abandoned-animals/${encodeURIComponent(no)}`, {
@@ -55,27 +65,41 @@ export async function generateMetadata({
   const url = `${SITE_DOMAIN}/abandonment/${params.detail}`;
   if (!pet) {
     return {
-      title: "보호중 동물 | 파인드마이펫",
-      description: "전국 보호소 보호중 동물 정보",
+      title: "보호 공고 | 파인드마이펫",
+      description: "전국 보호소 유기동물 보호 공고 정보",
       alternates: { canonical: url },
       // 존재하지 않는/내려간 공고 — 색인 제외 (검색 품질 신호 보호)
       robots: { index: false, follow: true },
     };
   }
-  // 종료(반환·입양 등)된 공고는 죽은 콘텐츠 — noindex 로 검색 결과에서 정리.
-  // 판정은 sitemap 과 동일 기준을 쓰기 위해 @/lib/abandonment 한 곳에서만 한다.
-  const isClosed = isClosedNotice(pet.processState);
-  const kind = pet.kindCd ?? "구조동물";
+  /**
+   * 공고 기간이 끝난 페이지는 noindex 로 검색 유입을 끊는다. 단 URL 은 200 + follow 로 살려둔다 —
+   * 이미 색인된 2만여 건을 404 로 만들면 외부 링크·SNS 공유·북마크가 전부 깨지고, 얻는 건
+   * "색인 제거가 조금 빠르다" 뿐인데 그건 noindex 로도 된다.
+   *
+   * canonical 은 self 유지. 개체 상세 → 지역 목록은 등가 콘텐츠가 아니라서 canonical 을 옮기면
+   * 무시되거나(최선) noindex 가 대상 페이지로 번질 위험이 있다. self-canonical + noindex 가
+   * 서로 모순 없는 유일한 조합이다.
+   */
+  const closed = isNoticeClosed(pet);
+  const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
   const place = pet.happenPlace ?? pet.careAddr ?? "";
-  const title = `${kind} - ${place} 보호중 | 파인드마이펫`;
+  const endedOn = formatYyyyMmDdKo(pet.noticeEdt);
+  const title = closed
+    ? `${kind} - ${place} 공고 종료 | 파인드마이펫`
+    : `${kind} - ${place} 보호중 | 파인드마이펫`;
   const sex =
     pet.sexCd === "M" ? "수컷" : pet.sexCd === "F" ? "암컷" : "성별 미상";
-  const description =
-    `${pet.careNm ?? "보호소"} 에서 보호중인 ${kind}. ${sex}, ${pet.age ?? "나이미상"}, ${pet.weight ?? "체중미상"}.` +
-    ` 발견: ${place}, ${pet.happenDt ? formatDate(pet.happenDt) : ""}. ${pet.specialMark ?? ""}`.slice(
-      0,
-      160,
-    );
+  const description = closed
+    ? (
+        `${pet.careNm ?? "보호소"} 공고가 ${endedOn ? `${endedOn}에 ` : ""}종료된 ${kind}. ` +
+        `현재 상태는 보호소에 직접 확인이 필요합니다. ${sex}, ${pet.age ?? "나이미상"}.` +
+        ` 발견: ${place}, ${pet.happenDt ? formatDate(pet.happenDt) : ""}.`
+      ).slice(0, 160)
+    : (
+        `${pet.careNm ?? "보호소"} 에서 보호중인 ${kind}. ${sex}, ${pet.age ?? "나이미상"}, ${pet.weight ?? "체중미상"}.` +
+        ` 발견: ${place}, ${pet.happenDt ? formatDate(pet.happenDt) : ""}. ${pet.specialMark ?? ""}`
+      ).slice(0, 160);
   const ogImage = pet.popfile ?? pet.filename;
 
   return {
@@ -99,7 +123,7 @@ export async function generateMetadata({
       description,
       images: ogImage ? [ogImage] : undefined,
     },
-    ...(isClosed ? { robots: { index: false, follow: true } } : {}),
+    ...(closed ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -113,9 +137,9 @@ export default async function AbandonmentDetailPage({
   if (!pet) {
     return (
       <div className="w-full max-w-2xl mx-auto py-20 text-center">
-        <h1 className="text-xl font-bold mb-2">보호중 정보를 찾을 수 없어요</h1>
+        <h1 className="text-xl font-bold mb-2">공고 정보를 찾을 수 없어요</h1>
         <p className="text-sm text-gray-500 mb-6">
-          이미 입양·반환 등으로 보호 종료됐거나, 등록 전 단계일 수 있습니다.
+          이미 보관 기간이 지나 내려갔거나, 등록 전 단계일 수 있습니다.
         </p>
         <Link href="/">
           <Button>홈으로</Button>
@@ -124,13 +148,26 @@ export default async function AbandonmentDetailPage({
     );
   }
 
+  const closed = isNoticeClosed(pet);
+  const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
+  const endedOn = formatYyyyMmDdKo(pet.noticeEdt);
+  const noticeStart = happenDtToDate(pet.noticeSdt) ?? happenDtToDate(pet.happenDt);
+  const noticeEnd = happenDtToDate(pet.noticeEdt);
+
+  /**
+   * 상태를 지어내지 않는다. 우리가 아는 건 공고기간(`noticeSdt`~`noticeEdt`)뿐이므로
+   * schema.org `Article.expires`("콘텐츠가 만료돼 더 이상 유효하지 않은 날짜")로만 표현한다.
+   * headline 에 "보호중" 을 무조건 박아 넣던 예전 코드는 종료된 공고에 현재형 사실을 단언했다.
+   */
   const ldJson = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `${pet.kindCd ?? "구조동물"} 보호중`,
+    headline: closed ? `${kind} 보호 공고 (공고 종료)` : `${kind} 보호중`,
     description: pet.specialMark ?? "",
     image: pet.popfile ? [pet.popfile] : [],
     inLanguage: "ko-KR",
+    ...(noticeStart ? { datePublished: noticeStart.toISOString() } : {}),
+    ...(noticeEnd ? { expires: noticeEnd.toISOString() } : {}),
   };
 
   return (
@@ -149,10 +186,24 @@ export default async function AbandonmentDetailPage({
           </Link>
         </div>
 
+        {closed && (
+          <div className="mb-4">
+            <ClosedNoticeBanner
+              noticeEdt={pet.noticeEdt}
+              careNm={pet.careNm}
+              careTel={pet.careTel}
+            />
+          </div>
+        )}
+
         <div className="mb-4">
           <ShareButtons
             contentType="ABANDONED"
-            title={`${pet.kindCd ?? "구조동물"} — ${pet.careNm ?? "보호소"}에서 보호중`}
+            title={
+              closed
+                ? `${kind} — ${pet.careNm ?? "보호소"} 공고 종료`
+                : `${kind} — ${pet.careNm ?? "보호소"}에서 보호중`
+            }
             description={`발견: ${pet.happenPlace ?? ""}${pet.happenDt ? ` (${formatDate(pet.happenDt)})` : ""}. ${pet.specialMark ?? ""}`}
             url={`${SITE_DOMAIN}/abandonment/${params.detail}`}
             imageUrl={pet.popfile ?? pet.filename}
@@ -166,7 +217,7 @@ export default async function AbandonmentDetailPage({
                 <Image
                   src={pet.filename}
                   layout="fill"
-                  alt={`${pet.kindCd ?? "구조동물"} - ${pet.happenPlace ?? ""} 보호중`}
+                  alt={`${kind} - ${pet.happenPlace ?? ""} ${closed ? "공고 종료" : "보호중"}`}
                   className="rounded-lg object-cover"
                 />
               ) : (
@@ -176,7 +227,7 @@ export default async function AbandonmentDetailPage({
               )}
             </div>
             <div className="flex flex-col sm:h-full sm:justify-between sm:gap-0 gap-2">
-              <Row label="품종" value={pet.kindCd} />
+              <Row label="품종" value={kind} />
               <Row label="성별" value={pet.sexCd} />
               <Row label="나이" value={pet.age} />
               <Row label="체중" value={pet.weight} />
@@ -217,18 +268,33 @@ export default async function AbandonmentDetailPage({
               </div>
               <div>
                 <h3 className="font-bold text-xs text-gray-500">연락처</h3>
-                <span>{pet.careTel ?? "-"}</span>
+                {pet.careTel ? (
+                  <a href={`tel:${pet.careTel}`} className="underline">
+                    {pet.careTel}
+                  </a>
+                ) : (
+                  <span>-</span>
+                )}
               </div>
               <div>
                 <h3 className="font-bold text-xs text-gray-500">상태</h3>
+                {/* 공공데이터 원본값은 위조하지 않고 그대로 둔다. 다만 이 값은 상류가 갱신을
+                    멈춰 "보호중" 으로 얼어붙어 있으므로, 우리가 확실히 아는 사실(공고 기간 종료)을
+                    보조 표기로 덧붙여 오해를 막는다. */}
                 <span>{pet.processState ?? "-"}</span>
+                {closed && (
+                  <span className="block text-xs text-amber-700">
+                    공고 기간 종료{endedOn ? ` (${endedOn})` : ""} · 현재 상태는 보호소 확인 필요
+                  </span>
+                )}
               </div>
             </div>
             {pet.careAddr && <ShelterMap careAddr={pet.careAddr} />}
           </div>
 
           <div className="border-t pt-6 text-center text-sm text-gray-600">
-            <p className="mb-3">혹시 우리 강아지/고양이 같으신가요?</p>
+            {/* "강아지/고양이" 로 한정하면 그 외 반려동물 공고가 배제된다. */}
+            <p className="mb-3">혹시 우리 아이 같으신가요?</p>
             <Link href="/register">
               <Button>실종 게시글 작성하기</Button>
             </Link>

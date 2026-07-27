@@ -4,8 +4,8 @@ import { getAllPosts } from "@/lib/parsePost";
 import {
   happenDtCutoff,
   happenDtToDate,
-  isClosedNotice,
-  normalizeHappenDt,
+  isNoticeClosed,
+  normalizeYyyyMmDd,
 } from "@/lib/abandonment";
 
 const DOMAIN_URL = "https://findmypet.platformholder.site";
@@ -13,17 +13,21 @@ const POSTS_PAGE_SIZE = 100;
 const POSTS_MAX_PAGES = 10; // 최대 1000건만 sitemap 에 포함 (그 이상은 정적 page param 추가 필요)
 
 /**
- * 유기동물 공고 신선도 윈도우(일). 이보다 오래된 공고는 sitemap 에서 제외한다.
+ * 유기동물 공고 신선도 윈도우(일) — **주 필터가 아니라 폭주 방어용 backstop 이다.**
  *
- * 근거(2026-07 실측, 전체 30,976건 / 상류 mirror 보존기간 약 113일):
- *  - 공고 법정 기간은 10일이지만 그 뒤로도 상당 기간 `보호중` 으로 남는다.
- *    발견 후 경과일별 `종료*` 비율 표본(200건/페이지):
- *      ~2일 1.5% / ~19일 0.5% / ~38일 1.5% / ~54일 3.0% / ~69일 2.0%
- *      / ~88일 11.5% / ~108일 53.0% / ~112일 65.3%
- *  - 즉 90일 부근이 "살아있는 공고" → "종료된 죽은 콘텐츠" 로 급격히 꺾이는 지점이다.
- *    더 짧게 자르면(예: 종전의 페이지 상한 부산물이던 ~38일) 98% 가 아직 `보호중` 인
- *    유효 공고를 대량으로 버리게 되고, 더 길게 잡으면 종료 공고 비중이 절반을 넘는다.
- *  - 90일 기준 예상 수집량은 약 2.5만건으로 sitemap 상한(50,000 URL / 50MB) 안쪽이다.
+ * ⚠️ 예전 주석에 있던 "경과일별 `종료*` 비율(~108일 53.0% / ~112일 65.3%)" 표는 폐기했다.
+ *    그 수치는 `processState` 를 측정한 값인데, 상류(data.go.kr)가 이 필드를 갱신하지 않아
+ *    100일 지난 공고도 96~99% 가 "보호중" 으로 내려온다. 90일이라는 숫자의 근거 전체가
+ *    사실이 아닌 필드에서 나왔던 셈이라 그대로 두면 다음 사람이 같은 착각을 반복한다.
+ *
+ * 지금의 실제 종료 판정은 `noticeEdt`(법정 공고기간)이고, 그 필터는 두 겹으로 건다:
+ *  1) 서버사이드 — 목록 API 에 `noticeStatus=OPEN` 을 명시해 진행중만 받는다.
+ *  2) 클라이언트 — {@link isNoticeClosed} 로 항목 단위 재확인(백엔드 만료 배치가 아직 돌지 않은
+ *     구간, data.go.kr 직결 fallback 응답 대비).
+ *
+ * 그래서 이 윈도우는 평소 발화하지 않는다(진행중 공고는 정의상 `noticeEdt >= 오늘` = 발견 후 대략
+ * 2주 이내). 남겨 두는 이유는 백엔드 만료 배치가 멈춰 종료분이 대량 유입되는 사고가 났을 때
+ * sitemap 이 무한정 부풀지 않게 막는 마지막 방어선이기 때문이다.
  */
 const ABANDONED_FRESHNESS_DAYS = 90;
 
@@ -101,6 +105,10 @@ interface ApiPostSummary {
 interface ApiAbandonedSummary {
   desertionNo: string;
   happenDt?: string | null;
+  /** 법정 공고 종료일 `"YYYYMMDD"` — 종료 판정의 주 신호. */
+  noticeEdt?: string | null;
+  /** 백엔드가 `closed_at` 기준으로 채워 주는 값. 만료 배치 이전/fallback 응답에서는 false. */
+  noticeClosed?: boolean | null;
   processState?: string | null;
 }
 
@@ -124,21 +132,29 @@ async function fetchAllPosts(deadline: Deadline): Promise<ApiPostSummary[]> {
 }
 
 /**
- * 조기 종료가 정상 동작이라면 최소 이 정도는 모였어야 한다는 하한선.
+ * `happenDt` 컷오프로 조기 종료가 걸렸을 때만 평가하는 하한선.
  *
- * 실측 유입량 약 274건/일 × 90일 ≈ 24,700건이 기대치다. 여기서 한 자릿수 % 수준으로
- * 떨어진 채로 컷오프 break 가 걸렸다면 정렬 전제가 깨졌다는 신호이므로 경고를 남긴다
- * (넉넉히 잡아 약 1주치 유입량 = 2,000건).
+ * 진행중만 받는 지금은 `hasNextPage === false` 로 먼저 끝나므로 이 검사 자체를 거의 타지 않는다.
+ * 그런데도 컷오프가 걸렸다는 건 90일치 진행중 공고가 있다는 뜻(= 만료 배치 이상) 이거나
+ * `happenDt` 내림차순 전제가 깨졌다는 뜻이다. 실측 유입량 약 274건/일 기준 1주치(2,000건)를
+ * 하한으로 잡아, 그보다 적게 모은 채 컷오프가 걸리면 경고를 남긴다.
  */
 const ABANDONED_MIN_EXPECTED = 2_000;
 
 /**
  * 진행중 유기동물 desertionNo listing — sitemap 의 /abandonment 페이지용.
  *
- * 수집 정책 (2건 모두 클라이언트 필터. 백엔드가 `bgnde`/`endde`(happen_dt 인덱스 부재로 무시됨) 와
- * `processState` 필터를 지원하지 않아 서버사이드로 내릴 수 없다):
- *  1) `종료*` 공고 제외 — 상세 페이지가 noindex 로 내보내는 페이지를 sitemap 이 색인 요청하던 모순 제거.
- *  2) 발견일 기준 최근 {@link ABANDONED_FRESHNESS_DAYS} 일만 포함.
+ * 수집 정책:
+ *  1) 공고 종료분 제외 — 서버사이드 `noticeStatus=OPEN` + 항목 단위 {@link isNoticeClosed} 재확인.
+ *     상세 페이지가 noindex 로 내보내는 페이지를 sitemap 이 색인 요청하던 모순을 제거한다.
+ *     (예전에는 `processState.startsWith("종료")` 하나에 의존했는데, 상류가 그 값을 갱신하지 않아
+ *      2만여 건이 필터를 그대로 통과했다 — 필터가 있는데 단 한 건도 걸리지 않는 상태였다.)
+ *  2) 발견일 기준 최근 {@link ABANDONED_FRESHNESS_DAYS} 일만 포함(backstop).
+ *
+ * ⚠️ 종료 판정(`noticeEdt`)으로 **조기 종료(break)를 걸지 않는다.** 내림차순이 보장되는 정렬 키는
+ *    `happenDt` 뿐이다(`AbandonedAnimalRepository.findOpenByFilters`). `noticeEdt` 는 정렬 키가
+ *    아니므로 그걸로 break 를 걸면 아래에서 경고한 붕괴가 그대로 재현된다.
+ *    → **break 는 `happenDt` 페이지 경계, 제외는 `noticeEdt` 항목 단위**로 역할을 분리한다.
  *
  * ⚠️ 조기 종료의 정렬 전제와 그 유일한 보장원:
  *   - 내림차순을 보장하는 곳은 **mirror 경로 단 하나**다 —
@@ -154,8 +170,8 @@ const ABANDONED_MIN_EXPECTED = 2_000;
  * mirror 경로에서는 두 방식의 종료 지점이 동일하다(내림차순이면 첫 stale 항목이 나온 페이지의
  * 마지막 항목도 반드시 stale). 정렬이 깨진 경우에만 동작이 갈린다.
  *
- * `MAX_PAGES` 는 정책이 아니라 무한루프/폭주 방어용 안전장치다. 정상 동작에서는 날짜 조건이 먼저 걸린다
- * (실측 유입량 약 274건/일 → 90일 ≈ 124페이지 < MAX_PAGES).
+ * `MAX_PAGES` 는 정책이 아니라 무한루프/폭주 방어용 안전장치다. 진행중만 받으므로 정상 동작에서는
+ * `hasNextPage === false` 가 먼저 걸린다(진행중 약 2,400~3,100건 → 200건/페이지 = 약 15페이지).
  */
 async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummary[]> {
   const result: ApiAbandonedSummary[] = [];
@@ -176,7 +192,13 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
     for (let p = start; p < start + ABANDONED_BATCH && p <= MAX_PAGES; p++) pageNos.push(p);
     const batch = await Promise.all(
       pageNos.map((pageNo) =>
-        fetchJson(`${BASE_URL}/abandoned-animals?pageNo=${pageNo}&numOfRows=${PAGE}`, 1800, deadline),
+        // noticeStatus=OPEN 은 백엔드 기본값이기도 하지만 명시해서 보낸다 —
+        // 기본값이 바뀌어도 sitemap 이 종료 공고를 색인 요청하는 사고로 이어지지 않게.
+        fetchJson(
+          `${BASE_URL}/abandoned-animals?pageNo=${pageNo}&numOfRows=${PAGE}&noticeStatus=OPEN`,
+          1800,
+          deadline,
+        ),
       ),
     );
 
@@ -202,7 +224,7 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
 
       for (const item of contents) {
         if (!item?.desertionNo) continue;
-        const happenDt = normalizeHappenDt(item.happenDt);
+        const happenDt = normalizeYyyyMmDd(item.happenDt);
         if (happenDt !== null) {
           lastDatedHappenDt = happenDt;
           // 고정폭 "YYYYMMDD" 라 문자열 사전순 비교로 안전하게 대소 판정 가능.
@@ -214,7 +236,10 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
         }
         // happenDt 가 형식 불량/누락이면 신선도를 판정할 수 없다.
         // 조기 종료 판단에는 쓰지 않고(잘못 끊으면 유효 공고를 대량 유실) 포함만 시킨다.
-        if (isClosedNotice(item.processState)) continue;
+        //
+        // 종료 공고는 서버가 이미 걸러 주지만(noticeStatus=OPEN) 항목 단위로 한 번 더 본다:
+        // 백엔드 만료 배치가 아직 돌지 않은 구간과 data.go.kr 직결 fallback 응답은 진행중으로 온다.
+        if (isNoticeClosed(item)) continue;
         result.push(item);
       }
 

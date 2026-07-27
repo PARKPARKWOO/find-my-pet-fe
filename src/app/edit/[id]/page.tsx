@@ -42,6 +42,7 @@ import LocalStorage from "@/lib/localStorage";
 import { useState } from "react";
 import BreedSelect from "@/app/_components/BreedSelect";
 import type { AnimalType } from "@/types/breed";
+import { ANIMAL_TYPE_LABEL, ANIMAL_TYPES } from "@/lib/animalType";
 
 
 const formSchema = z.object({
@@ -151,7 +152,7 @@ export default function LostPetRegister({ params }: { params: { id: string } }) 
                   <FormLabel>동물 종</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
-                      {(["DOG", "CAT", "OTHER"] as AnimalType[]).map((t) => (
+                      {ANIMAL_TYPES.map((t) => (
                         <button
                           key={t}
                           type="button"
@@ -165,7 +166,7 @@ export default function LostPetRegister({ params }: { params: { id: string } }) 
                             form.setValue("breedId", null);
                           }}
                         >
-                          {t === "DOG" ? "개" : t === "CAT" ? "고양이" : "기타"}
+                          {ANIMAL_TYPE_LABEL[t]}
                         </button>
                       ))}
                     </div>

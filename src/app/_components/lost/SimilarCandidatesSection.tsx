@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api";
+import { formatKindLabel } from "@/lib/animalType";
 
 interface MatchCandidate {
   desertionNo: string;
@@ -87,14 +88,14 @@ function CandidateCard({ c }: { c: MatchCandidate }) {
       {c.photoUrl && (
         <img
           src={c.photoUrl}
-          alt={c.kindCd ?? "구조동물"}
+          alt={formatKindLabel(c.kindCd) ?? "구조동물"}
           className="w-full h-40 object-cover rounded"
         />
       )}
       <div className="mt-2">
         <div className="font-semibold text-sm">이 아이, 닮았나요?</div>
         <div className="text-xs text-gray-600 mt-1 space-y-0.5">
-          {c.kindCd && <div>{c.kindCd}</div>}
+          {c.kindCd && <div>{formatKindLabel(c.kindCd)}</div>}
           {c.happenPlace && <div>📍 {c.happenPlace}</div>}
           {c.happenDt && (
             <div>📅 {formatYYYYMMDD(c.happenDt)} 입소</div>

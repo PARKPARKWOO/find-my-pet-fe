@@ -9,6 +9,7 @@ import {
   resolveSido,
   SITE_DOMAIN,
 } from "@/lib/region";
+import { formatKindLabel } from "@/lib/animalType";
 
 export const revalidate = 3_600;
 
@@ -77,7 +78,8 @@ export default async function SidoPage({ params }: Props) {
       </nav>
       <h1 className="mt-2 text-2xl font-bold">{sidoName} 유기동물 보호 공고</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        현재 {sidoName}에서 보호중인 공고 {page.totalCount.toLocaleString()}건. 시군구를
+        {/* 목록 API 가 진행중(noticeStatus=OPEN)만 반환하므로 "보호중" 이 아니라 "공고 진행 중" 이 사실이다. */}
+        현재 {sidoName}에서 공고 진행 중인 아이 {page.totalCount.toLocaleString()}건. 시군구를
         선택하면 해당 지역 공고와 보호소 정보를 볼 수 있습니다.
       </p>
 
@@ -109,13 +111,15 @@ export default async function SidoPage({ params }: Props) {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.popfile}
-                      alt={item.kindCd ?? "보호중 동물"}
+                      alt={formatKindLabel(item.kindCd) ?? "보호 공고 동물"}
                       className="h-28 w-full object-cover"
                       loading="lazy"
                     />
                   )}
                   <div className="p-2 text-xs">
-                    <div className="font-medium">{item.kindCd ?? "구조동물"}</div>
+                    <div className="font-medium">
+                      {formatKindLabel(item.kindCd) ?? "구조동물"}
+                    </div>
                     <div className="mt-0.5 line-clamp-1 text-muted-foreground">
                       {item.happenPlace ?? item.careNm ?? ""}
                     </div>

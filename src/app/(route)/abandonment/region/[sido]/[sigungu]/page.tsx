@@ -11,6 +11,7 @@ import {
   SITE_DOMAIN,
 } from "@/lib/region";
 import { formatDate } from "@/lib/utils";
+import { formatKindLabel } from "@/lib/animalType";
 
 export const revalidate = 1_800;
 
@@ -82,7 +83,7 @@ export default async function SigunguPage({ params }: Props) {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
       name: `${sigunguName} 유기동물 보호 공고`,
-      description: `${sidoName} ${sigunguName} 보호중 유기동물 ${page.totalCount}건`,
+      description: `${sidoName} ${sigunguName} 공고 진행 중인 유기동물 ${page.totalCount}건`,
       url,
       inLanguage: "ko-KR",
       isPartOf: { "@type": "WebSite", name: "파인드마이펫", url: SITE_DOMAIN },
@@ -92,7 +93,7 @@ export default async function SigunguPage({ params }: Props) {
         itemListElement: page.contents.slice(0, 10).map((item, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          name: item.kindCd ?? "구조동물",
+          name: formatKindLabel(item.kindCd) ?? "구조동물",
           url: `${SITE_DOMAIN}/abandonment/${item.desertionNo}`,
         })),
       },
@@ -119,7 +120,8 @@ export default async function SigunguPage({ params }: Props) {
         {sigunguName} 유기동물 보호 공고
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {sidoName} {sigunguName}에서 보호중인 공고{" "}
+        {/* 목록 API 가 진행중(noticeStatus=OPEN)만 반환하므로 "보호중" 이 아니라 "공고 진행 중" 이 사실이다. */}
+        {sidoName} {sigunguName}에서 공고 진행 중인 아이{" "}
         <strong>{page.totalCount.toLocaleString()}건</strong> (동물보호관리시스템
         공공데이터, 매시간 갱신). 잃어버린 반려동물이 있다면 아래 공고와 보호소에
         직접 확인하는 것이 가장 빠릅니다.
@@ -127,7 +129,7 @@ export default async function SigunguPage({ params }: Props) {
 
       {page.contents.length === 0 ? (
         <p className="mt-8 rounded-lg border p-6 text-center text-sm text-muted-foreground">
-          현재 {sigunguName}에 보호중 공고가 없습니다.{" "}
+          현재 {sigunguName}에 진행 중인 공고가 없습니다.{" "}
           <Link href={regionPath(sidoName)} className="underline">
             {sidoName} 전체 공고
           </Link>
@@ -145,13 +147,15 @@ export default async function SigunguPage({ params }: Props) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.popfile}
-                    alt={`${sigunguName} 보호중 ${item.kindCd ?? "동물"}`}
+                    alt={`${sigunguName} 보호 공고 ${formatKindLabel(item.kindCd) ?? "동물"}`}
                     className="h-32 w-full object-cover"
                     loading="lazy"
                   />
                 )}
                 <div className="p-2 text-xs">
-                  <div className="font-medium">{item.kindCd ?? "구조동물"}</div>
+                  <div className="font-medium">
+                    {formatKindLabel(item.kindCd) ?? "구조동물"}
+                  </div>
                   <div className="mt-0.5 line-clamp-1 text-muted-foreground">
                     {item.happenPlace ?? ""}
                   </div>
