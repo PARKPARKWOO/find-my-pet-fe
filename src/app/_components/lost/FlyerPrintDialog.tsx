@@ -55,6 +55,88 @@ export const REPORT_OPEN_CHAT_URL = "https://open.kakao.com/o/pReqeQFi";
  * 배경은 어느 템플릿이든 흰 종이 그대로다. 전면을 색으로 채우면 잉크가 많이 들고, 사례금·전화번호
  * 같은 검은 글자의 대비가 오히려 떨어진다. 색은 테두리·배너·강조에만 쓴다.
  */
+/**
+ * 용지 크기.
+ *
+ * 시트는 A4(210×297mm) 기준으로 **한 번만** 조판하고, 다른 용지는 균일 축소/확대로 만든다.
+ * 용지마다 mm 상수를 따로 잡지 않는 이유는 넘침 방지 보장 때문이다 — {@link compositionFits} 의
+ * `오버헤드 53 + 사진 60 + 블록 135 ≤ 297` 부등식은 양변에 같은 수를 곱해도 그대로 성립하므로,
+ * 균일 배율이면 어떤 용지에서도 **자동으로** 안 깨진다. 상수를 용지별로 다시 잡으면 그 보장이
+ * 용지 수만큼 갈라지고, 하나만 틀려도 인쇄물이 잘린다.
+ *
+ * ISO 규격(A·B 계열)은 전부 1:√2 라 가로세로 비율이 같아 이 방식이 정확히 맞아떨어진다.
+ * Letter 만 비율이 달라(0.773) 세로 기준으로 맞추고 좌우에 여백이 남는다.
+ */
+export type PaperSize = "A3" | "B4" | "A4" | "B5" | "A5" | "LETTER";
+
+export interface PaperConfig {
+  label: string;
+  /** 용도 안내. 크기 숫자만 보여주면 무엇을 골라야 할지 알 수 없다. */
+  caption: string;
+  widthMm: number;
+  heightMm: number;
+  /** `@page { size: ... }` 에 쓰는 CSS 키워드. */
+  cssSize: string;
+}
+
+export const PAPERS: Record<PaperSize, PaperConfig> = {
+  A3: { label: "A3", caption: "가장 큼 · 게시판·전봇대", widthMm: 297, heightMm: 420, cssSize: "A3" },
+  B4: { label: "B4", caption: "A4보다 큼 · 눈에 잘 띔", widthMm: 250, heightMm: 353, cssSize: "B4" },
+  A4: { label: "A4", caption: "표준 · 대부분의 프린터", widthMm: 210, heightMm: 297, cssSize: "A4" },
+  B5: { label: "B5", caption: "손에 나눠주기 좋은 크기", widthMm: 176, heightMm: 250, cssSize: "B5" },
+  A5: { label: "A5", caption: "가장 작음 · 우편함·전단 배포", widthMm: 148, heightMm: 210, cssSize: "A5" },
+  LETTER: { label: "Letter", caption: "미국 규격 · 좌우 여백 생김", widthMm: 215.9, heightMm: 279.4, cssSize: "letter" },
+};
+
+/** 다이얼로그 안에서 시트를 보여줄 때만 쓰는 화면용 축소율. 인쇄물과는 무관하다. */
+const PREVIEW_SCALE = 0.6;
+
+/** A4 조판을 이 용지에 앉히는 배율. 가로·세로 중 **더 빡빡한 쪽**을 따라야 어느 축으로도 안 넘친다. */
+export function paperScale(paper: PaperConfig): number {
+  return Math.min(paper.widthMm / 210, paper.heightMm / 297);
+}
+
+/**
+ * A4 조판을 목표 용지에 앉히는 액자.
+ *
+ * 바깥 div 가 실제 용지 크기를 차지하고 `overflow: hidden` 으로 자른다 — transform 은 레이아웃
+ * 박스를 바꾸지 않아서, 이 액자가 없으면 축소해도 원래 210×297mm 자리를 그대로 먹어 인쇄 시
+ * 빈 두 번째 장이 딸려 나온다.
+ */
+export function PaperFrame({
+  paper,
+  children,
+}: {
+  paper: PaperConfig;
+  children: React.ReactNode;
+}) {
+  const scale = paperScale(paper);
+  // Letter 처럼 비율이 다른 용지에서 조판이 왼쪽으로 쏠리지 않게 남는 폭을 반씩 나눈다.
+  const sideMm = (paper.widthMm - 210 * scale) / 2;
+  return (
+    <div
+      style={{
+        width: `${paper.widthMm}mm`,
+        height: `${paper.heightMm}mm`,
+        overflow: "hidden",
+        backgroundColor: "#fff",
+      }}
+    >
+      <div
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          width: "210mm",
+          height: "297mm",
+          marginLeft: `${sideMm}mm`,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export type FlyerTemplate =
   | "URGENT"
   | "WARM"
@@ -405,9 +487,15 @@ const FLYER_COMPOSITION_STORAGE_KEY = "fmp:flyer:composition:v1";
 
 export default function FlyerPrintDialog(props: Props) {
   const printRef = useRef<HTMLDivElement | null>(null);
+  const [paper, setPaper] = useState<PaperSize>("A4");
+  const paperConfig = PAPERS[paper];
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `${props.title} - 전단지`,
+    // @page 로 실제 용지를 지정하지 않으면 브라우저 기본값(대개 A4)에 맞춰 축소·확대돼서
+    // 화면에서 고른 크기와 나오는 종이가 어긋난다. margin: 0 은 시트가 이미 8mm padding 을
+    // 갖고 있어 이중 여백을 막기 위한 것.
+    pageStyle: `@page { size: ${paperConfig.cssSize}; margin: 0; } @media print { body { margin: 0; } }`,
   });
 
   // 게시글이 있으면 상세로, 없으면 제보 오픈채팅으로 보낸다. 게시글 없는 전단지는 QR 이 가리킬
@@ -491,6 +579,34 @@ export default function FlyerPrintDialog(props: Props) {
           A4 한 장 전단지로 출력됩니다. 아래 텍스트는 자유롭게 수정한 다음 인쇄하실 수 있어요.
         </p>
 
+        {/* 용지 선택 — 조판은 A4 하나로 하고 균일 배율로 앉히므로, 어느 걸 골라도 넘치지 않는다. */}
+        <div className="mb-3">
+          <p className="text-xs text-gray-600 mb-1">용지</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {(Object.keys(PAPERS) as PaperSize[]).map((key) => {
+              const p = PAPERS[key];
+              const active = paper === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setPaper(key)}
+                  aria-pressed={active}
+                  className={`text-left p-2 rounded border text-xs transition-colors ${
+                    active ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="font-bold">{p.label}</span>
+                  <span className="ml-1.5 text-[10px] text-gray-400">
+                    {Math.round(p.widthMm)}×{Math.round(p.heightMm)}mm
+                  </span>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{p.caption}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 템플릿 선택 */}
         <div className="mb-3">
           <p className="text-xs text-gray-600 mb-1">템플릿</p>
@@ -555,31 +671,31 @@ export default function FlyerPrintDialog(props: Props) {
           </div>
         </div>
 
-        {/* 프리뷰: A4(210mm ≈ 794px) 가 다이얼로그보다 넓으므로 scale 로 축소.
-            transform 은 인쇄 시 react-to-print 의 iframe 에 영향 없음. */}
+        {/* 프리뷰: 실제 용지(A3면 297mm)가 다이얼로그보다 넓으므로 화면용으로 한 번 더 축소한다.
+            이 축소는 바깥 div 가 맡고 printRef 는 그 **안쪽** 에 둔다 — react-to-print 는 대상
+            노드를 cloneNode 로 복제하므로 인라인 style 이 그대로 따라가고, printRef 에 화면용
+            scale 이 걸려 있으면 인쇄물까지 같이 줄어 종이 왼쪽 위에 작게 찍힌다. */}
         <div
           className="rounded-md bg-muted/40 overflow-auto shadow-[0px_0px_0px_1px_rgba(0,0,0,0.06),0px_1px_1px_-0.5px_rgba(0,0,0,0.06),0px_3px_3px_-1.5px_rgba(0,0,0,0.06),_0px_6px_6px_-3px_rgba(0,0,0,0.06),0px_12px_12px_-6px_rgba(0,0,0,0.06),0px_24px_24px_-12px_rgba(0,0,0,0.06)]"
           style={{ maxHeight: "60vh", padding: "12px" }}
         >
           <div
             style={{
-              width: "calc(210mm * 0.6)",
-              height: "calc(297mm * 0.6)",
+              width: `calc(${paperConfig.widthMm}mm * ${PREVIEW_SCALE})`,
+              height: `calc(${paperConfig.heightMm}mm * ${PREVIEW_SCALE})`,
               margin: "0 auto",
               overflow: "hidden",
             }}
           >
-            {/* 축소는 이 바깥 div 가 맡고, printRef 는 그 **안쪽** 에 둔다.
-                react-to-print 는 대상 노드를 cloneNode 로 복제하므로 인라인 style 이 그대로 따라간다.
-                printRef 에 scale(0.6) 이 걸려 있으면 인쇄물까지 60% 로 줄어 A4 왼쪽 위에 작게 찍힌다. */}
             <div
               style={{
-                transform: "scale(0.6)",
+                transform: `scale(${PREVIEW_SCALE})`,
                 transformOrigin: "top left",
-                width: "210mm",
+                width: `${paperConfig.widthMm}mm`,
               }}
             >
               <div ref={printRef}>
+                <PaperFrame paper={paperConfig}>
                 <FlyerSheet
                   {...props}
                   title={title}
@@ -591,6 +707,7 @@ export default function FlyerPrintDialog(props: Props) {
                   theme={TEMPLATES[template]}
                   composition={composition}
                 />
+                </PaperFrame>
               </div>
             </div>
           </div>
