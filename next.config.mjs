@@ -5,6 +5,8 @@ const nextConfig = {
   // 진짜 방어선은 sitemap.ts 의 수집 예산이고, 이건 그 예산이 어긋났을 때를 위한 여유분이다.
   staticPageGenerationTimeout: 180,
   images: {
+    // Vercel 이미지 변환 계층의 결제 게이트와 무관하게 원본/CDN 이미지를 직접 제공한다.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "github.com" },
       // MinIO presigned GET URL — post 이미지 공개 게시판용 (1h expiry)
