@@ -32,7 +32,7 @@ export default function Navigation() {
   };
 
   const registerCta = (className?: string) => {
-    const linkClassName = `inline-flex h-9 items-center justify-center rounded-md bg-forest px-3 text-sm font-medium text-white transition-colors hover:bg-forest/90 focus-visible:outline-none ${className ?? ""}`;
+    const linkClassName = `inline-flex h-9 items-center justify-center rounded-md bg-forest px-3 text-sm font-medium text-white transition-colors hover:bg-forest/90 ${className ?? ""}`;
     const button = (
       <Button
         className={`bg-forest text-white hover:bg-forest/90 ${className ?? ""}`}
@@ -54,7 +54,7 @@ export default function Navigation() {
   return (
     <header className="relative z-40 w-full border-b border-ink/10 bg-surface-raised text-ink">
       <nav aria-label="주 탐색" className="mx-auto flex h-16 w-full max-w-page items-center justify-between px-4 md:px-6">
-        <Link href="/" className="shrink-0 text-base font-bold tracking-tight text-ink focus-visible:outline-none">
+        <Link href="/" className="shrink-0 text-base font-bold tracking-tight text-ink">
           Find My Pet
         </Link>
 
@@ -63,7 +63,7 @@ export default function Navigation() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-ink/80 transition-colors hover:text-forest focus-visible:outline-none"
+              className="text-sm font-medium text-ink/80 transition-colors hover:text-forest"
             >
               {item.label}
             </Link>
@@ -77,7 +77,7 @@ export default function Navigation() {
               <NotificationBell />
               <Popover>
                 <PopoverTrigger asChild>
-                  <button type="button" className="rounded-full focus-visible:outline-none" aria-label="내 계정 메뉴">
+                  <button type="button" className="rounded-full" aria-label="내 계정 메뉴">
                     <Avatar className="border border-ink/15">
                       <AvatarImage src="../../favicon.ico" alt="내 프로필" />
                       <AvatarFallback>-</AvatarFallback>
@@ -88,7 +88,7 @@ export default function Navigation() {
                   <div className="flex flex-col gap-1">
                     <Link
                       href="/profile"
-                      className="rounded-md border border-input px-3 py-2 text-sm font-bold hover:bg-accent focus-visible:outline-none"
+                      className="rounded-md border border-input px-3 py-2 text-sm font-bold hover:bg-accent"
                     >
                       마이페이지
                     </Link>
@@ -106,7 +106,7 @@ export default function Navigation() {
           )}
           <button
             type="button"
-            className="flex h-11 min-w-11 items-center justify-center rounded-md px-3 text-sm font-medium text-ink hover:bg-surface-paper focus-visible:outline-none md:hidden"
+            className="flex h-11 min-w-11 items-center justify-center rounded-md px-3 text-sm font-medium text-ink hover:bg-surface-paper md:hidden"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
             onClick={() => setIsMenuOpen((open) => !open)}
@@ -116,7 +116,7 @@ export default function Navigation() {
         </div>
       </nav>
 
-      <div
+      <nav
         id="mobile-navigation"
         hidden={!isMenuOpen}
         aria-label="모바일 탐색"
@@ -128,14 +128,14 @@ export default function Navigation() {
               key={item.href}
               href={item.href}
               onClick={closeMenu}
-              className="rounded-md px-3 py-3 text-sm font-medium text-ink/80 hover:bg-surface-paper hover:text-forest focus-visible:outline-none"
+              className="rounded-md px-3 py-3 text-sm font-medium text-ink/80 hover:bg-surface-paper hover:text-forest"
             >
               {item.label}
             </Link>
           ))}
           <div className="px-3 pt-2">{registerCta("w-full")}</div>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

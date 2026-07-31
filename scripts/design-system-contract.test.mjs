@@ -111,19 +111,37 @@ test("전역 셸은 접근 가능한 64px 탐색, 건너뛰기 링크, 안전한
   assert.match(navigation, /<Link[^>]+href="\/"/);
   assert.doesNotMatch(navigation, /<div[^>]+onClick=\{\(\) => router\.push\("\/"\)\}/);
   assert.doesNotMatch(navigation, /<Button[^>]*>\s*<Link/);
-  assert.match(navigation, /h-16/);
-  assert.match(navigation, /메뉴/);
-  assert.match(navigation, /aria-expanded=/);
-  assert.match(navigation, /aria-controls=/);
+  assert.match(navigation, /<nav[^>]+className="[^"]*\bflex\b[^"]*\bh-16\b[^"]*"/);
+  assert.doesNotMatch(navigation, /focus-visible:outline-none/);
+  assert.match(
+    navigation,
+    /<button(?=[^>]*className="[^"]*\bh-11\b[^"]*\bmin-w-11\b[^"]*")(?=[^>]*aria-expanded=\{isMenuOpen\})(?=[^>]*aria-controls="mobile-navigation")[^>]*>/,
+  );
   assert.match(navigation, /NotificationBell/);
   assert.match(navigation, /requestLogout/);
   assert.match(navigation, /소식 등록/);
   assert.match(navigation, /상황별 반려동물 안내/);
-  for (const label of ["함께 찾기", "보호 동물", "보호소·입양", "이용 안내"]) {
-    assert.match(siteNavigation, new RegExp(label));
+  assert.match(navigation, /href: "\/faq"/);
+  assert.match(navigation, /href="\/register" onClick=\{closeMenu\}/);
+  assert.match(navigation, /if \(!isLogin\) return <KakaoLoginDialog>\{button\}<\/KakaoLoginDialog>;/);
+  assert.match(navigation, /<nav[\s\S]*id="mobile-navigation"[\s\S]*aria-label="모바일 탐색"/);
+  assert.match(navigation, /import \{ Popover, PopoverContent, PopoverTrigger \} from "@\/components\/ui\/popover";/);
+  assert.doesNotMatch(navigation, /from "@radix-ui\/react-popover"/);
+  for (const [label, href] of [
+    ["함께 찾기", "/lost"],
+    ["보호 동물", "/abandonment"],
+    ["보호소·입양", "/abandonment/region"],
+    ["이용 안내", "/guide"],
+  ]) {
+    assert.match(siteNavigation, new RegExp(`\\{ label: "${label}", href: "${href}" \\}`));
   }
   assert.match(layout, /href="#main-content"/);
   assert.match(layout, /id="main-content"/);
+  for (const component of [
+    "GoogleAnalytics", "AdSenseScript", "AdFitScript", "KakaoMapScript", "AuthQueryCapture", "Toaster",
+  ]) {
+    assert.match(layout, new RegExp(`<${component}(?:\\s|\\/|>)`));
+  }
   assert.doesNotMatch(layout, /<main[\s>]/);
   assert.doesNotMatch(layout, /from ["']lenis["']/);
   assert.doesNotMatch(layout, /from ["']gsap["']/);
@@ -134,6 +152,7 @@ test("푸터의 광고와 법적 링크를 전역 셸에서 보존한다", () =>
   const footer = read(footerPath);
 
   assert.match(footer, /<FooterAd\s*\/>/);
+  assert.ok(footer.indexOf("<FooterAd") < footer.indexOf("<footer"));
   assert.match(footer, /href="\/terms"/);
   assert.match(footer, /href="\/privacy"/);
 });
