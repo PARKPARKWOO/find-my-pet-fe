@@ -2,79 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  :root {
+    --fmp-canvas: 233 230 223; /* #E9E6DF */
+    --fmp-paper: 245 240 232; /* #F5F0E8 */
+    --fmp-raised: 255 253 248; /* #FFFDF8 */
+    --fmp-ink: 32 42 38; /* #202A26 */
+    --fmp-forest: 47 90 73; /* #2F5A49 */
+    --fmp-clay: 214 111 84; /* #D66F54 */
+    --fmp-wine: 112 69 65; /* #704541 */
+    --fmp-sighting: 75 127 163; /* #4B7FA3 */
+    --fmp-waiting: 185 137 59; /* #B9893B */
+    --fmp-kakao: 254 229 0; /* #FEE500 */
+    --fmp-text-primary: var(--fmp-ink);
+    --fmp-text-secondary: 68 79 73;
+    --fmp-text-muted: 105 112 107;
+    --fmp-text-inverse: var(--fmp-raised);
+    --fmp-action-primary: var(--fmp-forest);
+    --fmp-action-secondary: var(--fmp-wine);
+    --fmp-action-destructive: 181 68 56;
+    --fmp-action-brand: var(--fmp-kakao);
+    --fmp-state-searching: var(--fmp-clay);
+    --fmp-state-sighting: var(--fmp-sighting);
+    --fmp-state-found: var(--fmp-forest);
+    --fmp-state-protected: var(--fmp-wine);
+    --fmp-state-waiting: var(--fmp-waiting);
+    --fmp-state-archived: var(--fmp-text-muted);
+    --fmp-map-missing-pin: var(--fmp-clay);
+    --fmp-map-sighting-pin: var(--fmp-sighting);
+    --fmp-map-radius: 214 111 84;
+    --fmp-map-selected: var(--fmp-ink);
+    --fmp-radius-sm: 0.625rem;
+    --fmp-radius-md: 0.75rem;
+    --fmp-radius-lg: 1rem;
+    --fmp-radius-xl: 1.25rem;
+    --fmp-shadow-raised: 0 12px 30px rgb(32 42 38 / 0.08);
+
+    /* shadcn compatibility variables, mapped to the warm light system. */
+    --background: 37 39% 94%;
+    --foreground: 156 14% 15%;
+    --card: 43 100% 99%;
+    --card-foreground: 156 14% 15%;
+    --popover: 43 100% 99%;
+    --popover-foreground: 156 14% 15%;
+    --primary: 156 31% 27%;
+    --primary-foreground: 43 100% 99%;
+    --secondary: 5 24% 89%;
+    --secondary-foreground: 156 14% 15%;
+    --muted: 37 22% 89%;
+    --muted-foreground: 150 4% 43%;
+    --accent: 37 22% 89%;
+    --accent-foreground: 156 14% 15%;
+    --destructive: 6 53% 47%;
+    --destructive-foreground: 43 100% 99%;
+    --border: 36 16% 82%;
+    --input: 36 16% 82%;
+    --ring: 156 31% 27%;
+    --chart-1: 13 60% 58%;
+    --chart-2: 205 37% 47%;
+    --chart-3: 156 31% 27%;
+    --chart-4: 39 51% 48%;
+    --chart-5: 5 24% 35%;
+    --radius: var(--fmp-radius-md);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    color: rgb(var(--fmp-ink));
+    background: rgb(var(--fmp-canvas));
+    font-family: var(--font-geist-sans), "Noto Sans KR", system-ui, sans-serif;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--fmp-forest));
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-}
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

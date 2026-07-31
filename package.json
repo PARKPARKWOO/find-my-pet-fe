@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test:contracts": "node --test scripts/*.test.mjs",
     "test:category": "node --test scripts/category-contract.test.mjs",
     "test:abandonment-status": "node --test scripts/abandonment-status-contract.test.mjs",
     "test:withdrawal-flow": "node --test scripts/withdrawal-flow.test.mjs",
