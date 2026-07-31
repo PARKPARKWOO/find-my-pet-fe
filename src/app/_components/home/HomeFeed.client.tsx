@@ -67,26 +67,22 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
           </Button>
         )}
       </div>
-      {showLost && (
-        <section className="w-full">
-          {view === "all" && (
-            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1">집을 잃었어요</h2>
-          )}
-          <LostList initialPage={lostSeed} />
-        </section>
-      )}
-      {showAbandonment && (
-        <section className="w-full">
-          {view === "all" && (
-            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">
-              보호소에서 가족을 기다려요
-            </h2>
-          )}
-          <Suspense fallback={<div className="h-[400px]" />}>
-            <AbandonmentList initialPage={abandonmentSeed} />
-          </Suspense>
-        </section>
-      )}
+      <section hidden={!showLost} className="w-full">
+        {view === "all" && (
+          <h2 className="text-base font-semibold text-gray-700 mb-3 px-1">집을 잃었어요</h2>
+        )}
+        <LostList initialPage={lostSeed} />
+      </section>
+      <section hidden={!showAbandonment} className="w-full">
+        {view === "all" && (
+          <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">
+            보호소에서 가족을 기다려요
+          </h2>
+        )}
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <AbandonmentList initialPage={abandonmentSeed} />
+        </Suspense>
+      </section>
     </div>
   );
 }

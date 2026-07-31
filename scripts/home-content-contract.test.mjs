@@ -17,6 +17,24 @@ const homeFeed = fs.readFileSync(
   "utf8",
 );
 
+function assertListsStayMounted(source) {
+  assert.match(
+    source,
+    /<section hidden=\{!showLost\} className="w-full">[\s\S]*?<LostList initialPage=\{lostSeed\} \/>[\s\S]*?<\/section>/,
+  );
+  assert.match(
+    source,
+    /<section hidden=\{!showAbandonment\} className="w-full">[\s\S]*?<Suspense[\s\S]*?<AbandonmentList initialPage=\{abandonmentSeed\} \/>[\s\S]*?<\/Suspense>[\s\S]*?<\/section>/,
+  );
+  assert.doesNotMatch(source, /\{showLost && \(\s*<section/);
+  assert.doesNotMatch(source, /\{showAbandonment && \(\s*<section/);
+  assert.equal((source.match(/<LostList initialPage=\{lostSeed\} \/>/g) ?? []).length, 1);
+  assert.equal(
+    (source.match(/<AbandonmentList initialPage=\{abandonmentSeed\} \/>/g) ?? []).length,
+    1,
+  );
+}
+
 test("home guidance links retain their stable destinations", () => {
   assert.deepEqual(
     content.FEATURED_GUIDES.map(({ id, href }) => ({ id, href })),
@@ -94,6 +112,20 @@ test("홈 피드 client island는 서버 seed와 기존 상호작용을 보존�
   assert.doesNotMatch(homeFeed, /SearchBar/);
   assert.doesNotMatch(homeFeed, /PurposeCategoryNav/);
 
+  assertListsStayMounted(homeFeed);
+
   const missingLostSeed = homeFeed.replace("<LostList initialPage={lostSeed} />", "<LostList />");
   assert.doesNotMatch(missingLostSeed, /<LostList initialPage=\{lostSeed\} \/>/);
+
+  const remountOnToggleMutation = homeFeed.replace(
+    '<section hidden={!showLost} className="w-full">',
+    '{showLost && (\n        <section className="w-full">',
+  );
+  assert.throws(() => assertListsStayMounted(remountOnToggleMutation));
+
+  const abandonmentRemountMutation = homeFeed.replace(
+    '<section hidden={!showAbandonment} className="w-full">',
+    '{showAbandonment && (\n        <section className="w-full">',
+  );
+  assert.throws(() => assertListsStayMounted(abandonmentRemountMutation));
 });

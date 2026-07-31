@@ -38,6 +38,37 @@ const abandonmentIndexPagePath = path.resolve(
 );
 const llmsPath = path.resolve(scriptsDirectory, "../public/llms.txt");
 
+function extractAbandonmentMainEffect(source) {
+  const start = source.indexOf(
+    "  useEffect(() => {\n    if (!isCanonicalPageQuery(rawPage, currentPage))",
+  );
+  assert.notEqual(start, -1, "main abandonment effect must start with the canonical-page guard");
+  const end = source.indexOf("\n  ]);", start);
+  assert.notEqual(end, -1, "main abandonment effect dependency boundary must exist");
+  return source.slice(start, end + "\n  ]);".length);
+}
+
+function assertAbandonmentMainRequestContract(mainEffect) {
+  const canonicalIndex = mainEffect.indexOf(
+    "if (!isCanonicalPageQuery(rawPage, currentPage))",
+  );
+  const decisionIndex = mainEffect.indexOf("const seedDecision = decideHomeSeedRequest");
+  const controllerIndex = mainEffect.indexOf("const controller = new AbortController()");
+  const requestIndex = mainEffect.indexOf('apiClient.get("/abandoned-animals"');
+
+  assert.ok(
+    canonicalIndex >= 0 &&
+      canonicalIndex < decisionIndex &&
+      decisionIndex < controllerIndex &&
+      controllerIndex < requestIndex,
+  );
+  assert.equal((mainEffect.match(/apiClient\.get\("\/abandoned-animals"/g) ?? []).length, 1);
+  assert.doesNotMatch(mainEffect, /\/abandoned-animals\/(?:sido|sigungu)/);
+  assert.match(mainEffect, /signal: controller\.signal/);
+  assert.ok((mainEffect.match(/controller\.signal\.aborted/g) ?? []).length >= 3);
+  assert.match(mainEffect, /return \(\) => controller\.abort\(\);/);
+}
+
 test("목적 카테고리는 승인된 명칭과 경로를 한 단계로 제공한다", () => {
   const { PURPOSE_CATEGORIES } = loadTypeScriptModule(registryPath);
 
@@ -70,10 +101,6 @@ test("목록은 오류와 빈 결과를 구분하고 보호 카드를 링크로 
   assert.ok((lost.match(/signal: controller\.signal/g) ?? []).length >= 2);
   assert.match(lost, /if \(controller\.signal\.aborted\) return;/);
   assert.match(lost, /return \(\) => controller\.abort\(\)/);
-  assert.match(abandoned, /const controller = new AbortController\(\)/);
-  assert.match(abandoned, /signal: controller\.signal/);
-  assert.match(abandoned, /if \(controller\.signal\.aborted\) return;/);
-  assert.match(abandoned, /return \(\) => controller\.abort\(\)/);
   assert.match(abandoned, /const rawPage = searchParams\.get\(QUERY_KEY\.page\)/);
   assert.match(abandoned, /if \(!isCanonicalPageQuery\(rawPage, currentPage\)\) \{[\s\S]*?replacePage\(currentPage\);[\s\S]*?return;/);
   assert.match(abandoned, /let keepLoadingForRedirect = false/);
@@ -115,10 +142,13 @@ test("홈 서버 시드는 정규 요청에서 한 번만 쓰고 목록의 기�
   assert.doesNotMatch(lost, /\[[^\]]*initialPage[^\]]*\]/);
   assert.doesNotMatch(abandoned, /\[[^\]]*initialPage[^\]]*\]/);
 
-  const canonicalIndex = abandoned.indexOf("if (!isCanonicalPageQuery(rawPage, currentPage))");
-  const decisionIndex = abandoned.indexOf("const seedDecision = decideHomeSeedRequest");
-  const mainRequestIndex = abandoned.indexOf('apiClient.get("/abandoned-animals"');
-  assert.ok(canonicalIndex >= 0 && canonicalIndex < decisionIndex && decisionIndex < mainRequestIndex);
+  assert.match(
+    abandoned,
+    /validateHomeListSeed\(initialPage, \{\s*isCanonicalRequest: isCanonicalPageQuery\(rawPage, currentPage\),\s*expectedRequestKey: HOME_ABANDONMENT_REQUEST_KEY,\s*currentRequestKey,\s*\}\)/,
+  );
+
+  const mainEffect = extractAbandonmentMainEffect(abandoned);
+  assertAbandonmentMainRequestContract(mainEffect);
   assert.ok(lost.indexOf("const seedDecision = decideHomeSeedRequest") < lost.indexOf("apiClient.get"));
 
   assert.match(lost, /\/posts\/nearby[\s\S]*?signal: controller\.signal/);
@@ -141,6 +171,22 @@ test("홈 서버 시드는 정규 요청에서 한 번만 쓰고 목록의 기�
     "if (false)",
   );
   assert.equal(canonicalMutation.indexOf("if (!isCanonicalPageQuery(rawPage, currentPage))"), -1);
+
+  const mainSignalMutation = mainEffect.replace("signal: controller.signal,", "");
+  const sourceWithoutMainSignal = abandoned.replace(mainEffect, mainSignalMutation);
+  assert.match(
+    sourceWithoutMainSignal,
+    /\/abandoned-animals\/sigungu[\s\S]*?signal: controller\.signal/,
+  );
+  assert.throws(() => assertAbandonmentMainRequestContract(mainSignalMutation));
+
+  const mainCleanupMutation = mainEffect.replace("return () => controller.abort();", "return;");
+  const sourceWithoutMainCleanup = abandoned.replace(mainEffect, mainCleanupMutation);
+  assert.match(
+    sourceWithoutMainCleanup,
+    /\/abandoned-animals\/sigungu[\s\S]*?return \(\) => controller\.abort\(\)/,
+  );
+  assert.throws(() => assertAbandonmentMainRequestContract(mainCleanupMutation));
 });
 
 test("공유된 nullable 카드 타입은 빈 필드를 꾸며내지 않는다", () => {

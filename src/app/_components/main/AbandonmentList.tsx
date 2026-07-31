@@ -22,7 +22,11 @@ import {
   type NoticeStatusFilter,
 } from "@/lib/abandonment";
 import { clampPageToTotal, isCanonicalPageQuery } from "@/lib/pagination";
-import { decideHomeSeedRequest, type HomeSeedGateState } from "@/lib/homeSeed";
+import {
+  decideHomeSeedRequest,
+  validateHomeListSeed,
+  type HomeSeedGateState,
+} from "@/lib/homeSeed";
 import {
   getAbandonmentRequestKey,
   HOME_ABANDONMENT_REQUEST_KEY,
@@ -87,10 +91,11 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
   const initialSeedValidatedRef = useRef(false);
   const initialSeedRef = useRef<HomeListSeed<AbandonedAnimalSummary> | undefined>(undefined);
   if (!initialSeedValidatedRef.current) {
-    initialSeedRef.current =
-      isCanonicalPageQuery(rawPage, currentPage) && initialPage?.requestKey === currentRequestKey
-        ? initialPage
-        : undefined;
+    initialSeedRef.current = validateHomeListSeed(initialPage, {
+      isCanonicalRequest: isCanonicalPageQuery(rawPage, currentPage),
+      expectedRequestKey: HOME_ABANDONMENT_REQUEST_KEY,
+      currentRequestKey,
+    });
     initialSeedValidatedRef.current = true;
   }
   const seedGateRef = useRef<HomeSeedGateState>({

@@ -11,10 +11,18 @@ const homeSeedPath = path.resolve(
 );
 
 const DEFAULT_KEY = "lost:standard:page=1:size=5";
+const ABANDONMENT_DEFAULT_KEY =
+  "abandonment:status=OPEN:type=ALL:sido=:sigungu=:page=1:size=20";
 
 function decide(state, input) {
   const { decideHomeSeedRequest } = loadTypeScriptModule(homeSeedPath);
   return decideHomeSeedRequest(state, input);
+}
+
+function validate(initialPage, input) {
+  const { validateHomeListSeed } = loadTypeScriptModule(homeSeedPath);
+  assert.equal(typeof validateHomeListSeed, "function");
+  return validateHomeListSeed(initialPage, input);
 }
 
 test("matching server seed is consumed without a request, including StrictMode replay", () => {
@@ -69,4 +77,75 @@ test("a seed for a different request key fetches and is invalidated", () => {
 
   assert.equal(decision.shouldFetch, true);
   assert.equal(decision.state.seededRequestKey, null);
+});
+
+test("mount seed validation accepts only the canonical exact default request", () => {
+  const initialPage = {
+    requestKey: ABANDONMENT_DEFAULT_KEY,
+    data: { contents: [], totalCount: 0, hasNextPage: false },
+  };
+
+  assert.equal(
+    validate(initialPage, {
+      isCanonicalRequest: true,
+      expectedRequestKey: ABANDONMENT_DEFAULT_KEY,
+      currentRequestKey: ABANDONMENT_DEFAULT_KEY,
+    }),
+    initialPage,
+  );
+});
+
+test("mount seed validation rejects a noncanonical page before consumption", () => {
+  const initialPage = {
+    requestKey: ABANDONMENT_DEFAULT_KEY,
+    data: { contents: ["must-not-render"], totalCount: 1, hasNextPage: false },
+  };
+
+  assert.equal(
+    validate(initialPage, {
+      isCanonicalRequest: false,
+      expectedRequestKey: ABANDONMENT_DEFAULT_KEY,
+      currentRequestKey: ABANDONMENT_DEFAULT_KEY,
+    }),
+    undefined,
+  );
+});
+
+test("mount seed validation rejects fabricated matching CLOSED, regional, or page keys", () => {
+  for (const fabricatedKey of [
+    "abandonment:status=CLOSED:type=ALL:sido=:sigungu=:page=1:size=20",
+    "abandonment:status=OPEN:type=ALL:sido=6110000:sigungu=:page=1:size=20",
+    "abandonment:status=OPEN:type=ALL:sido=:sigungu=:page=2:size=20",
+  ]) {
+    const initialPage = {
+      requestKey: fabricatedKey,
+      data: { contents: ["must-not-render"], totalCount: 1, hasNextPage: false },
+    };
+
+    assert.equal(
+      validate(initialPage, {
+        isCanonicalRequest: true,
+        expectedRequestKey: ABANDONMENT_DEFAULT_KEY,
+        currentRequestKey: fabricatedKey,
+      }),
+      undefined,
+    );
+  }
+});
+
+test("mount seed validation rejects the default seed for a different current request", () => {
+  const initialPage = {
+    requestKey: ABANDONMENT_DEFAULT_KEY,
+    data: { contents: ["must-not-render"], totalCount: 1, hasNextPage: false },
+  };
+
+  assert.equal(
+    validate(initialPage, {
+      isCanonicalRequest: true,
+      expectedRequestKey: ABANDONMENT_DEFAULT_KEY,
+      currentRequestKey:
+        "abandonment:status=OPEN:type=DOG:sido=:sigungu=:page=1:size=20",
+    }),
+    undefined,
+  );
 });
