@@ -21,6 +21,22 @@ const navigationPath = "src/app/_components/layout/Navigation.tsx";
 const footerPath = "src/app/_components/layout/Footer.tsx";
 const siteNavigationPath = "src/lib/siteNavigation.ts";
 
+const assertMobileNavigationContract = (navigation) => {
+  assert.match(
+    navigation,
+    /<nav(?=[^>]*\bid="mobile-navigation")(?=[^>]*\baria-label="모바일 탐색")[^>]*>/,
+  );
+
+  const mappedBlock = navigation.match(
+    /\{MOBILE_NAVIGATION\.map\(\(item\) => \(([\s\S]*?)\)\)\}/,
+  )?.[1];
+  assert.ok(mappedBlock, "MOBILE_NAVIGATION.map block must exist");
+  assert.match(
+    mappedBlock,
+    /<Link(?=[^>]*\bhref=\{item\.href\})(?=[^>]*\bonClick=\{closeMenu\})[^>]*>/,
+  );
+};
+
 test("승인된 색을 semantic token으로 제공한다", () => {
   const css = read(globalsPath);
 
@@ -123,8 +139,8 @@ test("전역 셸은 접근 가능한 64px 탐색, 건너뛰기 링크, 안전한
   assert.match(navigation, /상황별 반려동물 안내/);
   assert.match(navigation, /href: "\/faq"/);
   assert.match(navigation, /href="\/register" onClick=\{closeMenu\}/);
+  assertMobileNavigationContract(navigation);
   assert.match(navigation, /if \(!isLogin\) return <KakaoLoginDialog>\{button\}<\/KakaoLoginDialog>;/);
-  assert.match(navigation, /<nav[\s\S]*id="mobile-navigation"[\s\S]*aria-label="모바일 탐색"/);
   assert.match(navigation, /import \{ Popover, PopoverContent, PopoverTrigger \} from "@\/components\/ui\/popover";/);
   assert.doesNotMatch(navigation, /from "@radix-ui\/react-popover"/);
   for (const [label, href] of [
@@ -146,6 +162,28 @@ test("전역 셸은 접근 가능한 64px 탐색, 건너뛰기 링크, 안전한
   assert.doesNotMatch(layout, /from ["']lenis["']/);
   assert.doesNotMatch(layout, /from ["']gsap["']/);
   assert.match(layout, /max-w-page/);
+});
+
+test("모바일 탐색 landmark 계약은 div 대체 mutation을 거부한다", () => {
+  const navigation = read(navigationPath);
+  const mutation = navigation.replace(
+    /<nav(\s+id="mobile-navigation")/,
+    "<div$1",
+  );
+
+  assert.notEqual(mutation, navigation);
+  assert.throws(() => assertMobileNavigationContract(mutation));
+});
+
+test("모바일 탐색 링크 계약은 close handler 제거 mutation을 거부한다", () => {
+  const navigation = read(navigationPath);
+  const mutation = navigation.replace(
+    /(\{MOBILE_NAVIGATION\.map\(\(item\) => \([\s\S]*?<Link[\s\S]*?)\s+onClick=\{closeMenu\}/,
+    "$1",
+  );
+
+  assert.notEqual(mutation, navigation);
+  assert.throws(() => assertMobileNavigationContract(mutation));
 });
 
 test("푸터의 광고와 법적 링크를 전역 셸에서 보존한다", () => {
