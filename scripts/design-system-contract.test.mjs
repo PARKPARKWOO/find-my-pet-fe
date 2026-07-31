@@ -16,6 +16,10 @@ const legacyLabelPath = "src/app/_components/ui/label.tsx";
 const containerPath = "src/components/layout/Container.tsx";
 const pageShellPath = "src/components/layout/PageShell.tsx";
 const sectionHeadingPath = "src/components/typography/SectionHeading.tsx";
+const layoutPath = "src/app/layout.tsx";
+const navigationPath = "src/app/_components/layout/Navigation.tsx";
+const footerPath = "src/app/_components/layout/Footer.tsx";
+const siteNavigationPath = "src/lib/siteNavigation.ts";
 
 test("승인된 색을 semantic token으로 제공한다", () => {
   const css = read(globalsPath);
@@ -97,4 +101,39 @@ test("layout과 typography primitive의 선언된 public interface를 제공한�
 test("legacy Input과 Label은 canonical primitive를 재수출한다", () => {
   assert.match(read(legacyInputPath), /from\s+["']@\/components\/ui\/input["']/);
   assert.match(read(legacyLabelPath), /from\s+["']@\/components\/ui\/label["']/);
+});
+
+test("전역 셸은 접근 가능한 64px 탐색, 건너뛰기 링크, 안전한 랜드마크를 제공한다", () => {
+  const layout = read(layoutPath);
+  const navigation = read(navigationPath);
+  const siteNavigation = read(siteNavigationPath);
+
+  assert.match(navigation, /<Link[^>]+href="\/"/);
+  assert.doesNotMatch(navigation, /<div[^>]+onClick=\{\(\) => router\.push\("\/"\)\}/);
+  assert.doesNotMatch(navigation, /<Button[^>]*>\s*<Link/);
+  assert.match(navigation, /h-16/);
+  assert.match(navigation, /메뉴/);
+  assert.match(navigation, /aria-expanded=/);
+  assert.match(navigation, /aria-controls=/);
+  assert.match(navigation, /NotificationBell/);
+  assert.match(navigation, /requestLogout/);
+  assert.match(navigation, /소식 등록/);
+  assert.match(navigation, /상황별 반려동물 안내/);
+  for (const label of ["함께 찾기", "보호 동물", "보호소·입양", "이용 안내"]) {
+    assert.match(siteNavigation, new RegExp(label));
+  }
+  assert.match(layout, /href="#main-content"/);
+  assert.match(layout, /id="main-content"/);
+  assert.doesNotMatch(layout, /<main[\s>]/);
+  assert.doesNotMatch(layout, /from ["']lenis["']/);
+  assert.doesNotMatch(layout, /from ["']gsap["']/);
+  assert.match(layout, /max-w-page/);
+});
+
+test("푸터의 광고와 법적 링크를 전역 셸에서 보존한다", () => {
+  const footer = read(footerPath);
+
+  assert.match(footer, /<FooterAd\s*\/>/);
+  assert.match(footer, /href="\/terms"/);
+  assert.match(footer, /href="\/privacy"/);
 });

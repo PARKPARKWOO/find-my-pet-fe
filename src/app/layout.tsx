@@ -130,9 +130,16 @@ export default function RootLayout({
         <KakaoMapScript />
         <AuthQueryCapture />
         <div className="w-full flex flex-col min-h-screen h-full">
+          <a href="#main-content" className="sr-only focus:not-sr-only">
+            본문으로 바로가기
+          </a>
           <Navigation />
-          <div className="flex flex-grow justify-center p-6 ">
-            <div className="max-w-[1280px] w-full">{children}</div>
+          <div
+            id="main-content"
+            tabIndex={-1}
+            className="flex flex-grow justify-center px-4 py-6 md:px-6"
+          >
+            <div className="w-full max-w-page">{children}</div>
           </div>
           <Footer />
         </div>
