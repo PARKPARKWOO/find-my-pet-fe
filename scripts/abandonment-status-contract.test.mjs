@@ -96,9 +96,16 @@ test("closed-notice fallback copy does not claim a displayed future date passed"
 test("CLOSED and ALL list guidance does not infer that the notice period elapsed", () => {
   const source = read("src/app/_components/main/AbandonmentList.tsx");
 
+  assert.match(source, /NOTICE_STATUSES[^\n]*\["OPEN", "CLOSED", "ALL"\]/);
   assert.match(source, /종료된 공고가 포함될 수/);
   assert.match(source, /보호소.*확인|확인.*보호소/);
   assert.doesNotMatch(source, /공고 ?기간이? 끝난 아이/);
+});
+
+test("integrated search marks ended shelter notices with the backend status", () => {
+  const source = read("src/app/search/page.tsx");
+
+  assert.match(source, /item\.noticeClosed[\s\S]{0,240}공고 종료/);
 });
 
 test("FAQ distinguishes the seven-day notice minimum from ten-day ownership transfer", () => {
@@ -110,4 +117,8 @@ test("FAQ distinguishes the seven-day notice minimum from ten-day ownership tran
   assert.match(source, /10일[\s\S]{0,80}소유자[\s\S]{0,40}알 수 없/);
   assert.doesNotMatch(source, /공고\s*후\s*10일이\s*지나면\s*소유권/);
   assert.doesNotMatch(source, /공고\s*기간이\s*끝난\s*동물부터\s*입양이\s*가능/);
+  assert.doesNotMatch(source, /진행중인\s*공고만\s*노출됩니다/);
+  assert.match(source, /진행 중인 공고\(OPEN\)[\s\S]{0,40}기본/);
+  assert.match(source, /공고 종료\(CLOSED\)[\s\S]{0,80}전체 필터[\s\S]{0,120}안내/);
+  assert.match(source, /통합검색[\s\S]{0,80}공고 종료[\s\S]{0,40}뱃지/);
 });
