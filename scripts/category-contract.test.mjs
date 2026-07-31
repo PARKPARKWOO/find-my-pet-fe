@@ -26,6 +26,8 @@ const abandonmentCardPath = path.resolve(
   scriptsDirectory,
   "../src/app/_components/AbandonmentCard.tsx",
 );
+const lostCardPath = path.resolve(scriptsDirectory, "../src/app/_components/LostCard.tsx");
+const homeSeedPath = path.resolve(scriptsDirectory, "../src/lib/homeSeed.ts");
 const lostIndexPagePath = path.resolve(
   scriptsDirectory,
   "../src/app/(route)/lost/page.tsx",
@@ -62,7 +64,6 @@ test("목록은 오류와 빈 결과를 구분하고 보호 카드를 링크로 
   assert.match(lost, /다시 시도/);
   assert.match(abandoned, /보호 동물 정보를 불러오지 못했어요/);
   assert.match(abandoned, /다시 시도/);
-  assert.match(abandoned, /const \[isLoading, setIsLoading\] = useState\(true\)/);
   assert.match(abandoned, /<Link[\s\S]*?href=\{`\/abandonment\//);
   assert.doesNotMatch(abandoned, /localStorage\.setItem\("petInfo"/);
   assert.match(lost, /const controller = new AbortController\(\)/);
@@ -86,6 +87,80 @@ test("목록은 오류와 빈 결과를 구분하고 보호 카드를 링크로 
   );
   assert.match(lostPagination, /if \(totalPages <= 0\) return null/);
   assert.match(abandonmentCard, /className="h-\[350px\] w-full/);
+});
+
+test("홈 서버 시드는 정규 요청에서 한 번만 쓰고 목록의 기존 요청 계약은 보존한다", () => {
+  const lost = fs.readFileSync(lostListPath, "utf8");
+  const abandoned = fs.readFileSync(abandonmentListPath, "utf8");
+  const seed = fs.readFileSync(homeSeedPath, "utf8");
+
+  assert.match(seed, /export function decideHomeSeedRequest/);
+  assert.match(lost, /export interface LostListProps\s*\{\s*initialPage\?: HomeListSeed<LostPetSummary>/);
+  assert.match(abandoned, /export interface AbandonmentListProps\s*\{\s*initialPage\?: HomeListSeed<AbandonedAnimalSummary>/);
+  assert.match(lost, /HOME_LOST_REQUEST_KEY/);
+  assert.match(abandoned, /HOME_ABANDONMENT_REQUEST_KEY/);
+  assert.match(lost, /getLostRequestKey\(\{ currentPage, pageSize: ITEM_PER_PAGE, nearby \}\)/);
+  assert.match(
+    abandoned,
+    /getAbandonmentRequestKey\(\{\s*noticeStatus,\s*animalType: filter,\s*uprCd,\s*orgCd,\s*currentPage,\s*pageSize: PAGE_SIZE,\s*\}\)/,
+  );
+  assert.match(lost, /useState\(\(\) => initialSeedRef\.current\?\.data\.contents \?\? \[\]\)/);
+  assert.match(lost, /useState\(\(\) => !initialSeedRef\.current\)/);
+  assert.match(abandoned, /useState\(\(\) => initialSeedRef\.current\?\.data\.totalCount \?\? 0\)/);
+  assert.match(abandoned, /useState\(\(\) => !initialSeedRef\.current\)/);
+  assert.match(lost, /const seedDecision = decideHomeSeedRequest\(/);
+  assert.match(abandoned, /const seedDecision = decideHomeSeedRequest\(/);
+  assert.match(lost, /retryRequested: reloadToken > 0/);
+  assert.match(abandoned, /retryRequested: reloadToken > 0/);
+  assert.doesNotMatch(lost, /\[[^\]]*initialPage[^\]]*\]/);
+  assert.doesNotMatch(abandoned, /\[[^\]]*initialPage[^\]]*\]/);
+
+  const canonicalIndex = abandoned.indexOf("if (!isCanonicalPageQuery(rawPage, currentPage))");
+  const decisionIndex = abandoned.indexOf("const seedDecision = decideHomeSeedRequest");
+  const mainRequestIndex = abandoned.indexOf('apiClient.get("/abandoned-animals"');
+  assert.ok(canonicalIndex >= 0 && canonicalIndex < decisionIndex && decisionIndex < mainRequestIndex);
+  assert.ok(lost.indexOf("const seedDecision = decideHomeSeedRequest") < lost.indexOf("apiClient.get"));
+
+  assert.match(lost, /\/posts\/nearby[\s\S]*?signal: controller\.signal/);
+  assert.match(lost, /\/posts\?pageSize=\$\{ITEM_PER_PAGE\}&pageOffset=\$\{currentPage - 1\}&orderBy=CREATED_AT_DESC[\s\S]*?signal: controller\.signal/);
+  assert.match(lost, /return \(\) => controller\.abort\(\)/);
+  assert.match(abandoned, /\/abandoned-animals\/sido/);
+  assert.match(abandoned, /\/abandoned-animals\/sigungu[\s\S]*?signal: controller\.signal/);
+  assert.match(abandoned, /\/me\/abandoned-subscriptions/);
+  assert.match(lost, /flatMap\(/);
+  assert.match(lost, /AD_INTERVAL/);
+  assert.match(lost, /AdFitSlot/);
+  assert.match(lost, /AdSlot/);
+  assert.doesNotMatch(lost, /homeFeed\.server/);
+  assert.doesNotMatch(abandoned, /homeFeed\.server/);
+
+  const retryMutation = lost.replace("retryRequested: reloadToken > 0", "retryRequested: false");
+  assert.doesNotMatch(retryMutation, /retryRequested: reloadToken > 0/);
+  const canonicalMutation = abandoned.replace(
+    "if (!isCanonicalPageQuery(rawPage, currentPage))",
+    "if (false)",
+  );
+  assert.equal(canonicalMutation.indexOf("if (!isCanonicalPageQuery(rawPage, currentPage))"), -1);
+});
+
+test("공유된 nullable 카드 타입은 빈 필드를 꾸며내지 않는다", () => {
+  const lostCard = fs.readFileSync(lostCardPath, "utf8");
+  const abandonmentCard = fs.readFileSync(abandonmentCardPath, "utf8");
+  const lost = fs.readFileSync(lostListPath, "utf8");
+  const abandoned = fs.readFileSync(abandonmentListPath, "utf8");
+
+  assert.match(lostCard, /import type \{ LostPetSummary \} from "@\/lib\/homeFeed"/);
+  assert.match(lostCard, /thumbnail \?/);
+  assert.match(abandonmentCard, /import type \{ AbandonedAnimalSummary \} from "@\/lib\/homeFeed"/);
+  assert.doesNotMatch(abandonmentCard, /from "\.\/main\/AbandonmentList"/);
+  assert.doesNotMatch(lostCard, /homeFeed\.server/);
+  assert.doesNotMatch(abandonmentCard, /homeFeed\.server/);
+  assert.doesNotMatch(abandoned, /interface IPet/);
+  assert.doesNotMatch(lost, /interface ILostPet/);
+  assert.match(abandonmentCard, /pet\.sexCd &&/);
+  assert.match(abandonmentCard, /pet\.weight &&/);
+  assert.match(abandonmentCard, /pet\.processState &&/);
+  assert.match(abandonmentCard, /formatKindLabel\(pet\.kindCd\) \?\? "구조동물"/);
 });
 
 test("페이지 번호는 총 건수를 벗어나지 않도록 정규화한다", () => {

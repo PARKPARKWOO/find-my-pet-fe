@@ -12,6 +12,10 @@ const searchBar = fs.readFileSync(
   path.join(rootDir, "src/app/_components/layout/SearchBar.tsx"),
   "utf8",
 );
+const homeFeed = fs.readFileSync(
+  path.join(rootDir, "src/app/_components/home/HomeFeed.client.tsx"),
+  "utf8",
+);
 
 test("home guidance links retain their stable destinations", () => {
   assert.deepEqual(
@@ -70,4 +74,26 @@ test("both site search variants remain accessible native GET forms", () => {
   assert.doesNotMatch(searchBar, /useRouter/);
   assert.doesNotMatch(searchBar, /preventDefault/);
   assert.doesNotMatch(searchBar, /router\.push/);
+});
+
+test("홈 피드 client island는 서버 seed와 기존 상호작용을 보존한다", () => {
+  assert.match(homeFeed, /^"use client";/);
+  assert.match(homeFeed, /export interface HomeFeedProps\s*\{[\s\S]*?lostSeed\?: HomeListSeed<LostPetSummary>/);
+  assert.match(homeFeed, /abandonmentSeed\?: HomeListSeed<AbandonedAnimalSummary>/);
+  assert.match(homeFeed, /data-native-scroll/);
+  assert.match(homeFeed, /<LostList initialPage=\{lostSeed\} \/>/);
+  assert.match(homeFeed, /<AbandonmentList initialPage=\{abandonmentSeed\} \/>/);
+  assert.match(homeFeed, /<Suspense fallback=\{<div className="h-\[400px\]" \/>\}>/);
+  assert.match(homeFeed, />\s*전체\s*</);
+  assert.match(homeFeed, />\s*집을 잃었어요\s*</);
+  assert.match(homeFeed, />\s*보호소에서 가족을 기다려요\s*</);
+  assert.match(homeFeed, /useIsLoginStore/);
+  assert.match(homeFeed, /router\.push\('\/register'\)/);
+  assert.match(homeFeed, /로그인이 필요합니다/);
+  assert.doesNotMatch(homeFeed, /homeFeed\.server/);
+  assert.doesNotMatch(homeFeed, /SearchBar/);
+  assert.doesNotMatch(homeFeed, /PurposeCategoryNav/);
+
+  const missingLostSeed = homeFeed.replace("<LostList initialPage={lostSeed} />", "<LostList />");
+  assert.doesNotMatch(missingLostSeed, /<LostList initialPage=\{lostSeed\} \/>/);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AbandonmentCard from "../AbandonmentCard";
 import { PetListSkeleton } from "../skeleton/PetListSkeleton";
 import Link from "next/link";
@@ -22,38 +22,13 @@ import {
   type NoticeStatusFilter,
 } from "@/lib/abandonment";
 import { clampPageToTotal, isCanonicalPageQuery } from "@/lib/pagination";
-
-export interface IPet {
-  desertionNo: string;
-  filename: string;
-  happenDt: string;
-  happenPlace: string;
-  kindCd: string;
-  colorCd?: string;
-  age: string;
-  weight: string;
-  noticeNo: string;
-  noticeSdt: string;
-  noticeEdt: string;
-  /** 백엔드가 계산한 표시용 종료일. OPEN/CLOSED 판정에는 사용하지 않는다. */
-  effectiveNoticeEdt?: string | null;
-  popfile: string;
-  processState: string;
-  sexCd: string;
-  neuterYn?: string;
-  specialMark: string;
-  careNm: string;
-  careTel: string;
-  careAddr: string;
-  orgNm?: string;
-  chargeNm?: string;
-  officetel?: string;
-  /** 백엔드가 upkind 로 분류해 채운 값 (DOG/CAT/OTHER) */
-  animalType?: "DOG" | "CAT" | "OTHER";
-  /** 백엔드가 판정한 공고 종료 여부. 판정은 @/lib/abandonment 를 쓴다. */
-  noticeClosed?: boolean | null;
-  noticeClosedAt?: string | null;
-}
+import { decideHomeSeedRequest, type HomeSeedGateState } from "@/lib/homeSeed";
+import {
+  getAbandonmentRequestKey,
+  HOME_ABANDONMENT_REQUEST_KEY,
+  type AbandonedAnimalSummary,
+  type HomeListSeed,
+} from "@/lib/homeFeed";
 
 interface RegionItem {
   orgCd: string | null;
@@ -74,12 +49,16 @@ const QUERY_KEY = {
 
 const NOTICE_STATUSES: NoticeStatusFilter[] = ["OPEN", "CLOSED", "ALL"];
 
+export interface AbandonmentListProps {
+  initialPage?: HomeListSeed<AbandonedAnimalSummary>;
+}
+
 function parsePage(raw: string | null): number {
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
 }
 
-export default function AbandonmentList() {
+export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -97,10 +76,33 @@ export default function AbandonmentList() {
   const orgCd = searchParams.get(QUERY_KEY.sigungu) ?? ""; // 시군구 코드
   const rawPage = searchParams.get(QUERY_KEY.page);
   const currentPage = parsePage(rawPage);
+  const currentRequestKey = getAbandonmentRequestKey({
+    noticeStatus,
+    animalType: filter,
+    uprCd,
+    orgCd,
+    currentPage,
+    pageSize: PAGE_SIZE,
+  });
+  const initialSeedValidatedRef = useRef(false);
+  const initialSeedRef = useRef<HomeListSeed<AbandonedAnimalSummary> | undefined>(undefined);
+  if (!initialSeedValidatedRef.current) {
+    initialSeedRef.current =
+      isCanonicalPageQuery(rawPage, currentPage) && initialPage?.requestKey === currentRequestKey
+        ? initialPage
+        : undefined;
+    initialSeedValidatedRef.current = true;
+  }
+  const seedGateRef = useRef<HomeSeedGateState>({
+    seededRequestKey: initialSeedRef.current?.requestKey ?? null,
+    previousRequestKey: HOME_ABANDONMENT_REQUEST_KEY,
+  });
 
-  const [abandonmentPetList, setAbandonmentPetList] = useState<IPet[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [abandonmentPetList, setAbandonmentPetList] = useState(
+    () => initialSeedRef.current?.data.contents ?? [],
+  );
+  const [totalCount, setTotalCount] = useState(() => initialSeedRef.current?.data.totalCount ?? 0);
+  const [isLoading, setIsLoading] = useState(() => !initialSeedRef.current);
   const [loadError, setLoadError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [sidoList, setSidoList] = useState<RegionItem[]>([]);
@@ -225,13 +227,23 @@ export default function AbandonmentList() {
   }, [uprCd]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    let keepLoadingForRedirect = false;
-
     if (!isCanonicalPageQuery(rawPage, currentPage)) {
       replacePage(currentPage);
-      return () => controller.abort();
+      return;
     }
+
+    const seedDecision = decideHomeSeedRequest(seedGateRef.current, {
+      requestKey: currentRequestKey,
+      retryRequested: reloadToken > 0,
+    });
+    seedGateRef.current = seedDecision.state;
+    if (!seedDecision.shouldFetch) {
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    let keepLoadingForRedirect = false;
 
     const fetchData = async () => {
       setIsLoading(true);
@@ -274,7 +286,17 @@ export default function AbandonmentList() {
     fetchData();
 
     return () => controller.abort();
-  }, [currentPage, filter, noticeStatus, uprCd, orgCd, rawPage, reloadToken, replacePage]);
+  }, [
+    currentPage,
+    currentRequestKey,
+    filter,
+    noticeStatus,
+    orgCd,
+    rawPage,
+    reloadToken,
+    replacePage,
+    uprCd,
+  ]);
 
   const chipClass = (active: boolean) =>
     `px-4 py-2 text-sm rounded-full transition-colors ${
@@ -410,7 +432,7 @@ export default function AbandonmentList() {
             </button>
           </div>
         ) : (
-          abandonmentPetList.map((pet: IPet) => (
+          abandonmentPetList.map((pet) => (
             <Link
               key={pet.desertionNo}
               href={`/abandonment/${pet.desertionNo}`}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PetListSkeleton } from "../skeleton/PetListSkeleton";
 import LostCard from "../LostCard";
 import Link from "next/link";
@@ -11,6 +11,13 @@ import NearbyFilter, { type NearbySetting } from "./NearbyFilter";
 import AdSlot from "../ads/AdSlot";
 import AdFitSlot from "../ads/AdFitSlot";
 import { clampPageToTotal } from "@/lib/pagination";
+import { decideHomeSeedRequest, type HomeSeedGateState } from "@/lib/homeSeed";
+import {
+  getLostRequestKey,
+  HOME_LOST_REQUEST_KEY,
+  type HomeListSeed,
+  type LostPetSummary,
+} from "@/lib/homeFeed";
 
 /** 홈 피드 카드 몇 장마다 1번 광고 슬롯 삽입. */
 const AD_INTERVAL = 6;
@@ -18,29 +25,43 @@ const AD_INTERVAL = 6;
 const ADFIT_FEED_UNIT = process.env.NEXT_PUBLIC_ADFIT_UNIT_FEED;
 const ADSENSE_FEED_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FEED;
 
-export interface ILostPet {
-  author: string;
-  gratuity: number;
-  id: string;
-  place: string;
-  thumbnail: string;
-  time: string;
-  title: string;
-  description: string;
-  missingAnimalStatus: "SEARCHING" | "FOUND" | "SEEN";
-  distanceKm?: number;
+export interface LostListProps {
+  initialPage?: HomeListSeed<LostPetSummary>;
 }
 
-export default function LostList() {
-  const [lostPetList, setLostPetList] = useState<ILostPet[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+export default function LostList({ initialPage }: LostListProps) {
+  const initialSeedValidatedRef = useRef(false);
+  const initialSeedRef = useRef<HomeListSeed<LostPetSummary> | undefined>(undefined);
+  if (!initialSeedValidatedRef.current) {
+    initialSeedRef.current =
+      initialPage?.requestKey === HOME_LOST_REQUEST_KEY ? initialPage : undefined;
+    initialSeedValidatedRef.current = true;
+  }
+
+  const seedGateRef = useRef<HomeSeedGateState>({
+    seededRequestKey: initialSeedRef.current?.requestKey ?? null,
+    previousRequestKey: HOME_LOST_REQUEST_KEY,
+  });
+  const [lostPetList, setLostPetList] = useState(() => initialSeedRef.current?.data.contents ?? []);
+  const [totalCount, setTotalCount] = useState(() => initialSeedRef.current?.data.totalCount ?? 0);
+  const [isLoading, setIsLoading] = useState(() => !initialSeedRef.current);
   const [loadError, setLoadError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [nearby, setNearby] = useState<NearbySetting>({ enabled: false });
 
   useEffect(() => {
+    const requestKey = getLostRequestKey({ currentPage, pageSize: ITEM_PER_PAGE, nearby });
+    const seedDecision = decideHomeSeedRequest(seedGateRef.current, {
+      requestKey,
+      retryRequested: reloadToken > 0,
+    });
+    seedGateRef.current = seedDecision.state;
+    if (!seedDecision.shouldFetch) {
+      setIsLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
     let keepLoadingForRedirect = false;
 
@@ -48,7 +69,7 @@ export default function LostList() {
       setIsLoading(true);
       setLoadError(false);
       try {
-        let nextContents: ILostPet[];
+        let nextContents: LostPetSummary[];
         let nextTotalCount: number;
         if (nearby.enabled) {
           const res = await apiClient.get(`/posts/nearby`, {
@@ -139,7 +160,6 @@ export default function LostList() {
                 <LostCard {...pet} />
               </Link>
             );
-            // 카드 AD_INTERVAL 개마다 광고 1개 삽입 (맨 앞/마지막 제외)
             const shouldInjectAd =
               idx > 0 && (idx + 1) % AD_INTERVAL === 0 && idx !== lostPetList.length - 1;
             if (!shouldInjectAd) return [node];
