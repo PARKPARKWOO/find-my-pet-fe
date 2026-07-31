@@ -38,15 +38,19 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => (
-    <CanonicalButton
-      ref={ref}
-      variant={variant}
-      size={size}
-      className={cn(buttonVariants({ variant, size }), className)}
-      {...props}
-    />
-  )
+  ({ className, variant, size, ...props }, ref) => {
+    const resolvedSize = size ?? "sm";
+
+    return (
+      <CanonicalButton
+        ref={ref}
+        variant={variant}
+        size={resolvedSize}
+        className={cn(buttonVariants({ variant, size: resolvedSize }), className)}
+        {...props}
+      />
+    );
+  }
 );
 Button.displayName = "LegacyButton";
 

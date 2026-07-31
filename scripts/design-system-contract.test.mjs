@@ -54,6 +54,14 @@ test("기존 xs breakpoint와 primitive 호환 경로를 보존한다", () => {
   assert.match(adapter, /export\s*\{\s*Button,\s*buttonVariants\s*\}/);
 });
 
+test("legacy Button은 생략된 크기를 sm으로 정규화해 양쪽 variant 경계에 전달한다", () => {
+  const adapter = read(legacyButtonPath);
+
+  assert.match(adapter, /const resolvedSize = size \?\? ["']sm["']/);
+  assert.match(adapter, /<CanonicalButton[\s\S]*?size=\{resolvedSize\}/);
+  assert.match(adapter, /buttonVariants\(\{\s*variant,\s*size:\s*resolvedSize\s*\}\)/);
+});
+
 test("semantic Tailwind maps와 canonical Button 변형을 제공한다", () => {
   const tailwind = read(tailwindPath);
   const button = read(canonicalButtonPath);
@@ -66,7 +74,7 @@ test("semantic Tailwind maps와 canonical Button 변형을 제공한다", () => 
   assert.match(tailwind, /reading:\s*["']48rem["']/);
   assert.match(tailwind, /raised:\s*["']var\(--fmp-shadow-raised\)["']/);
   assert.match(button, /action:\s*["']bg-forest text-white hover:bg-forest\/90["']/);
-  assert.match(button, /signal:\s*["']bg-clay text-white hover:bg-clay\/90["']/);
+  assert.match(button, /signal:\s*["']bg-clay text-\[#111513\] hover:bg-clay\/90["']/);
   assert.match(button, /brand:\s*["']bg-kakao text-\[#191919\] hover:bg-kakao\/90["']/);
 });
 
