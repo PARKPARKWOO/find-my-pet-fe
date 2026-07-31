@@ -21,6 +21,7 @@ import {
   withdrawAccount,
   type WithdrawalPreview,
 } from "@/lib/auth";
+import { runWithdrawalFlow } from "@/lib/withdrawalFlow";
 
 /**
  * 회원 탈퇴.
@@ -109,31 +110,31 @@ export default function WithdrawSection() {
     setIsPending(true);
     setFailure(null);
 
-    // 1단계 성공 여부는 이 렌더에서 바로 알아야 해서 지역 변수로 들고 간다(state 반영은 다음 렌더).
-    let destroyed = dataDestroyed;
-    try {
-      if (!destroyed) {
-        await destroyMyServiceData();
-        destroyed = true;
-        setDataDestroyed(true);
-      }
-      await withdrawAccount();
-    } catch (error) {
-      const expired = isUnauthorizedError(error);
+    const result = await runWithdrawalFlow(
+      { dataDestroyed },
+      {
+        destroyData: destroyMyServiceData,
+        withdrawAccount,
+        isUnauthorizedError,
+      },
+    );
+
+    if (result.kind === "failed") {
+      setDataDestroyed(result.dataDestroyed);
       // 어디까지 처리됐는지를 그대로 알린다. 되돌릴 수 없는 작업에서 "실패했습니다" 한 줄만 주면
       // 이용자는 데이터가 지워졌는지 아닌지 확인할 방법이 없다.
-      const message = !destroyed
-        ? expired
+      const message = result.phase === "data-destruction"
+        ? result.unauthorized
           ? "로그인이 만료되어 탈퇴를 진행하지 못했습니다. 계정과 데이터는 그대로입니다. 다시 로그인한 뒤 시도해 주세요."
           : "데이터 삭제에 실패했습니다. 계정과 데이터는 그대로 남아 있습니다. 잠시 후 다시 시도해 주세요."
-        : expired
+        : result.unauthorized
           ? "데이터 삭제는 완료되었지만 계정 탈퇴는 남아 있습니다. 다시 로그인한 뒤 한 번 더 진행해 주세요."
           : "데이터 삭제는 완료되었지만 계정 탈퇴에 실패했습니다. '다시 시도'를 눌러 주세요. 남은 단계만 다시 진행합니다.";
       setFailure(message);
       // 401 이면 전역 로그아웃 이벤트로 이 섹션이 통째로 사라지므로, 다이얼로그 밖에도 남겨야 한다.
       toast({
         variant: "destructive",
-        title: destroyed ? "탈퇴가 끝나지 않았습니다" : "탈퇴하지 못했습니다",
+        title: result.dataDestroyed ? "탈퇴가 끝나지 않았습니다" : "탈퇴하지 못했습니다",
         description: message,
       });
       setIsPending(false);
