@@ -33,6 +33,8 @@ export interface IPet {
   noticeNo: string;
   noticeSdt: string;
   noticeEdt: string;
+  /** 백엔드가 계산한 표시용 종료일. OPEN/CLOSED 판정에는 사용하지 않는다. */
+  effectiveNoticeEdt?: string | null;
   popfile: string;
   processState: string;
   sexCd: string;
@@ -46,8 +48,8 @@ export interface IPet {
   officetel?: string;
   /** 백엔드가 upkind 로 분류해 채운 값 (DOG/CAT/OTHER) */
   animalType?: "DOG" | "CAT" | "OTHER";
-  /** 백엔드가 `closed_at` 기준으로 채우는 공고 종료 여부. 판정은 @/lib/abandonment 를 쓴다. */
-  noticeClosed?: boolean;
+  /** 백엔드가 판정한 공고 종료 여부. 판정은 @/lib/abandonment 를 쓴다. */
+  noticeClosed?: boolean | null;
   noticeClosedAt?: string | null;
 }
 
@@ -257,8 +259,8 @@ export default function AbandonmentList() {
         ))}
       </div>
 
-      {/* 공고 상태 필터 — 기본은 진행 중. "공고 종료" 는 이미 공고기간이 끝난 아이들이라
-          현재 보호 여부를 보장하지 않는다는 안내를 함께 노출한다. */}
+      {/* 공고 상태 필터 — 기본은 OPEN. CLOSED 는 백엔드의 공고 상태이며
+          동물의 현재 보호·입양·반환 상태를 단정하지 않는다. */}
       <div className="flex gap-2 mb-3 flex-wrap items-center">
         <span className="text-xs text-gray-500">공고 상태</span>
         {NOTICE_STATUSES.map((status) => (
@@ -277,8 +279,8 @@ export default function AbandonmentList() {
 
       {noticeStatus !== "OPEN" && (
         <p className="mb-3 text-xs text-amber-800 bg-amber-50 border-l-4 border-amber-400 rounded-r-md px-3 py-2">
-          공고 기간이 끝난 아이가 포함돼 있습니다. 보호소가 계속 보호 중일 수도, 입양·반환됐을 수도
-          있으니 현재 상태는 보호소에 직접 확인해 주세요.
+          종료된 공고가 포함될 수 있습니다. 현재 보호·입양·반환 상태는 이 공고만으로 알 수 없으니
+          보호소에 직접 확인해 주세요.
         </p>
       )}
 

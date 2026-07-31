@@ -23,6 +23,9 @@ export interface AbandonedSummary {
   careTel: string | null;
   careAddr: string | null;
   processState: string | null;
+  noticeEdt?: string | null;
+  effectiveNoticeEdt?: string | null;
+  noticeClosed?: boolean | null;
 }
 
 export interface AbandonedPage {
@@ -84,6 +87,7 @@ export async function fetchAbandonedByRegion(params: {
     pageNo: "1",
     numOfRows: String(params.numOfRows ?? 20),
     uprCd: params.uprCd,
+    noticeStatus: "OPEN",
   });
   if (params.orgCd) q.set("orgCd", params.orgCd);
   try {

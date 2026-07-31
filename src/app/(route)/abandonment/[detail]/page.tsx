@@ -5,7 +5,12 @@ import { ArrowLeft } from "lucide-react";
 import { BASE_URL } from "@/app/constant/api";
 import { Button } from "@/app/_components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { formatYyyyMmDdKo, happenDtToDate, isNoticeClosed } from "@/lib/abandonment";
+import {
+  formatYyyyMmDdKo,
+  happenDtToDate,
+  isNoticeClosed,
+  resolveDisplayedNoticeEdt,
+} from "@/lib/abandonment";
 import { formatKindLabel } from "@/lib/animalType";
 import AbandonmentMaps, { ShelterMap } from "./AbandonmentMaps";
 import ShareButtons from "@/app/_components/share/ShareButtons";
@@ -31,9 +36,11 @@ interface AbandonedPet {
   noticeNo: string | null;
   noticeSdt: string | null;
   noticeEdt: string | null;
+  /** 백엔드가 계산한 표시용 종료일. OPEN/CLOSED 판정에는 사용하지 않는다. */
+  effectiveNoticeEdt?: string | null;
   animalType: string | null;
   orgNm?: string | null;
-  /** 백엔드가 `closed_at` 기준으로 채우는 공고 종료 여부 (mirror 경로에서만 채워진다). */
+  /** 백엔드가 판정한 공고 종료 여부. */
   noticeClosed?: boolean | null;
   noticeClosedAt?: string | null;
 }
@@ -73,7 +80,7 @@ export async function generateMetadata({
     };
   }
   /**
-   * 공고 기간이 끝난 페이지는 noindex 로 검색 유입을 끊는다. 단 URL 은 200 + follow 로 살려둔다 —
+   * 백엔드가 CLOSED 로 판정한 공고는 noindex 로 검색 유입을 끊는다. 단 URL 은 200 + follow 로 살려둔다 —
    * 이미 색인된 2만여 건을 404 로 만들면 외부 링크·SNS 공유·북마크가 전부 깨지고, 얻는 건
    * "색인 제거가 조금 빠르다" 뿐인데 그건 noindex 로도 된다.
    *
@@ -84,7 +91,8 @@ export async function generateMetadata({
   const closed = isNoticeClosed(pet);
   const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
   const place = pet.happenPlace ?? pet.careAddr ?? "";
-  const endedOn = formatYyyyMmDdKo(pet.noticeEdt);
+  const displayedNoticeEdt = resolveDisplayedNoticeEdt(pet);
+  const endedOn = formatYyyyMmDdKo(displayedNoticeEdt);
   const title = closed
     ? `${kind} - ${place} 공고 종료 | 파인드마이펫`
     : `${kind} - ${place} 보호중 | 파인드마이펫`;
@@ -92,7 +100,8 @@ export async function generateMetadata({
     pet.sexCd === "M" ? "수컷" : pet.sexCd === "F" ? "암컷" : "성별 미상";
   const description = closed
     ? (
-        `${pet.careNm ?? "보호소"} 공고가 ${endedOn ? `${endedOn}에 ` : ""}종료된 ${kind}. ` +
+        `${pet.careNm ?? "보호소"} 공고가 종료된 ${kind}. ` +
+        `${endedOn ? `표시된 공고 종료일: ${endedOn}. ` : ""}` +
         `현재 상태는 보호소에 직접 확인이 필요합니다. ${sex}, ${pet.age ?? "나이미상"}.` +
         ` 발견: ${place}, ${pet.happenDt ? formatDate(pet.happenDt) : ""}.`
       ).slice(0, 160)
@@ -150,9 +159,10 @@ export default async function AbandonmentDetailPage({
 
   const closed = isNoticeClosed(pet);
   const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
-  const endedOn = formatYyyyMmDdKo(pet.noticeEdt);
+  const displayedNoticeEdt = resolveDisplayedNoticeEdt(pet);
+  const endedOn = formatYyyyMmDdKo(displayedNoticeEdt);
   const noticeStart = happenDtToDate(pet.noticeSdt) ?? happenDtToDate(pet.happenDt);
-  const noticeEnd = happenDtToDate(pet.noticeEdt);
+  const noticeEnd = happenDtToDate(displayedNoticeEdt);
 
   /**
    * 상태를 지어내지 않는다. 우리가 아는 건 공고기간(`noticeSdt`~`noticeEdt`)뿐이므로
@@ -189,7 +199,7 @@ export default async function AbandonmentDetailPage({
         {closed && (
           <div className="mb-4">
             <ClosedNoticeBanner
-              noticeEdt={pet.noticeEdt}
+              noticeEdt={displayedNoticeEdt}
               processState={pet.processState}
               careNm={pet.careNm}
               careTel={pet.careTel}
@@ -279,13 +289,12 @@ export default async function AbandonmentDetailPage({
               </div>
               <div>
                 <h3 className="font-bold text-xs text-gray-500">상태</h3>
-                {/* 공공데이터 원본값은 위조하지 않고 그대로 둔다. 다만 이 값은 상류가 갱신을
-                    멈춰 "보호중" 으로 얼어붙어 있으므로, 우리가 확실히 아는 사실(공고 기간 종료)을
-                    보조 표기로 덧붙여 오해를 막는다. */}
+                {/* 공공데이터 원본값은 위조하지 않고 그대로 둔다. 백엔드가 판정한 CLOSED 공고는
+                    별도 보조 표기로 덧붙이되 기간 경과나 동물의 현재 상태를 추론하지 않는다. */}
                 <span>{pet.processState ?? "-"}</span>
                 {closed && (
                   <span className="block text-xs text-amber-700">
-                    공고 기간 종료{endedOn ? ` (${endedOn})` : ""} · 현재 상태는 보호소 확인 필요
+                    공고 종료{endedOn ? ` · 표시된 공고 종료일 ${endedOn}` : ""} · 현재 상태는 보호소 확인 필요
                   </span>
                 )}
               </div>

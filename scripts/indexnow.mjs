@@ -9,9 +9,8 @@
  *
  * 설계 원칙
  * - 기본 동작은 "변경분만". 전량(10,000+) 제출은 --all 로 명시할 때만.
- * - 색인 대상만 보낸다. 종료(반환·입양·자연사) 공고는 상세 페이지가 noindex 이므로 제외.
- *   ※ sitemap.xml 은 processState 를 거르지 않아 noindex URL 을 포함한다(확인함).
- *      그래서 sitemap 이 아니라 API 를 소스로 쓰고 여기서 직접 필터한다.
+ * - 색인 대상만 보낸다. 백엔드가 종료로 판정한 공고는 상세 페이지가 noindex 이므로 제외.
+ *   sitemap 이 아니라 API 를 소스로 쓰고 서버의 noticeClosed 값을 직접 확인한다.
  * - 실패해도 배포를 깨뜨리지 않는다. 항상 exit 0.
  *
  * 사용
@@ -197,9 +196,7 @@ function sleep(ms) {
 
 /** 진행중 공고만 수집. 종료(반환·입양·자연사) 건은 상세가 noindex 라 제출 대상이 아니다. */
 function isOngoing(item) {
-  const state = item?.processState;
-  if (typeof state !== "string" || state.length === 0) return false;
-  return !state.startsWith("종료");
+  return item?.noticeClosed === false;
 }
 
 async function collectAbandonedUrls({ all, since, slack }) {
@@ -212,10 +209,10 @@ async function collectAbandonedUrls({ all, since, slack }) {
 
   for (let pageNo = 1; pageNo <= LIST_MAX_PAGES; pageNo++) {
     const json = await getJson(
-      `${API_BASE}/abandoned-animals?pageNo=${pageNo}&numOfRows=${LIST_PAGE_SIZE}`,
+      `${API_BASE}/abandoned-animals?pageNo=${pageNo}&numOfRows=${LIST_PAGE_SIZE}&noticeStatus=OPEN`,
     );
     const contents = json?.data?.contents;
-    if (!Array.isArray(contents) || contents.length === 0) break;
+    if (!Array.isArray(contents)) break;
     scanned += contents.length;
 
     for (const item of contents) {
@@ -231,7 +228,7 @@ async function collectAbandonedUrls({ all, since, slack }) {
       urls.push(`${SITE}/abandonment/${encodeURIComponent(item.desertionNo)}`);
     }
 
-    if (json?.data?.hasNextPage === false) break;
+    if (json?.data?.hasNextPage !== true) break;
 
     // 목록은 happenDt 내림차순 — 페이지 전체가 여유분보다 오래되면 이후는 볼 필요가 없다.
     if (scanCutoff) {
