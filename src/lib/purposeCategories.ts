@@ -45,3 +45,20 @@ export const PURPOSE_CATEGORIES: readonly PurposeCategory[] = [
     availability: "planned",
   },
 ];
+
+const HOME_PURPOSE_CATEGORY_IDS: readonly PurposeCategory["id"][] = [
+  "lost",
+  "abandonment",
+  "shelters",
+  "adoption-wanted",
+  "adoption-offer",
+];
+
+export const HOME_PURPOSE_CATEGORIES: readonly PurposeCategory[] =
+  HOME_PURPOSE_CATEGORY_IDS.map((id) => {
+    const category = PURPOSE_CATEGORIES.find((candidate) => candidate.id === id);
+    if (!category) {
+      throw new Error(`Missing purpose category required by the home page: ${id}`);
+    }
+    return category;
+  });

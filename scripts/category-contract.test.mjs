@@ -70,7 +70,7 @@ function assertAbandonmentMainRequestContract(mainEffect) {
 }
 
 test("목적 카테고리는 승인된 명칭과 경로를 한 단계로 제공한다", () => {
-  const { PURPOSE_CATEGORIES } = loadTypeScriptModule(registryPath);
+  const { HOME_PURPOSE_CATEGORIES, PURPOSE_CATEGORIES } = loadTypeScriptModule(registryPath);
 
   assert.deepEqual(
     PURPOSE_CATEGORIES.map(({ label, href, availability }) => ({ label, href, availability })),
@@ -82,6 +82,46 @@ test("목적 카테고리는 승인된 명칭과 경로를 한 단계로 제공�
       { label: "반려동물의 새 가족을 찾아요", href: "/adoption/offer", availability: "planned" },
     ],
   );
+
+  const assertHomeCategoryOrder = (categories) =>
+    assert.deepEqual(
+      categories.map(({ id, label, href, availability }) => ({
+        id,
+        label,
+        href,
+        availability,
+      })),
+      [
+        { id: "lost", label: "집을 잃었어요", href: "/lost", availability: "available" },
+        {
+          id: "abandonment",
+          label: "보호소에서 가족을 기다려요",
+          href: "/abandonment",
+          availability: "available",
+        },
+        { id: "shelters", label: "우리집 근처 보호소", href: "/shelters", availability: "planned" },
+        {
+          id: "adoption-wanted",
+          label: "반려동물을 입양하고 싶어요",
+          href: "/adoption/wanted",
+          availability: "planned",
+        },
+        {
+          id: "adoption-offer",
+          label: "반려동물의 새 가족을 찾아요",
+          href: "/adoption/offer",
+          availability: "planned",
+        },
+      ],
+    );
+
+  assertHomeCategoryOrder(HOME_PURPOSE_CATEGORIES);
+  const activeOrderMutation = [
+    HOME_PURPOSE_CATEGORIES[1],
+    HOME_PURPOSE_CATEGORIES[0],
+    ...HOME_PURPOSE_CATEGORIES.slice(2),
+  ];
+  assert.throws(() => assertHomeCategoryOrder(activeOrderMutation));
 });
 
 test("목록은 오류와 빈 결과를 구분하고 보호 카드를 링크로 제공한다", () => {
