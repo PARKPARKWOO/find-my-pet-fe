@@ -4,6 +4,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
+
 import { loadTypeScriptModule } from "./test-utils/load-typescript-module.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -32,6 +34,400 @@ const nearbyMap = readOwnedSource(
 );
 const marquee = readOwnedSource("src/app/_components/home/LatestPetMarquee.tsx");
 const kakaoScript = readOwnedSource("src/app/_components/KakaoMapScript.tsx");
+
+function parseTsx(source, fileName = "contract.tsx") {
+  return ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+}
+
+function walk(node, visit) {
+  visit(node);
+  node.forEachChild((child) => walk(child, visit));
+}
+
+function jsxAttribute(element, name) {
+  return element.openingElement.attributes.properties.find(
+    (attribute) => ts.isJsxAttribute(attribute) && attribute.name.text === name,
+  );
+}
+
+function jsxStringAttribute(element, name) {
+  const attribute = jsxAttribute(element, name);
+  return attribute?.initializer && ts.isStringLiteral(attribute.initializer)
+    ? attribute.initializer.text
+    : null;
+}
+
+function constantTruthiness(expression) {
+  if (ts.isParenthesizedExpression(expression)) {
+    return constantTruthiness(expression.expression);
+  }
+  if (expression.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (expression.kind === ts.SyntaxKind.FalseKeyword || expression.kind === ts.SyntaxKind.NullKeyword) {
+    return false;
+  }
+  if (ts.isStringLiteral(expression) || ts.isNumericLiteral(expression)) {
+    return Boolean(expression.text && Number(expression.text) !== 0) ||
+      (ts.isStringLiteral(expression) && expression.text.length > 0);
+  }
+  if (
+    ts.isPrefixUnaryExpression(expression) &&
+    expression.operator === ts.SyntaxKind.ExclamationToken
+  ) {
+    const operand = constantTruthiness(expression.operand);
+    return operand === null ? null : !operand;
+  }
+  return null;
+}
+
+function statementAlwaysAbrupt(statement) {
+  if (ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) return true;
+  if (ts.isBlock(statement)) return statement.statements.some(statementAlwaysAbrupt);
+  if (!ts.isIfStatement(statement)) return false;
+
+  const condition = constantTruthiness(statement.expression);
+  if (condition === true) return statementAlwaysAbrupt(statement.thenStatement);
+  if (condition === false) {
+    return Boolean(statement.elseStatement && statementAlwaysAbrupt(statement.elseStatement));
+  }
+  return Boolean(
+    statement.elseStatement &&
+      statementAlwaysAbrupt(statement.thenStatement) &&
+      statementAlwaysAbrupt(statement.elseStatement),
+  );
+}
+
+function assertExplicitNearbyButtonContract(source) {
+  const sourceFile = parseTsx(source, "HomeNearbyMap.client.tsx");
+  const handlers = [];
+  const geolocationCalls = [];
+  const lookupButtons = [];
+
+  walk(sourceFile, (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === "handleLookup" &&
+      node.initializer &&
+      ts.isArrowFunction(node.initializer)
+    ) {
+      handlers.push(node.initializer);
+    }
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.getText(sourceFile) === "navigator.geolocation.getCurrentPosition"
+    ) {
+      geolocationCalls.push(node);
+    }
+    if (
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(sourceFile) === "button" &&
+      node.getText(sourceFile).includes("내 위치로 가까운 소식 보기")
+    ) {
+      lookupButtons.push(node);
+    }
+  });
+
+  assert.equal(handlers.length, 1, "one explicit lookup handler must own geolocation");
+  assert.equal(geolocationCalls.length, 1, "geolocation must have exactly one call site");
+  assert.ok(ts.isBlock(handlers[0].body), "handleLookup must have an executable block body");
+  assert.ok(
+    geolocationCalls[0].getStart(sourceFile) >= handlers[0].body.getStart(sourceFile) &&
+      geolocationCalls[0].end <= handlers[0].body.end,
+    "the sole geolocation call must stay inside handleLookup",
+  );
+  const directCallStatements = handlers[0].body.statements.filter(
+    (statement) =>
+      ts.isExpressionStatement(statement) &&
+      ts.isCallExpression(statement.expression) &&
+      statement.expression === geolocationCalls[0],
+  );
+  assert.equal(
+    directCallStatements.length,
+    1,
+    "geolocation must be a directly executed handleLookup statement",
+  );
+  const directCallIndex = handlers[0].body.statements.indexOf(directCallStatements[0]);
+  assert.equal(
+    handlers[0].body.statements
+      .slice(0, directCallIndex)
+      .some(statementAlwaysAbrupt),
+    false,
+    "handleLookup must not terminate unconditionally before geolocation",
+  );
+  assert.equal(lookupButtons.length, 1, "the visible lookup action must be a real button");
+
+  const onClick = jsxAttribute(lookupButtons[0], "onClick");
+  assert.ok(
+    onClick &&
+      onClick.initializer &&
+      ts.isJsxExpression(onClick.initializer) &&
+      onClick.initializer.expression &&
+      ts.isIdentifier(onClick.initializer.expression) &&
+      onClick.initializer.expression.text === "handleLookup",
+    "the visible lookup button must bind onClick directly to handleLookup",
+  );
+}
+
+const SERVER_COMPONENT_ALLOWED_MODULES = new Map([
+  [
+    "HomeHero.tsx",
+    new Set(["@/app/_components/category/PurposeCategoryNav", "./SituationGuide"]),
+  ],
+  [
+    "SituationGuide.tsx",
+    new Set(["next/link", "lucide-react", "@/lib/featuredGuides"]),
+  ],
+  ["NearbyDiscovery.tsx", new Set(["next/link", "./HomeNearbyMap.client"])],
+  ["LatestPetMarquee.tsx", new Set(["next/link", "@/lib/homeFeed"])],
+]);
+const SERVER_COMPONENT_FORBIDDEN_IDENTIFIERS = new Set([
+  "apiClient",
+  "navigator",
+  "window",
+  "document",
+  "localStorage",
+  "sessionStorage",
+  "indexedDB",
+  "useState",
+  "useEffect",
+  "useLayoutEffect",
+  "useReducer",
+  "useRef",
+  "useMemo",
+  "useCallback",
+  "useSyncExternalStore",
+]);
+
+function assertServerComponentBoundary(source, fileName) {
+  const sourceFile = parseTsx(source, fileName);
+  const directives = sourceFile.statements
+    .filter(ts.isExpressionStatement)
+    .map((statement) => statement.expression)
+    .filter(ts.isStringLiteral)
+    .map((literal) => literal.text);
+  assert.equal(directives.includes("use client"), false, `${fileName} must remain a Server Component`);
+
+  const allowedModules = SERVER_COMPONENT_ALLOWED_MODULES.get(fileName);
+  assert.ok(allowedModules, `missing server import allowlist for ${fileName}`);
+  const importedModules = sourceFile.statements
+    .filter(ts.isImportDeclaration)
+    .map((statement) => statement.moduleSpecifier)
+    .filter(ts.isStringLiteral)
+    .map((moduleSpecifier) => moduleSpecifier.text);
+  assert.deepEqual(
+    [...importedModules].sort(),
+    [...allowedModules].sort(),
+    `${fileName} imports must stay inside its audited Server Component boundary`,
+  );
+
+  for (const statement of sourceFile.statements) {
+    assert.equal(
+      ts.isExportDeclaration(statement) && Boolean(statement.moduleSpecifier),
+      false,
+      `${fileName} must not re-export an unaudited module`,
+    );
+  }
+
+  walk(sourceFile, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+        (ts.isIdentifier(node.expression) && node.expression.text === "require"))
+    ) {
+      assert.fail(`${fileName} must not dynamically load browser-only modules`);
+    }
+    if (
+      ts.isElementAccessExpression(node) &&
+      node.argumentExpression &&
+      ts.isStringLiteral(node.argumentExpression) &&
+      SERVER_COMPONENT_FORBIDDEN_IDENTIFIERS.has(node.argumentExpression.text)
+    ) {
+      assert.fail(
+        `${fileName} must not use computed browser-only access ${node.argumentExpression.text}`,
+      );
+    }
+    if (!ts.isIdentifier(node)) return;
+    assert.equal(
+      SERVER_COMPONENT_FORBIDDEN_IDENTIFIERS.has(node.text),
+      false,
+      `${fileName} must not reference browser-only identifier ${node.text}`,
+    );
+  });
+}
+
+function assertRadiusKeyboardFocusContract(source) {
+  const sourceFile = parseTsx(source, "HomeNearbyMap.client.tsx");
+  const radiusInputs = [];
+  walk(sourceFile, (node) => {
+    if (
+      ts.isJsxSelfClosingElement(node) &&
+      node.tagName.getText(sourceFile) === "input" &&
+      jsxStringAttribute({ openingElement: node }, "name") === "nearby-radius"
+    ) {
+      radiusInputs.push(node);
+    }
+  });
+  assert.equal(radiusInputs.length, 1, "one mapped nearby-radius radio template must exist");
+  const radiusInput = radiusInputs[0];
+  assert.equal(jsxStringAttribute({ openingElement: radiusInput }, "type"), "radio");
+  const value = jsxAttribute({ openingElement: radiusInput }, "value");
+  assert.ok(
+    value?.initializer &&
+      ts.isJsxExpression(value.initializer) &&
+      value.initializer.expression &&
+      ts.isIdentifier(value.initializer.expression) &&
+      value.initializer.expression.text === "radius",
+    "the radio value must use the mapped radius",
+  );
+  const inputClasses = new Set(
+    (jsxStringAttribute({ openingElement: radiusInput }, "className") ?? "").split(/\s+/),
+  );
+  assert.equal(inputClasses.has("sr-only"), true, "the native radio must remain focusable");
+  assert.equal(inputClasses.has("hidden"), false);
+
+  let radiusLabel = radiusInput.parent;
+  while (
+    radiusLabel &&
+    (!ts.isJsxElement(radiusLabel) ||
+      radiusLabel.openingElement.tagName.getText(sourceFile) !== "label")
+  ) {
+    radiusLabel = radiusLabel.parent;
+  }
+  assert.ok(radiusLabel && ts.isJsxElement(radiusLabel), "the radio must be owned by a visible label");
+  assert.equal(
+    Boolean(jsxAttribute(radiusLabel, "hidden")),
+    false,
+    "the owning radius label must not use the hidden attribute",
+  );
+  assert.notEqual(
+    jsxStringAttribute(radiusLabel, "aria-hidden"),
+    "true",
+    "the owning radius label must remain exposed",
+  );
+  const radiusExpressionIndex = radiusLabel.children.findIndex(
+    (child) =>
+      ts.isJsxExpression(child) &&
+      child.expression &&
+      ts.isIdentifier(child.expression) &&
+      child.expression.text === "radius",
+  );
+  assert.notEqual(
+    radiusExpressionIndex,
+    -1,
+    "the visible label must render its mapped radius",
+  );
+  assert.equal(
+    radiusLabel.children
+      .slice(radiusExpressionIndex + 1)
+      .some((child) => ts.isJsxText(child) && child.text.trim() === "km"),
+    true,
+    "the visible radius value must include the km unit",
+  );
+  const labelClasses = new Set(
+    (jsxStringAttribute(radiusLabel, "className") ?? "").split(/\s+/),
+  );
+  for (const hiddenClass of ["hidden", "invisible", "sr-only", "opacity-0"]) {
+    assert.equal(labelClasses.has(hiddenClass), false, `radius label must not use ${hiddenClass}`);
+  }
+  for (const requiredClass of [
+    "has-[:focus-visible]:ring-2",
+    "has-[:focus-visible]:ring-action-primary",
+    "has-[:focus-visible]:ring-offset-2",
+  ]) {
+    assert.equal(labelClasses.has(requiredClass), true, `radius label requires ${requiredClass}`);
+  }
+}
+
+function conditionalMappings(node, sourceFile) {
+  const mappings = [];
+  walk(node, (candidate) => {
+    if (
+      ts.isConditionalExpression(candidate) &&
+      candidate.condition.getText(sourceFile).replace(/\s+/g, " ") ===
+        'item.missingAnimalStatus === "SEARCHING"' &&
+      ts.isStringLiteral(candidate.whenTrue) &&
+      ts.isStringLiteral(candidate.whenFalse)
+    ) {
+      mappings.push([candidate.whenTrue.text, candidate.whenFalse.text]);
+    }
+  });
+  return mappings;
+}
+
+function assertNearbyStatusPresentation(source) {
+  const sourceFile = parseTsx(source, "HomeNearbyMap.client.tsx");
+  const markerMappings = [];
+  const listMappings = [];
+  walk(sourceFile, (node) => {
+    if (
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(sourceFile) === "CustomOverlayMap"
+    ) {
+      const markerSpans = [];
+      walk(node, (candidate) => {
+        if (
+          ts.isJsxSelfClosingElement(candidate) &&
+          candidate.tagName.getText(sourceFile) === "span" &&
+          jsxStringAttribute({ openingElement: candidate }, "aria-hidden") === "true"
+        ) {
+          markerSpans.push(candidate);
+        }
+      });
+      assert.equal(markerSpans.length, 1, "each overlay must own one decorative marker");
+      const markerClass = jsxAttribute({ openingElement: markerSpans[0] }, "className");
+      assert.ok(markerClass?.initializer && ts.isJsxExpression(markerClass.initializer));
+      markerMappings.push(...conditionalMappings(markerClass.initializer, sourceFile));
+    }
+
+    if (
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(sourceFile) === "ul" &&
+      jsxStringAttribute(node, "aria-label") === "가까운 공개 위치 소식"
+    ) {
+      const resultLinks = [];
+      walk(node, (candidate) => {
+        if (
+          ts.isJsxElement(candidate) &&
+          candidate.openingElement.tagName.getText(sourceFile) === "Link"
+        ) {
+          resultLinks.push(candidate);
+        }
+      });
+      assert.equal(resultLinks.length, 1, "the semantic list must own one result-link template");
+      const statusSpan = resultLinks[0].children.find(ts.isJsxElement);
+      assert.ok(statusSpan, "the result link must render a direct status element first");
+      assert.equal(
+        statusSpan.openingElement.tagName.getText(sourceFile),
+        "span",
+        "the first rendered result-link element must be the status span",
+      );
+      const statusClasses = new Set(
+        (jsxStringAttribute(statusSpan, "className") ?? "").split(/\s+/),
+      );
+      for (const requiredClass of ["text-xs", "font-semibold", "text-clay"]) {
+        assert.equal(statusClasses.has(requiredClass), true);
+      }
+      for (const hiddenClass of ["hidden", "invisible", "sr-only", "opacity-0"]) {
+        assert.equal(statusClasses.has(hiddenClass), false);
+      }
+      assert.notEqual(jsxStringAttribute(statusSpan, "aria-hidden"), "true");
+      const directStatusConditions = statusSpan.children
+        .filter(ts.isJsxExpression)
+        .map((child) => child.expression)
+        .filter((expression) => expression && ts.isConditionalExpression(expression));
+      assert.equal(directStatusConditions.length, 1, "the visible status span needs one direct mapping");
+      listMappings.push(...conditionalMappings(directStatusConditions[0], sourceFile));
+    }
+  });
+  assert.deepEqual(markerMappings, [["bg-map-missing", "bg-map-sighting"]]);
+  assert.deepEqual(listMappings, [["찾는 중", "목격"]]);
+}
 
 function assertHomeSnapshotComposition(source) {
   assert.doesNotMatch(source, /^"use client";/);
@@ -118,6 +514,7 @@ test("server home uses one snapshot for marquee and both Task 6 seeds", () => {
 
 test("nearby lookup is explicit, abortable, stale-safe, and truthful", () => {
   assertNearbyConcurrencyContract(nearbyMap);
+  assertExplicitNearbyButtonContract(nearbyMap);
   assert.match(nearbyMap, /내 위치로 가까운 소식 보기/);
   assert.match(nearbyMap, /1, 3, 5, 10/);
   assert.match(nearbyMap, /useState<RadiusKm>\(3\)/);
@@ -153,6 +550,159 @@ test("nearby lookup is explicit, abortable, stale-safe, and truthful", () => {
     "          const result = normalizeNearbyResponse",
   );
   assert.throws(() => assertNearbyConcurrencyContract(successStaleMutation));
+
+  const noOpButtonMutation = nearbyMap.replace(
+    "onClick={handleLookup}",
+    "onClick={() => undefined}",
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(noOpButtonMutation));
+  const missingButtonBindingMutation = nearbyMap.replace(
+    "onClick={handleLookup}",
+    'aria-label="위치 조회"',
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(missingButtonBindingMutation));
+  const secondGeolocationMutation = nearbyMap.replace(
+    "export default function HomeNearbyMap()",
+    "navigator.geolocation.getCurrentPosition(() => {}, () => {});\n\nexport default function HomeNearbyMap()",
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(secondGeolocationMutation));
+  const earlyReturnMutation = nearbyMap.replace(
+    '    setLookupStatus("locating");',
+    '    return;\n    setLookupStatus("locating");',
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(earlyReturnMutation));
+  const conditionalEarlyReturnMutation = nearbyMap.replace(
+    '    setLookupStatus("locating");',
+    '    if (true) return;\n    setLookupStatus("locating");',
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(conditionalEarlyReturnMutation));
+  const deferredGeolocationMutation = nearbyMap.replace(
+    "    navigator.geolocation.getCurrentPosition(",
+    "    const deferredGeolocation = () => navigator.geolocation.getCurrentPosition(",
+  );
+  assert.throws(() => assertExplicitNearbyButtonContract(deferredGeolocationMutation));
+});
+
+test("home static sections preserve their Server Component boundaries", () => {
+  const serverComponents = [
+    ["HomeHero.tsx", hero],
+    ["SituationGuide.tsx", guide],
+    ["NearbyDiscovery.tsx", nearby],
+    ["LatestPetMarquee.tsx", marquee],
+  ];
+
+  for (const [fileName, source] of serverComponents) {
+    assertServerComponentBoundary(source, fileName);
+    assert.throws(() => assertServerComponentBoundary(`"use client";\n${source}`, fileName));
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `import apiClient from "@/lib/api";\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `import { Map as KakaoMap } from "react-kakao-maps-sdk";\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `const browserModule = import("@/lib/api");\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `import UnexpectedClient from "./Unexpected.client";\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `export { default as leakedApi } from "@/lib/api";\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `const requiredApi = require("@/lib/api");\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `import { useRef } from "react";\n${source}`,
+        fileName,
+      ),
+    );
+    assert.throws(() =>
+      assertServerComponentBoundary(
+        `const browserNavigator = globalThis["navigator"];\n${source}`,
+        fileName,
+      ),
+    );
+  }
+});
+
+test("nearby radius radios expose distinct keyboard focus on their visible labels", () => {
+  assertRadiusKeyboardFocusContract(nearbyMap);
+  const missingFocusMutation = nearbyMap.replaceAll(/\s+has-\[:focus-visible\]:\S+/g, "");
+  assert.throws(() => assertRadiusKeyboardFocusContract(missingFocusMutation));
+  assert.throws(() =>
+    assertRadiusKeyboardFocusContract(
+      nearbyMap.replace('type="radio"', 'type="checkbox"'),
+    ),
+  );
+  assert.throws(() =>
+    assertRadiusKeyboardFocusContract(
+      nearbyMap.replace('name="nearby-radius"', 'name="other-radius"'),
+    ),
+  );
+  assert.throws(() =>
+    assertRadiusKeyboardFocusContract(
+      nearbyMap.replace('className="sr-only"', 'className="hidden"'),
+    ),
+  );
+  assert.throws(() =>
+    assertRadiusKeyboardFocusContract(nearbyMap.replace("{radius}km", "")),
+  );
+  const hiddenLabelMutation = nearbyMap.replace(
+    'className="inline-flex min-h-11',
+    'className="hidden inline-flex min-h-11',
+  );
+  assert.throws(() => assertRadiusKeyboardFocusContract(hiddenLabelMutation));
+  const invisibleLabelMutation = nearbyMap.replace(
+    'className="inline-flex min-h-11',
+    'className="invisible inline-flex min-h-11',
+  );
+  assert.throws(() => assertRadiusKeyboardFocusContract(invisibleLabelMutation));
+  const hiddenAttributeMutation = nearbyMap.replace(
+    "<label key={radius}",
+    "<label hidden key={radius}",
+  );
+  assert.throws(() => assertRadiusKeyboardFocusContract(hiddenAttributeMutation));
+});
+
+test("nearby SEARCHING and SEEN presentation keeps exact pin and list mappings", () => {
+  assertNearbyStatusPresentation(nearbyMap);
+  const swappedPinMutation = nearbyMap.replace(
+    '? "bg-map-missing" : "bg-map-sighting"',
+    '? "bg-map-sighting" : "bg-map-missing"',
+  );
+  assert.throws(() => assertNearbyStatusPresentation(swappedPinMutation));
+  const swappedLabelMutation = nearbyMap.replace(
+    '? "찾는 중" : "목격"',
+    '? "목격" : "찾는 중"',
+  );
+  assert.throws(() => assertNearbyStatusPresentation(swappedLabelMutation));
+  const decoyMappingsMutation = `${swappedPinMutation}\nconst decoyPin = item.missingAnimalStatus === "SEARCHING" ? "bg-map-missing" : "bg-map-sighting";`;
+  assert.throws(() => assertNearbyStatusPresentation(decoyMappingsMutation));
+  const inListDecoyMutation = swappedLabelMutation.replace(
+    '<li key={`${item.id}:${index}`}>',
+    '<li key={`${item.id}:${index}`}><span className="sr-only">{item.missingAnimalStatus === "SEARCHING" ? "찾는 중" : "목격"}</span>',
+  );
+  assert.throws(() => assertNearbyStatusPresentation(inListDecoyMutation));
 });
 
 test("Kakao canvas is readiness-gated while the semantic result list stays available", () => {

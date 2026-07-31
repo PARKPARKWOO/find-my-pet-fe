@@ -135,7 +135,7 @@ export default function HomeNearbyMap() {
           <legend className="font-semibold text-content-primary">조회 반경</legend>
           <div className="mt-3 flex flex-wrap gap-2">
             {RADII.map((radius) => (
-              <label key={radius} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm text-content-secondary has-[:checked]:border-forest has-[:checked]:bg-forest has-[:checked]:text-content-inverse">
+              <label key={radius} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm text-content-secondary has-[:checked]:border-forest has-[:checked]:bg-forest has-[:checked]:text-content-inverse has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-action-primary has-[:focus-visible]:ring-offset-2">
                 <input
                   type="radio"
                   name="nearby-radius"
