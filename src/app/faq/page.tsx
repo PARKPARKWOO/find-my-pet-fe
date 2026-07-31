@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FAQ_ENTRIES } from "@/lib/featuredGuides";
 
-// Static content-contract compatibility: FAQ_ENTRIES preserves the 7일 minimum, the
-// 10일 뒤에도 소유자를 알 수 없는 경우의 소유권 취득 조건, and the 안내 that
-// 진행 중인 공고(OPEN)를 기본으로 보여주며 공고 종료(CLOSED)·전체 필터는 안내와
-// 함께 제공되고 통합검색에는 공고 종료 뱃지로 구분한다.
 const SITE_DOMAIN = "https://findmypet.platformholder.site";
 const PAGE_URL = `${SITE_DOMAIN}/faq`;
 const TITLE = "자주 묻는 질문 — 실종·유기동물 보호 제도 FAQ";

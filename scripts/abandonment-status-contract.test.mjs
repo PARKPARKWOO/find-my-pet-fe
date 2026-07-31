@@ -109,7 +109,10 @@ test("integrated search marks ended shelter notices with the backend status", ()
 });
 
 test("FAQ distinguishes the seven-day notice minimum from ten-day ownership transfer", () => {
-  const source = read("src/app/faq/page.tsx");
+  const { FAQ_ENTRIES } = loadTypeScriptModule(
+    path.join(root, "src/lib/featuredGuides.ts"),
+  );
+  const source = FAQ_ENTRIES.map(({ a }) => a).join("\n");
 
   assert.match(source, /7일|칠일|일주일/);
   assert.match(source, /10일|십일/);
@@ -121,4 +124,12 @@ test("FAQ distinguishes the seven-day notice minimum from ten-day ownership tran
   assert.match(source, /진행 중인 공고\(OPEN\)[\s\S]{0,40}기본/);
   assert.match(source, /공고 종료\(CLOSED\)[\s\S]{0,80}전체 필터[\s\S]{0,120}안내/);
   assert.match(source, /통합검색[\s\S]{0,80}공고 종료[\s\S]{0,40}뱃지/);
+});
+
+test("FAQ page renders its registry without static contract-only copy", () => {
+  const source = read("src/app/faq/page.tsx");
+
+  assert.match(source, /import\s*\{\s*FAQ_ENTRIES\s*\}\s*from\s*["']@\/lib\/featuredGuides["']/);
+  assert.match(source, /mainEntity:\s*FAQ_ENTRIES\.map/);
+  assert.doesNotMatch(source, /Static content-contract compatibility/);
 });

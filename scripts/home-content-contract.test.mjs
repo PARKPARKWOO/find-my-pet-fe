@@ -25,16 +25,49 @@ test("home guidance links retain their stable destinations", () => {
   );
 });
 
-test("FAQ entries have unique stable guide anchors", () => {
+test("FAQ entries retain their exact ordered stable guide anchors", () => {
+  assert.deepEqual(
+    content.FAQ_ENTRIES.map(({ id }) => id),
+    [
+      "shelter-check",
+      "notice-period",
+      "shelter-return",
+      "animal-registration",
+      "found-animal-report",
+      "after-notice",
+      "adoption-process",
+      "missing-report",
+      "data-source",
+      "search-radius",
+    ],
+  );
   assert.equal(new Set(content.FAQ_ENTRIES.map(({ id }) => id)).size, content.FAQ_ENTRIES.length);
-  assert.ok(content.FAQ_ENTRIES.some(({ id }) => id === "shelter-return"));
-  assert.ok(content.FAQ_ENTRIES.some(({ id }) => id === "adoption-process"));
 });
 
-test("site search remains a native GET form", () => {
-  assert.match(searchBar, /action="\/search"/);
-  assert.match(searchBar, /method="get"/);
-  assert.match(searchBar, /name="q"/);
+test("both site search variants remain accessible native GET forms", () => {
+  const forms = [...searchBar.matchAll(/<form\b[\s\S]*?<\/form>/g)].map(([form]) => form);
+
+  assert.equal(forms.length, 2, "hero and compact search forms must both exist");
+
+  for (const form of forms) {
+    assert.match(form, /action="\/search"/);
+    assert.match(form, /method="get"/);
+    assert.match(form, /name="q"/);
+    assert.match(form, /defaultValue=\{defaultQ\}/);
+    assert.match(form, /required/);
+    assert.match(form, /<label[\s\S]*?실종 또는 보호 동물 검색[\s\S]*?<\/label>/);
+  }
+
+  const [heroForm, compactForm] = forms;
+  assert.match(heroForm, /placeholder="실종 \/ 보호중 동물 검색 — 지역, 품종, 특징 등"/);
+  assert.match(compactForm, /placeholder="실종 \/ 보호중 검색"/);
+  assert.match(compactForm, /className="flex items-center"/);
+  assert.match(compactForm, /w-44 lg:w-64/);
+  assert.doesNotMatch(compactForm, /w-full/);
+  assert.doesNotMatch(compactForm, /<button\b/);
+
+  assert.doesNotMatch(searchBar, /"use client"/);
+  assert.doesNotMatch(searchBar, /useRouter/);
   assert.doesNotMatch(searchBar, /preventDefault/);
   assert.doesNotMatch(searchBar, /router\.push/);
 });

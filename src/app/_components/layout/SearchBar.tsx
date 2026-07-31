@@ -40,7 +40,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
   }
 
   return (
-    <form action="/search" method="get" role="search" className="flex w-full items-center">
+    <form action="/search" method="get" role="search" className="flex items-center">
       <label className="sr-only" htmlFor={`site-search-${variant}`}>
         실종 또는 보호 동물 검색
       </label>
@@ -58,9 +58,6 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
           placeholder="실종 / 보호중 검색"
           className="pl-7 pr-3 py-1.5 text-sm border rounded-md w-44 lg:w-64 focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
-        <button type="submit" className="sr-only">
-          검색
-        </button>
       </div>
     </form>
   );
