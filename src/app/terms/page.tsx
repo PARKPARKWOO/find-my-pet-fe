@@ -17,6 +17,9 @@ const DESC =
 /** 시행일. 약관을 고칠 때마다 이 값을 올리고 부칙에 이력을 한 줄 남긴다. */
 const EFFECTIVE_DATE = "2026년 7월 26일";
 
+/** 최초 제정일. 개정으로 시행일이 밀려도 "언제부터 있던 약관인가" 는 고정이라 따로 둔다. */
+const ENACTED_DATE = "2026년 7월 26일";
+
 export const metadata: Metadata = {
   title: `${TITLE} | 파인드마이펫`,
   description: DESC,
@@ -59,7 +62,9 @@ export default function TermsPage() {
         이 약관은 파인드마이펫(이하 &ldquo;서비스&rdquo;)의 이용 조건과 절차, 이용자와 운영자의
         권리·의무를 정합니다. 서비스를 이용하시면 이 약관에 동의한 것으로 봅니다.
       </p>
-      <p className="mt-3 text-xs text-muted-foreground">시행일: {EFFECTIVE_DATE} (최초 제정)</p>
+      <p className="mt-3 text-xs text-muted-foreground">
+        시행일: {EFFECTIVE_DATE} (최초 제정일: {ENACTED_DATE})
+      </p>
 
       <LegalToc items={TOC} />
 
@@ -144,16 +149,31 @@ export default function TermsPage() {
           items={[
             <span key="t1">
               <b className="text-foreground">
-                현재 서비스 화면에는 회원 탈퇴 기능이 제공되지 않습니다.
+                회원은 마이페이지 하단의 &lsquo;회원 탈퇴&rsquo;에서 언제든지 직접 이용계약을 해지할
+                수 있습니다.
               </b>{" "}
-              탈퇴와 회원정보 삭제를 원하시는 경우{" "}
+              확인 화면에서 삭제될 항목의 건수를 확인한 뒤 확정하면 즉시 처리되며, 삭제된 데이터는
+              복구할 수 없습니다.
+            </span>,
+            <span key="t2">
+              탈퇴하면 회원이 등록한 실종 신고 게시글·사진·전단지 부착 위치·즐겨찾기·관심 지역
+              구독·알림·후기가 함께 삭제되고, 다른 회원의 게시글에 남긴 목격 제보는 수색에 필요한
+              위치와 시각만 남긴 채 익명 처리됩니다. 항목별 처리 방식은{" "}
+              <Link href="/privacy#retention" className="underline underline-offset-2">
+                개인정보 처리방침 제4조
+              </Link>
+              에 기재되어 있습니다.
+            </span>,
+            "탈퇴와 함께 카카오 로그인 연동 해제가 요청됩니다. 다만 같은 카카오 계정으로 운영자의 다른 서비스를 이용 중인 경우에는 파인드마이펫의 연결만 해제됩니다.",
+            "로그아웃하면 인증 정보와 브라우저에 저장된 프로필 정보가 삭제되지만, 이는 탈퇴가 아닙니다.",
+            <span key="t3">
+              이용자가 등록한 게시물은 이용계약 해지와 별개로 언제든지 직접 삭제할 수 있습니다.
+              탈퇴 후 데이터베이스에 삭제 표시와 함께 남아 있는 기록의 완전 삭제를 원하시는 경우{" "}
               <a href="mailto:wy9295@naver.com" className="underline underline-offset-2">
                 wy9295@naver.com
               </a>
               으로 요청해 주시면 확인 후 처리합니다.
             </span>,
-            "로그아웃하면 인증 정보와 브라우저에 저장된 프로필 정보가 삭제되지만, 이는 탈퇴가 아닙니다.",
-            "이용자가 등록한 게시물은 이용계약 해지와 별개로 이용자가 직접 삭제할 수 있으며, 해지 시 남아 있는 게시물의 처리는 위 문의처를 통해 요청할 수 있습니다.",
             "운영자는 이용자가 제7조를 위반한 경우 사전 통지 후 이용을 제한하거나 이용계약을 해지할 수 있습니다. 다만 긴급하게 조치할 필요가 있는 경우에는 조치 후 통지할 수 있습니다.",
           ]}
         />
@@ -306,7 +326,12 @@ export default function TermsPage() {
           <div className="rounded-lg border p-4">
             <p className="font-semibold text-foreground">변경 이력</p>
             <ul className="mt-2 space-y-1">
-              <li>{EFFECTIVE_DATE} — 최초 제정</li>
+              <li>
+                {EFFECTIVE_DATE} — 마이페이지 회원 탈퇴 기능 도입에 따라 제6조(이용계약의 해지) 개정.
+                이용자가 문의처를 거치지 않고 직접 해지할 수 있게 된 개정이므로 제3조의 7일 공지에
+                따릅니다.
+              </li>
+              <li>{ENACTED_DATE} — 최초 제정</li>
             </ul>
           </div>
         </div>

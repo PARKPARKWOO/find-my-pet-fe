@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AbandonmentCard from "../AbandonmentCard";
 import { PetListSkeleton } from "../skeleton/PetListSkeleton";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AbandonmentPagination from "../AbandonmentPagination";
 import apiClient from "@/lib/api";
@@ -20,6 +21,7 @@ import {
   parseNoticeStatus,
   type NoticeStatusFilter,
 } from "@/lib/abandonment";
+import { clampPageToTotal, isCanonicalPageQuery } from "@/lib/pagination";
 
 export interface IPet {
   desertionNo: string;
@@ -33,6 +35,8 @@ export interface IPet {
   noticeNo: string;
   noticeSdt: string;
   noticeEdt: string;
+  /** 백엔드가 계산한 표시용 종료일. OPEN/CLOSED 판정에는 사용하지 않는다. */
+  effectiveNoticeEdt?: string | null;
   popfile: string;
   processState: string;
   sexCd: string;
@@ -46,8 +50,8 @@ export interface IPet {
   officetel?: string;
   /** 백엔드가 upkind 로 분류해 채운 값 (DOG/CAT/OTHER) */
   animalType?: "DOG" | "CAT" | "OTHER";
-  /** 백엔드가 `closed_at` 기준으로 채우는 공고 종료 여부. 판정은 @/lib/abandonment 를 쓴다. */
-  noticeClosed?: boolean;
+  /** 백엔드가 판정한 공고 종료 여부. 판정은 @/lib/abandonment 를 쓴다. */
+  noticeClosed?: boolean | null;
   noticeClosedAt?: string | null;
 }
 
@@ -91,11 +95,14 @@ export default function AbandonmentList() {
   const noticeStatus: NoticeStatusFilter = parseNoticeStatus(searchParams.get(QUERY_KEY.status));
   const uprCd = searchParams.get(QUERY_KEY.sido) ?? ""; // 시도 코드
   const orgCd = searchParams.get(QUERY_KEY.sigungu) ?? ""; // 시군구 코드
-  const currentPage = parsePage(searchParams.get(QUERY_KEY.page));
+  const rawPage = searchParams.get(QUERY_KEY.page);
+  const currentPage = parsePage(rawPage);
 
   const [abandonmentPetList, setAbandonmentPetList] = useState<IPet[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [sidoList, setSidoList] = useState<RegionItem[]>([]);
   const [sigunguList, setSigunguList] = useState<RegionItem[]>([]);
   const isLogin = useIsLoginStore((s) => s.isLogin);
@@ -131,6 +138,17 @@ export default function AbandonmentList() {
       updateQuery({ ...patch, page: "" });
     },
     [updateQuery],
+  );
+
+  const replacePage = useCallback(
+    (page: number) => {
+      const next = new URLSearchParams(searchParams.toString());
+      if (page <= 1) next.delete(QUERY_KEY.page);
+      else next.set(QUERY_KEY.page, String(page));
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
   );
 
   const reloadSubscriptions = () => {
@@ -185,19 +203,39 @@ export default function AbandonmentList() {
   // 시군구 초기화는 시도 select 의 onChange 에서 하지 여기서 하지 않는다 —
   // 여기서 지우면 `?sido=..&sigungu=..` 로 들어온 공유 링크가 마운트 직후 시군구를 잃는다.
   useEffect(() => {
+    const controller = new AbortController();
     if (!uprCd) {
       setSigunguList([]);
-      return;
+      return () => controller.abort();
     }
+    setSigunguList([]);
     apiClient
-      .get("/abandoned-animals/sigungu", { params: { uprCd } })
-      .then((res) => setSigunguList(res.data?.data ?? []))
-      .catch(() => setSigunguList([]));
+      .get("/abandoned-animals/sigungu", {
+        params: { uprCd },
+        signal: controller.signal,
+      })
+      .then((res) => {
+        if (!controller.signal.aborted) setSigunguList(res.data?.data ?? []);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSigunguList([]);
+      });
+
+    return () => controller.abort();
   }, [uprCd]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let keepLoadingForRedirect = false;
+
+    if (!isCanonicalPageQuery(rawPage, currentPage)) {
+      replacePage(currentPage);
+      return () => controller.abort();
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
+      setLoadError(false);
       try {
         const { data } = await apiClient.get("/abandoned-animals", {
           params: {
@@ -209,21 +247,34 @@ export default function AbandonmentList() {
             ...(uprCd ? { uprCd } : {}),
             ...(orgCd ? { orgCd } : {}),
           },
+          signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
         // 응답: { data: { contents: [...], hasNextPage, totalCount } }
+        const nextTotalCount = data?.data?.totalCount ?? 0;
+        const normalizedPage = clampPageToTotal(currentPage, nextTotalCount, PAGE_SIZE);
+        if (normalizedPage !== currentPage) {
+          keepLoadingForRedirect = true;
+          replacePage(normalizedPage);
+          return;
+        }
         setAbandonmentPetList(data?.data?.contents ?? []);
-        setTotalCount(data?.data?.totalCount ?? 0);
+        setTotalCount(nextTotalCount);
       } catch (e) {
+        if (controller.signal.aborted) return;
         console.error("구조동물 조회 실패", e);
         setAbandonmentPetList([]);
         setTotalCount(0);
+        setLoadError(true);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted && !keepLoadingForRedirect) setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [currentPage, filter, noticeStatus, uprCd, orgCd]);
+
+    return () => controller.abort();
+  }, [currentPage, filter, noticeStatus, uprCd, orgCd, rawPage, reloadToken, replacePage]);
 
   const chipClass = (active: boolean) =>
     `px-4 py-2 text-sm rounded-full transition-colors ${
@@ -241,6 +292,8 @@ export default function AbandonmentList() {
     <div>
       <div className="flex gap-2 mb-3 flex-wrap">
         <button
+          type="button"
+          aria-pressed={filter === "ALL"}
           className={chipClass(filter === "ALL")}
           onClick={() => applyFilter({ type: "" })}
         >
@@ -249,6 +302,8 @@ export default function AbandonmentList() {
         {ANIMAL_TYPES.map((type) => (
           <button
             key={type}
+            type="button"
+            aria-pressed={filter === type}
             className={chipClass(filter === type)}
             onClick={() => applyFilter({ type })}
           >
@@ -257,14 +312,15 @@ export default function AbandonmentList() {
         ))}
       </div>
 
-      {/* 공고 상태 필터 — 기본은 진행 중. "공고 종료" 는 이미 공고기간이 끝난 아이들이라
-          현재 보호 여부를 보장하지 않는다는 안내를 함께 노출한다. */}
+      {/* 공고 상태 필터 — 기본은 OPEN. CLOSED 는 백엔드의 공고 상태이며
+          동물의 현재 보호·입양·반환 상태를 단정하지 않는다. */}
       <div className="flex gap-2 mb-3 flex-wrap items-center">
         <span className="text-xs text-gray-500">공고 상태</span>
         {NOTICE_STATUSES.map((status) => (
           <button
             key={status}
             type="button"
+            aria-pressed={noticeStatus === status}
             className={statusChipClass(noticeStatus === status)}
             onClick={() =>
               applyFilter({ status: status === DEFAULT_NOTICE_STATUS ? "" : status })
@@ -277,14 +333,15 @@ export default function AbandonmentList() {
 
       {noticeStatus !== "OPEN" && (
         <p className="mb-3 text-xs text-amber-800 bg-amber-50 border-l-4 border-amber-400 rounded-r-md px-3 py-2">
-          공고 기간이 끝난 아이가 포함돼 있습니다. 보호소가 계속 보호 중일 수도, 입양·반환됐을 수도
-          있으니 현재 상태는 보호소에 직접 확인해 주세요.
+          종료된 공고가 포함될 수 있습니다. 현재 보호·입양·반환 상태는 이 공고만으로 알 수 없으니
+          보호소에 직접 확인해 주세요.
         </p>
       )}
 
       {/* 지역 필터 */}
       <div className="flex gap-2 mb-4 flex-wrap">
         <select
+          aria-label="시도 선택"
           value={uprCd}
           onChange={(e) => applyFilter({ sido: e.target.value, sigungu: "" })}
           className="border rounded-md px-3 py-1.5 text-sm bg-white"
@@ -297,6 +354,7 @@ export default function AbandonmentList() {
           ))}
         </select>
         <select
+          aria-label="시군구 선택"
           value={orgCd}
           onChange={(e) => applyFilter({ sigungu: e.target.value })}
           disabled={!uprCd || sigunguList.length === 0}
@@ -339,33 +397,44 @@ export default function AbandonmentList() {
       <div className="w-full grid lg:grid-cols-4 md:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
         {isLoading ? (
           <PetListSkeleton />
+        ) : loadError ? (
+          <div className="col-span-full py-10 text-center">
+            <h3 className="text-lg font-semibold">보호 동물 정보를 불러오지 못했어요</h3>
+            <p className="mt-2 text-sm text-gray-500">잠시 후 다시 시도해 주세요.</p>
+            <button
+              type="button"
+              onClick={() => setReloadToken((token) => token + 1)}
+              className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600"
+            >
+              다시 시도
+            </button>
+          </div>
         ) : (
           abandonmentPetList.map((pet: IPet) => (
-            <div
+            <Link
               key={pet.desertionNo}
-              onClick={() => {
-                router.push(`/abandonment/${pet.desertionNo}`);
-                localStorage.setItem("petInfo", JSON.stringify(pet));
-              }}
+              href={`/abandonment/${pet.desertionNo}`}
             >
-              <AbandonmentCard {...pet} key={pet.desertionNo} />
-            </div>
+              <AbandonmentCard {...pet} />
+            </Link>
           ))
         )}
       </div>
 
-      {!isLoading && abandonmentPetList.length === 0 && (
+      {!isLoading && !loadError && abandonmentPetList.length === 0 && (
         <p className="py-10 text-center text-sm text-gray-500">
           조건에 맞는 공고가 없습니다. 필터를 넓혀 보세요.
         </p>
       )}
 
-      <AbandonmentPagination
-        currentPage={currentPage}
-        totalCount={totalCount}
-        pageSize={PAGE_SIZE}
-        onPageChange={(page) => updateQuery({ page: page > 1 ? String(page) : "" })}
-      />
+      {!isLoading && !loadError && abandonmentPetList.length > 0 && (
+        <AbandonmentPagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          pageSize={PAGE_SIZE}
+          onPageChange={(page) => updateQuery({ page: page > 1 ? String(page) : "" })}
+        />
+      )}
     </div>
   );
 }

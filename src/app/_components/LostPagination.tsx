@@ -17,6 +17,8 @@ interface IProps {
 
 export default function LostPagination({currentPage, setCurrentPage, totalCount}: IProps){
     const totalPages = Math.ceil(totalCount / ITEM_PER_PAGE);
+    if (totalPages <= 0) return null;
+
     const page = Array.from(
         { length: Math.min(5, totalPages - (Math.floor((currentPage - 1) / 5) * 5)) },
         (_, i) => 1 + i + Math.floor((currentPage - 1) / 5) * 5
@@ -27,7 +29,8 @@ export default function LostPagination({currentPage, setCurrentPage, totalCount}
             <PaginationContent>
                 <PaginationItem>
                     <PaginationPrevious 
-                        onClick={() =>  setCurrentPage(currentPage-1)} 
+                        onClick={() => currentPage > 1 && setCurrentPage(currentPage-1)}
+                        disabled={currentPage <= 1}
                         aria-disabled={currentPage <= 1}
                         tabIndex={currentPage <= 1 ? -1 : undefined}
                         className={
@@ -46,7 +49,8 @@ export default function LostPagination({currentPage, setCurrentPage, totalCount}
                 }
                 <PaginationItem>
                     <PaginationNext 
-                        onClick={() => setCurrentPage(currentPage+1)}
+                        onClick={() => currentPage < totalPages && setCurrentPage(currentPage+1)}
+                        disabled={totalPages <= currentPage}
                         aria-disabled={totalPages <= currentPage}
                         tabIndex={totalPages <= currentPage ? -1 : undefined}
                         className={

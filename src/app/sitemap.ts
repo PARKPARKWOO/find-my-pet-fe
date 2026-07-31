@@ -20,14 +20,12 @@ const POSTS_MAX_PAGES = 10; // 최대 1000건만 sitemap 에 포함 (그 이상�
  *    100일 지난 공고도 96~99% 가 "보호중" 으로 내려온다. 90일이라는 숫자의 근거 전체가
  *    사실이 아닌 필드에서 나왔던 셈이라 그대로 두면 다음 사람이 같은 착각을 반복한다.
  *
- * 지금의 실제 종료 판정은 `noticeEdt`(법정 공고기간)이고, 그 필터는 두 겹으로 건다:
+ * 실제 종료 판정은 백엔드 `noticeClosed` 이고, 그 필터는 두 겹으로 건다:
  *  1) 서버사이드 — 목록 API 에 `noticeStatus=OPEN` 을 명시해 진행중만 받는다.
- *  2) 클라이언트 — {@link isNoticeClosed} 로 항목 단위 재확인(백엔드 만료 배치가 아직 돌지 않은
- *     구간, data.go.kr 직결 fallback 응답 대비).
+ *  2) 클라이언트 — {@link isNoticeClosed} 로 항목 단위 재확인한다.
  *
- * 그래서 이 윈도우는 평소 발화하지 않는다(진행중 공고는 정의상 `noticeEdt >= 오늘` = 발견 후 대략
- * 2주 이내). 남겨 두는 이유는 백엔드 만료 배치가 멈춰 종료분이 대량 유입되는 사고가 났을 때
- * sitemap 이 무한정 부풀지 않게 막는 마지막 방어선이기 때문이다.
+ * 신선도 윈도우는 오래된 데이터가 대량 유입되는 사고 때 sitemap 이 무한정 부풀지 않게 막는
+ * 별도 backstop 이며 OPEN/CLOSED 판정에는 관여하지 않는다.
  */
 const ABANDONED_FRESHNESS_DAYS = 90;
 
@@ -105,9 +103,11 @@ interface ApiPostSummary {
 interface ApiAbandonedSummary {
   desertionNo: string;
   happenDt?: string | null;
-  /** 법정 공고 종료일 `"YYYYMMDD"` — 종료 판정의 주 신호. */
+  /** 원본 법정 공고 종료일. 표시용 사실이며 상태 판정에는 쓰지 않는다. */
   noticeEdt?: string | null;
-  /** 백엔드가 `closed_at` 기준으로 채워 주는 값. 만료 배치 이전/fallback 응답에서는 false. */
+  /** 백엔드가 계산한 표시용 종료일. */
+  effectiveNoticeEdt?: string | null;
+  /** 백엔드가 판정한 공고 종료 여부. */
   noticeClosed?: boolean | null;
   processState?: string | null;
 }
@@ -151,10 +151,10 @@ const ABANDONED_MIN_EXPECTED = 2_000;
  *      2만여 건이 필터를 그대로 통과했다 — 필터가 있는데 단 한 건도 걸리지 않는 상태였다.)
  *  2) 발견일 기준 최근 {@link ABANDONED_FRESHNESS_DAYS} 일만 포함(backstop).
  *
- * ⚠️ 종료 판정(`noticeEdt`)으로 **조기 종료(break)를 걸지 않는다.** 내림차순이 보장되는 정렬 키는
+ * ⚠️ 날짜로 OPEN/CLOSED를 판정하거나 **조기 종료(break)를 걸지 않는다.** 내림차순이 보장되는 정렬 키는
  *    `happenDt` 뿐이다(`AbandonedAnimalRepository.findOpenByFilters`). `noticeEdt` 는 정렬 키가
  *    아니므로 그걸로 break 를 걸면 아래에서 경고한 붕괴가 그대로 재현된다.
- *    → **break 는 `happenDt` 페이지 경계, 제외는 `noticeEdt` 항목 단위**로 역할을 분리한다.
+ *    → **break 는 `happenDt` 페이지 경계, 종료 제외는 `noticeClosed`** 로 역할을 분리한다.
  *
  * ⚠️ 조기 종료의 정렬 전제와 그 유일한 보장원:
  *   - 내림차순을 보장하는 곳은 **mirror 경로 단 하나**다 —
@@ -238,7 +238,7 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
         // 조기 종료 판단에는 쓰지 않고(잘못 끊으면 유효 공고를 대량 유실) 포함만 시킨다.
         //
         // 종료 공고는 서버가 이미 걸러 주지만(noticeStatus=OPEN) 항목 단위로 한 번 더 본다:
-        // 백엔드 만료 배치가 아직 돌지 않은 구간과 data.go.kr 직결 fallback 응답은 진행중으로 온다.
+        // 상태 판정은 백엔드 boolean 만 신뢰한다. 날짜와 processState 는 판정에 사용하지 않는다.
         if (isNoticeClosed(item)) continue;
         result.push(item);
       }
@@ -389,6 +389,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: DOMAIN_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
+    { url: `${DOMAIN_URL}/lost`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
+    { url: `${DOMAIN_URL}/abandonment`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${DOMAIN_URL}/posts`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
     { url: `${DOMAIN_URL}/guide`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${DOMAIN_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },

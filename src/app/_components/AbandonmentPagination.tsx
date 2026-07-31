@@ -47,6 +47,7 @@ export default function AbandonmentPagination({
         <PaginationItem>
           <PaginationPrevious
             onClick={() => !isFirst && onPageChange(currentPage - 1)}
+            disabled={isFirst}
             aria-disabled={isFirst}
             tabIndex={isFirst ? -1 : undefined}
             className={isFirst ? "pointer-events-none opacity-50" : undefined}
@@ -65,6 +66,7 @@ export default function AbandonmentPagination({
         <PaginationItem>
           <PaginationNext
             onClick={() => !isLast && onPageChange(currentPage + 1)}
+            disabled={isLast}
             aria-disabled={isLast}
             tabIndex={isLast ? -1 : undefined}
             className={isLast ? "pointer-events-none opacity-50" : undefined}

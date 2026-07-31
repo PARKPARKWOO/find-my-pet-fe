@@ -13,7 +13,8 @@
 - [실종동물 찾는법 가이드](https://findmypet.platformholder.site/guide): 실종 직후 단계별 대처법 (HowTo)
 - [자주 묻는 질문](https://findmypet.platformholder.site/faq): 보호 공고 기간(공고 후 10일), 동물등록 의무, 입양 절차 등 제도 FAQ
 - [지역별 유기동물 보호 공고](https://findmypet.platformholder.site/abandonment/region): 전국 시도·시군구별 보호 공고와 보호소 연락처
-- [실종 게시판](https://findmypet.platformholder.site/): 진행중 실종 신고 목록
+- [집을 잃었어요](https://findmypet.platformholder.site/lost): 실종 소식 목록
+- [보호소에서 가족을 기다려요](https://findmypet.platformholder.site/abandonment): 전국 보호소의 보호 동물 목록
 - [실종 대응 아티클](https://findmypet.platformholder.site/posts): 강아지 실종 대처, 산책 중 이탈, 고양이 가출 원인별 대응 글
 - [실종 신고 등록](https://findmypet.platformholder.site/register)
 

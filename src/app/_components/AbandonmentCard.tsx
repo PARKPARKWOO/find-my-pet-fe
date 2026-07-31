@@ -12,7 +12,7 @@ export default function AbandonmentCard({ ...pet }: IPet) {
   const statusText = closed ? "공고 종료" : "보호중";
 
   return (
-    <Card className="h-[350px] sm:w-[250px] w-full hover:cursor-pointer">
+    <Card className="h-[350px] w-full hover:cursor-pointer">
       <div className="h-[200px] rounded-md flex justify-center relative bg-gray-100">
         {pet.popfile ? (
           <Image

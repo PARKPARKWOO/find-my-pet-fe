@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader } from "@/app/_components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import PostList from "@/app/_components/profile/PostList";
+import WithdrawSection from "@/app/_components/profile/WithdrawSection";
 import LocalStorage from "@/lib/localStorage";
 
 export default function Profile(){
-    
+
     return (
-        <div className="w-full flex sm:flex-row flex-col gap-10">
+        <div className="w-full flex flex-col gap-10">
+          <div className="w-full flex sm:flex-row flex-col gap-10">
             <div>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between border-b border-gray-200 py-3">
@@ -34,6 +36,9 @@ export default function Profile(){
                     <PostList/>
                 </div>
             </div>
+          </div>
+          {/* 탈퇴는 되돌릴 수 없으니 본문과 섞지 않고 화면 맨 아래 별도 영역에 낮은 위계로 둔다. */}
+          <WithdrawSection/>
         </div>
     )
 }

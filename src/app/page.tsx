@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import LostList from "./_components/main/LostList";
 import SearchBar from "./_components/layout/SearchBar";
 import useIsLoginStore from "@/store/loginStore";
+import { PurposeCategoryNav } from "./_components/category/PurposeCategoryNav";
 
 type FeedView = "all" | "lost" | "abandonment";
 
@@ -49,6 +50,7 @@ export default function Home() {
           <SearchBar variant="hero" />
         </div>
       </div>
+      <PurposeCategoryNav />
       <div className="w-full flex justify-center">
         <div className="sm:w-[60%] w-[90%] h-[250px] rounded-md border flex">
           <div className="flex justify-center items-center relative w-full h-full ">
@@ -80,7 +82,7 @@ export default function Home() {
             집을 잃었어요
           </button>
           <button className={chipClass("abandonment")} onClick={() => setView("abandonment")}>
-            가족을 기다려요
+            보호소에서 가족을 기다려요
           </button>
         </div>
         {showLost && (
@@ -98,7 +100,7 @@ export default function Home() {
       {showAbandonment && (
         <section className="w-full">
           {view === "all" && (
-            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">가족을 기다려요</h2>
+            <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">보호소에서 가족을 기다려요</h2>
           )}
           {/* AbandonmentList 가 필터 상태를 URL 쿼리(useSearchParams)로 들고 있다.
               정적 프리렌더 시점에는 쿼리를 알 수 없으므로 Suspense 경계가 반드시 필요하다
