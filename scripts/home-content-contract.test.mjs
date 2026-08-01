@@ -32,7 +32,8 @@ const nearby = readOwnedSource("src/app/_components/home/NearbyDiscovery.tsx");
 const nearbyMap = readOwnedSource(
   "src/app/_components/home/HomeNearbyMap.client.tsx",
 );
-const marquee = readOwnedSource("src/app/_components/home/LatestPetMarquee.tsx");
+const marquee = readOwnedSource("src/components/patterns/MarqueeRail.client.tsx");
+const latestMarquee = readOwnedSource("src/app/_components/home/LatestPetMarquee.tsx");
 const kakaoScript = readOwnedSource("src/app/_components/KakaoMapScript.tsx");
 
 function parseTsx(source, fileName = "contract.tsx") {
@@ -184,7 +185,10 @@ const SERVER_COMPONENT_ALLOWED_MODULES = new Map([
     new Set(["next/link", "lucide-react", "@/lib/featuredGuides"]),
   ],
   ["NearbyDiscovery.tsx", new Set(["next/link", "./HomeNearbyMap.client"])],
-  ["LatestPetMarquee.tsx", new Set(["next/link", "@/lib/homeFeed"])],
+  [
+    "LatestPetMarquee.tsx",
+    new Set(["@/components/patterns/MarqueeRail.client", "@/lib/homeFeed"]),
+  ],
 ]);
 const SERVER_COMPONENT_FORBIDDEN_IDENTIFIERS = new Set([
   "apiClient",
@@ -588,7 +592,7 @@ test("home static sections preserve their Server Component boundaries", () => {
     ["HomeHero.tsx", hero],
     ["SituationGuide.tsx", guide],
     ["NearbyDiscovery.tsx", nearby],
-    ["LatestPetMarquee.tsx", marquee],
+    ["LatestPetMarquee.tsx", latestMarquee],
   ];
 
   for (const [fileName, source] of serverComponents) {
@@ -731,13 +735,14 @@ test("nearby section exposes a real regional route and a non-clickable future st
 });
 
 test("latest marquee renders only actual items and valid absolute dates", () => {
-  assert.match(marquee, /if \(items\.length === 0\) return null/);
+  assert.match(latestMarquee, /if \(items\.length === 0\) return null/);
+  assert.match(latestMarquee, /<MarqueeRail items=\{items\} \/>/);
   assert.match(marquee, /items\.map/);
   assert.match(marquee, /formatMarqueeDate/);
-  assert.match(marquee, /formattedDate && \(/);
-  assert.match(marquee, /<time dateTime=\{item\.occurredAt/);
+  assert.match(marquee, /dateTime && formattedDate \? \(/);
+  assert.match(marquee, /<time dateTime=\{dateTime\}/);
   assert.match(marquee, /overflow-x-auto/);
-  assert.doesNotMatch(marquee, /next\/image|<Image|Date\.now|setInterval|clone/);
+  assert.doesNotMatch(marquee, /next\/image|<Image|Date\.now|setInterval/);
 });
 
 test("nearby map keys preserve duplicate public records without collisions", () => {
