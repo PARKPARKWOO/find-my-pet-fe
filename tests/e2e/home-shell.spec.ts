@@ -137,6 +137,18 @@ test("home remains useful without JavaScript", async ({ browser }) => {
     await expect(original.getByRole("link")).toHaveCount(8);
     await expect(page.locator('[data-marquee-sequence="duplicate"]')).toHaveCount(0);
     await expect(page.getByRole("button", { name: /소식 자동 이동/ })).toHaveCount(0);
+
+    const query = "서울 E2E";
+    const searchInput = search.locator('input[type="search"]');
+    await searchInput.fill(query);
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === "/search" && url.searchParams.get("q") === query),
+      search.getByRole("button", { name: "검색", exact: true }).click(),
+    ]);
+    const navigated = new URL(page.url());
+    expect(navigated.pathname).toBe("/search");
+    expect(navigated.searchParams.get("q")).toBe(query);
+    expect(page.url()).toContain("/search?q=%EC%84%9C%EC%9A%B8+E2E");
   } finally {
     await context.close();
   }

@@ -37,6 +37,34 @@ async function expectNoContrastViolations(page: Page, label: string) {
   ).toBe(0);
 }
 
+async function highImpactViolations(page: Page) {
+  const result = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  return result.violations.filter(
+    (violation) => violation.impact === "serious" || violation.impact === "critical",
+  );
+}
+
+async function expectNoHighImpactViolationsOnCurrentPage(page: Page, label: string) {
+  const violations = await highImpactViolations(page);
+  expect(violations, `${label}:\n${JSON.stringify(violations, null, 2)}`).toEqual([]);
+}
+
+async function waitAnimationFrames(page: Page, frameCount: number) {
+  await page.evaluate(
+    (count) =>
+      new Promise<void>((resolve) => {
+        let remaining = count;
+        const advance = () => {
+          remaining -= 1;
+          if (remaining <= 0) resolve();
+          else requestAnimationFrame(advance);
+        };
+        requestAnimationFrame(advance);
+      }),
+    frameCount,
+  );
+}
+
 async function abortNonLoopback(page: Page) {
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
@@ -52,11 +80,7 @@ async function expectNoHighImpactViolations(page: Page) {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.locator('[data-marquee-ready="true"]')).toBeVisible();
-  const result = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-  const violations = result.violations.filter(
-    (violation) => violation.impact === "serious" || violation.impact === "critical",
-  );
-  expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  await expectNoHighImpactViolationsOnCurrentPage(page, "reduced-motion home");
 }
 
 test.beforeEach(async ({ page, request }) => {
@@ -74,6 +98,34 @@ test("desktop has no serious or critical WCAG 2/2.1 A/AA axe violations", async 
 test("390px mobile has no serious or critical WCAG 2/2.1 A/AA axe violations", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await expectNoHighImpactViolations(page);
+});
+
+test("normal-motion clone and pause-control DOM passes the full axe gate", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('[data-marquee-ready="true"]')).toBeVisible();
+  await expect(page.locator('[data-marquee-sequence="duplicate"]')).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "소식 자동 이동 멈추기" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-home-motion", "active");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await waitAnimationFrames(page, 40);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await waitAnimationFrames(page, 40);
+  await expectNoHighImpactViolationsOnCurrentPage(page, "normal-motion enhanced home");
+});
+
+test("full axe gate detects a serious image-alt mutation", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.evaluate(() => {
+    const image = document.createElement("img");
+    image.id = "e2e-missing-alt-mutation";
+    image.src =
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3C/svg%3E";
+    document.body.append(image);
+  });
+  const violations = await highImpactViolations(page);
+  expect(violations.some((violation) => violation.id === "image-alt")).toBeTruthy();
+  await page.locator("#e2e-missing-alt-mutation").evaluate((element) => element.remove());
 });
 
 test("home text colors meet WCAG AA at desktop and mobile", async ({ page }) => {
@@ -99,7 +151,7 @@ test("active nearby filter remains readable", async ({ context, page }) => {
   await expect(activeRadius).toBeEnabled();
   await page.getByRole("button", { name: "내 위치로 가까운 소식 보기" }).click();
   await expect(page.getByRole("list", { name: "가까운 공개 위치 소식" })).toBeVisible();
-  await expectNoContrastViolations(page, "active nearby filter");
+  await expectNoHighImpactViolationsOnCurrentPage(page, "granted nearby/list state");
 });
 
 test("home feed error retries remain readable", async ({ page, request }) => {
@@ -110,5 +162,5 @@ test("home feed error retries remain readable", async ({ page, request }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.getByRole("button", { name: "다시 시도" })).toHaveCount(2);
-  await expectNoContrastViolations(page, "home feed error retries");
+  await expectNoHighImpactViolationsOnCurrentPage(page, "all-fail dynamic state");
 });
