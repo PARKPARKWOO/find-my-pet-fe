@@ -205,7 +205,7 @@ export default function HomeNearbyMap() {
                   href={item.href}
                   className="block min-h-11 rounded-xl border border-border p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary"
                 >
-                  <span className="text-xs font-semibold text-clay">
+                  <span className="text-xs font-semibold text-clay !text-accent-readable">
                     {item.missingAnimalStatus === "SEARCHING" ? "찾는 중" : "목격"}
                   </span>
                   <strong className="mt-1 block text-content-primary">{item.title}</strong>

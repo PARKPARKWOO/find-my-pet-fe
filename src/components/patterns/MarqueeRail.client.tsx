@@ -215,7 +215,7 @@ export function MarqueeRail({ items }: MarqueeRailProps) {
             tabIndex={duplicate ? -1 : undefined}
             className="flex h-full min-h-40 flex-col rounded-2xl border border-border bg-surface-raised p-5 shadow-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary"
           >
-            <span className="text-xs font-semibold text-clay">{STATUS_LABEL[item.kind]}</span>
+            <span className="text-xs font-semibold text-accent-readable">{STATUS_LABEL[item.kind]}</span>
             <strong className="mt-3 line-clamp-2 text-base text-content-primary">{item.title}</strong>
             {item.place ? <span className="mt-2 text-sm text-content-secondary">{item.place}</span> : null}
             {dateTime && formattedDate ? (

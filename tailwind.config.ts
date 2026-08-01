@@ -67,6 +67,7 @@ const config: Config = {
         ink: "rgb(var(--fmp-ink) / <alpha-value>)",
         forest: "rgb(var(--fmp-forest) / <alpha-value>)",
         clay: "rgb(var(--fmp-clay) / <alpha-value>)",
+        "accent-readable": "rgb(var(--fmp-accent-text) / <alpha-value>)",
         wine: "rgb(var(--fmp-wine) / <alpha-value>)",
         sighting: "rgb(var(--fmp-sighting) / <alpha-value>)",
         waiting: "rgb(var(--fmp-waiting) / <alpha-value>)",

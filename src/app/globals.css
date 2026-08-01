@@ -12,20 +12,21 @@
     --fmp-ink: 32 42 38; /* #202A26 */
     --fmp-forest: 47 90 73; /* #2F5A49 */
     --fmp-clay: 214 111 84; /* #D66F54 */
+    --fmp-accent-text: 154 62 41; /* #9A3E29: readable on paper/raised surfaces */
     --fmp-wine: 112 69 65; /* #704541 */
     --fmp-sighting: 75 127 163; /* #4B7FA3 */
     --fmp-waiting: 185 137 59; /* #B9893B */
     --fmp-kakao: 254 229 0; /* #FEE500 */
     --fmp-text-primary: var(--fmp-ink);
     --fmp-text-secondary: 68 79 73;
-    --fmp-text-muted: 105 112 107;
+    --fmp-text-muted: 83 91 86;
     --fmp-text-inverse: var(--fmp-raised);
     --fmp-action-primary: var(--fmp-forest);
     --fmp-action-secondary: var(--fmp-wine);
     --fmp-action-destructive: 181 68 56;
     --fmp-action-brand: var(--fmp-kakao);
-    --fmp-state-searching: var(--fmp-clay);
-    --fmp-state-sighting: var(--fmp-sighting);
+    --fmp-state-searching: var(--fmp-accent-text);
+    --fmp-state-sighting: 59 109 143; /* #3B6D8F: readable status surface */
     --fmp-state-found: var(--fmp-forest);
     --fmp-state-protected: var(--fmp-wine);
     --fmp-state-waiting: var(--fmp-waiting);

@@ -36,7 +36,7 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
   const chipClass = (key: FeedView) =>
     `px-4 py-2 text-sm rounded-full transition-colors ${
       view === key
-        ? "bg-blue-500 text-white"
+        ? "bg-action-primary text-content-inverse"
         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
     }`;
 
@@ -60,7 +60,7 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
         {showLost && (
           <Button
             size="default"
-            className="xs:absolute xs:right-4 xs:text-base text-sm"
+            className="xs:absolute xs:right-4 xs:text-base bg-action-primary text-content-inverse hover:bg-action-primary/90 text-sm"
             onClick={handleRegisterClick}
           >
             실종 동물 등록

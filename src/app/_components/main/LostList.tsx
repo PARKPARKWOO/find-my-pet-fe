@@ -132,11 +132,11 @@ export default function LostList({ initialPage }: LostListProps) {
         ) : loadError ? (
           <div className="col-span-full py-10 text-center">
             <h3 className="text-lg font-semibold">목록을 불러오지 못했어요</h3>
-            <p className="mt-2 text-sm text-gray-500">잠시 후 다시 시도해 주세요.</p>
+            <p className="mt-2 text-sm text-content-muted">잠시 후 다시 시도해 주세요.</p>
             <button
               type="button"
               onClick={() => setReloadToken((token) => token + 1)}
-              className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600"
+              className="mt-4 rounded-md bg-action-primary px-4 py-2 text-sm text-content-inverse hover:bg-action-primary/90"
             >
               다시 시도
             </button>

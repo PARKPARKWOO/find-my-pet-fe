@@ -7,7 +7,7 @@ export function NearbyDiscovery() {
     <section aria-labelledby="nearby-discovery-title" className="border-y border-border px-4 py-12 lg:px-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-clay">선택한 경우에만 위치를 확인해요</p>
+          <p className="text-sm font-medium text-accent-readable">선택한 경우에만 위치를 확인해요</p>
           <h2 id="nearby-discovery-title" className="mt-2 font-editorial text-3xl font-semibold text-content-primary">
             가까운 곳부터 함께 살펴봐요
           </h2>

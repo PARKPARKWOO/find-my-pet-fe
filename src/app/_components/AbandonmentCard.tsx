@@ -21,19 +21,17 @@ export default function AbandonmentCard({ ...pet }: AbandonedAnimalSummary) {
             className="rounded-t-lg object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">사진 없음</div>
+          <div className="w-full h-full flex items-center justify-center text-xs text-gray-700">사진 없음</div>
         )}
       </div>
       <div className="p-2">
         <div className="flex gap-1 my-2">
           {pet.sexCd && (
-            <Badge className={pet.sexCd === "M" ? "bg-blue-400" : "bg-pink-400"}>
-              {pet.sexCd}
-            </Badge>
+            <Badge variant="secondary">{pet.sexCd}</Badge>
           )}
           {pet.weight && <Badge>{pet.weight}</Badge>}
           {closed ? (
-            <Badge className="bg-amber-500">공고 종료</Badge>
+            <Badge className="bg-state-archived text-content-inverse">공고 종료</Badge>
           ) : (
             pet.processState && <Badge>{pet.processState}</Badge>
           )}

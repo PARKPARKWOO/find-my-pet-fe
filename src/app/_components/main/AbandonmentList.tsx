@@ -305,7 +305,9 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
 
   const chipClass = (active: boolean) =>
     `px-4 py-2 text-sm rounded-full transition-colors ${
-      active ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      active
+        ? "bg-action-primary text-content-inverse"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
     }`;
 
   const statusChipClass = (active: boolean) =>
@@ -342,7 +344,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
       {/* 공고 상태 필터 — 기본은 OPEN. CLOSED 는 백엔드의 공고 상태이며
           동물의 현재 보호·입양·반환 상태를 단정하지 않는다. */}
       <div className="flex gap-2 mb-3 flex-wrap items-center">
-        <span className="text-xs text-gray-500">공고 상태</span>
+        <span className="text-xs text-content-muted">공고 상태</span>
         {NOTICE_STATUSES.map((status) => (
           <button
             key={status}
@@ -427,11 +429,11 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
         ) : loadError ? (
           <div className="col-span-full py-10 text-center">
             <h3 className="text-lg font-semibold">보호 동물 정보를 불러오지 못했어요</h3>
-            <p className="mt-2 text-sm text-gray-500">잠시 후 다시 시도해 주세요.</p>
+            <p className="mt-2 text-sm text-content-muted">잠시 후 다시 시도해 주세요.</p>
             <button
               type="button"
               onClick={() => setReloadToken((token) => token + 1)}
-              className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600"
+              className="mt-4 rounded-md bg-action-primary px-4 py-2 text-sm text-content-inverse hover:bg-action-primary/90"
             >
               다시 시도
             </button>

@@ -55,7 +55,7 @@ export default function NearbyFilter({ value, onChange }: Props) {
             onClick={() => enable(km)}
             className={`px-3 py-1 text-xs rounded-full border transition ${
               active
-                ? "bg-blue-500 text-white border-blue-500"
+                ? "border-action-primary bg-action-primary text-content-inverse"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             } ${loading ? "opacity-60" : ""}`}
           >

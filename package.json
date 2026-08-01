@@ -12,6 +12,8 @@
     "test:category": "node --test scripts/category-contract.test.mjs",
     "test:abandonment-status": "node --test scripts/abandonment-status-contract.test.mjs",
     "test:withdrawal-flow": "node --test scripts/withdrawal-flow.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
     "indexnow": "node scripts/indexnow.mjs",
     "indexnow:dry": "node scripts/indexnow.mjs --dry-run",
     "indexnow:all": "node scripts/indexnow.mjs --all --include-core --include-regions"

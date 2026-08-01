@@ -30,7 +30,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
           />
           <button
             type="submit"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-blue-500 text-white text-sm font-semibold rounded-full hover:bg-blue-600"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-action-primary text-content-inverse text-sm font-semibold rounded-full hover:bg-action-primary/90"
           >
             검색
           </button>
