@@ -23,8 +23,16 @@ const geistMono = localFont({
 });
 
 const SITE_NAME = "파인드마이펫";
+/**
+ * 사이트 설명. 이 한 값이 meta description · og:description · twitter:description ·
+ * Organization JSON-LD 에 함께 들어간다.
+ *
+ * **80자를 넘기지 말 것.** 네이버 서치어드바이저가 "80자 이내로 작성해주세요"로 지적한다.
+ * 이전 문구는 81자로 딱 1자 초과였다. 길이를 줄이면서 실제로 제공하는 세 가지 —
+ * 실종 신고 등록 · 유기동물 보호 공고 조회 · 실종 시 대처 가이드 — 를 모두 남겼다.
+ */
 const SITE_DESCRIPTION =
-  "파인드마이펫은 실종된 동물의 정보를 공유하여 찾을 수 있도록 도와주는 커뮤니티입니다. 실종 정보를 등록하고 실종 시 대처 가이드라인을 참고하세요.";
+  "잃어버린 반려동물을 동네와 함께 찾습니다. 실종 신고 등록, 전국 유기동물 보호 공고 조회, 실종 시 대처 가이드 제공.";
 
 export const metadata: Metadata = {
   // favicon 은 app/favicon.ico 가 자동 서빙되므로 icons 오버라이드 제거 (기존 경로는 깨져 있었음).
