@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { PetListSkeleton } from "../skeleton/PetListSkeleton";
 import LostCard from "../LostCard";
 import Link from "next/link";
+import { PawPrint } from "lucide-react";
 import apiClient from "@/lib/api";
 import LostPagination from "../LostPagination";
 import { ITEM_PER_PAGE } from "@/app/constant/constant";
@@ -142,15 +143,38 @@ export default function LostList({ initialPage }: LostListProps) {
             </button>
           </div>
         ) : lostPetList.length === 0 ? (
-          <div className="col-span-full py-10 text-center">
-            <h3 className="text-lg font-semibold text-content-primary">지금 등록된 실종 소식이 없어요</h3>
-            <p className="mt-2 text-sm text-content-secondary">
-              다행이에요. 반려동물을 잃어버리셨다면 바로 주변에 알려주세요.
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm font-medium text-action-primary underline underline-offset-4">
-              <Link href="/register">실종 소식 등록</Link>
-              <Link href="/flyer">전단지 먼저 만들기</Link>
-              <Link href="/guide">실종 대응 가이드</Link>
+          <div className="col-span-full py-12">
+            <div className="mx-auto max-w-xl rounded-2xl border border-border bg-surface-raised p-8 text-center shadow-raised">
+              <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-forest/10">
+                <PawPrint aria-hidden className="size-6 text-forest" />
+              </span>
+              <h3 className="mt-4 text-lg font-semibold text-content-primary">지금 등록된 실종 소식이 없어요</h3>
+              <p className="mt-2 text-sm leading-6 text-content-secondary">
+                다행이에요. 잃어버리셨다면 지금 바로 이웃에게 알리고, 아니라면 미리 준비해 두거나
+                보호소에서 기다리는 아이들을 만나보세요.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <Link
+                  href="/register"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-action-primary px-5 text-sm font-semibold text-content-inverse transition-colors hover:bg-action-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2"
+                >
+                  실종 소식 등록
+                </Link>
+                <Link
+                  href="/flyer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-raised px-5 text-sm font-semibold text-content-primary transition-colors hover:border-clay/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary"
+                >
+                  전단지 먼저 만들기
+                </Link>
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium text-action-primary">
+                <Link href="/guide" className="underline underline-offset-4">
+                  실종 대응 가이드
+                </Link>
+                <Link href="/abandonment" className="underline underline-offset-4">
+                  보호소에서 기다리는 아이들 보기
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
