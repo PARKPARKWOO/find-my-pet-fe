@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 홈 새 소식 흐름</title>
+  <style>
+    :root { color-scheme:light; --canvas:#e9e6df; --paper:#f5f0e8; --raised:#fffdf8; --ink:#202a26; --forest:#2f5a49; --clay:#d66f54; --wine:#704541; --blue:#4b7fa3; --gold:#b9893b; --muted:#747a76; --line:rgba(32,42,38,.13); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    button { font:inherit; }
+    .page { width:min(1320px,calc(100% - 36px)); margin:auto; padding:30px 0 64px; }
+    .intro { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:24px; margin-bottom:19px; }
+    .eyebrow { margin:0 0 8px; color:#5e655f; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(28px,3vw,44px); line-height:1.08; letter-spacing:-.055em; }
+    .lead { max-width:790px; margin:10px 0 0; color:#68706b; font-size:14px; line-height:1.65; }
+    .motion-note { padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.55); color:#626964; font-size:11px; white-space:nowrap; }
+    .mock { overflow:hidden; border:1px solid rgba(27,36,32,.16); border-radius:22px; background:var(--paper); box-shadow:0 14px 42px rgba(47,44,37,.075); }
+    .browser { display:flex; align-items:center; gap:5px; height:27px; padding:0 11px; background:#272e2b; }
+    .browser i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.26); }
+    .browser span { margin-left:7px; color:rgba(255,255,255,.45); font-size:6px; }
+    nav { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(245,240,232,.94); }
+    .brand { font-family:"Noto Serif KR",Georgia,serif; font-size:13px; font-weight:600; letter-spacing:-.035em; }
+    .nav-links { display:flex; align-items:center; gap:14px; color:var(--ink); font-size:7px; font-weight:750; }
+    .nav-actions { justify-self:end; display:flex; align-items:center; gap:8px; color:var(--ink); font-size:6.5px; font-weight:750; }
+    .nav-actions b { padding:7px 9px; border-radius:999px; background:var(--ink); color:white; }
+    .hero { display:grid; grid-template-columns:1.03fr .97fr; min-height:295px; padding:13px 13px 0; }
+    .hero-copy { display:flex; flex-direction:column; justify-content:center; padding:28px 26px 27px 20px; }
+    .hero-copy small { color:var(--wine); font-size:7px; font-weight:900; letter-spacing:.13em; }
+    .hero h2 { margin:13px 0 12px; font-family:"Noto Serif KR",Georgia,serif; font-size:40px; font-weight:600; line-height:1.02; letter-spacing:-.065em; }
+    .hero h2 em { color:var(--clay); font-style:normal; }
+    .hero p { max-width:390px; margin:0; color:#68716b; font-size:9px; line-height:1.62; }
+    .tasks { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:18px; }
+    .task { min-height:72px; padding:10px 11px; border:1px solid var(--line); border-radius:10px; background:var(--raised); }
+    .task:first-child { background:var(--forest); color:white; }
+    .task small { font-size:6px; opacity:.67; }
+    .task b { display:block; margin-top:13px; font-size:8px; }
+    .visual { position:relative; min-height:272px; overflow:hidden; border-radius:17px; background:linear-gradient(145deg,#777e68 0%,#a9a58e 42%,#d9c6af 100%); }
+    .visual::before { content:""; position:absolute; width:245px; height:290px; right:-15px; bottom:-95px; border-radius:50% 50% 15px 15px; background:linear-gradient(155deg,rgba(245,226,204,.72),rgba(95,73,65,.39)); transform:rotate(7deg); }
+    .visual-note { position:absolute; z-index:2; left:15px; right:15px; bottom:14px; padding-top:9px; border-top:1px solid rgba(255,255,255,.4); color:white; font-family:Georgia,serif; font-size:10px; }
+    .search { position:relative; z-index:3; display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:9px; margin:-10px 28px 19px; padding:10px 10px 10px 12px; border:1px solid rgba(32,42,38,.11); border-radius:11px; background:rgba(255,253,248,.96); box-shadow:0 10px 24px rgba(48,54,49,.1); color:#7b817d; font-size:7px; }
+    .search span { padding-right:9px; border-right:1px solid var(--line); }
+    .search span:nth-child(2) { color:#5f6862; }
+    .search b { padding:7px 9px; border-radius:7px; background:var(--ink); color:white; }
+
+    .signals { padding:13px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#eee9e1; }
+    .signals-head { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:0 20px 11px; }
+    .signals-title { display:flex; align-items:center; gap:8px; }
+    .signals-title i { width:7px; height:7px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 4px rgba(214,111,84,.12); animation:pulse 2.2s ease-in-out infinite; }
+    .signals-title small { display:block; margin-bottom:3px; color:var(--wine); font-size:5.5px; font-weight:900; letter-spacing:.11em; }
+    .signals-title h3 { margin:0; font-family:"Noto Serif KR",Georgia,serif; font-size:15px; font-weight:600; letter-spacing:-.035em; }
+    .signal-controls { display:flex; align-items:center; gap:8px; }
+    .signal-controls span { color:#7d837e; font-size:5.5px; }
+    .pause { display:grid; place-items:center; width:26px; height:26px; border:1px solid var(--line); border-radius:50%; background:var(--raised); color:var(--ink); cursor:pointer; font-size:7px; }
+    .marquee { position:relative; overflow:hidden; outline:none; -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%); }
+    .track { display:flex; width:max-content; will-change:transform; animation:flow 34s linear infinite; }
+    .set { display:flex; gap:8px; padding-right:8px; }
+    .marquee:hover .track,.marquee:focus-within .track,.marquee.paused .track { animation-play-state:paused; }
+    .signal-card { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:9px; flex:0 0 286px; min-width:286px; height:82px; padding:8px; border:1px solid var(--line); border-radius:11px; background:var(--raised); color:var(--ink); text-decoration:none; box-shadow:0 5px 13px rgba(47,44,37,.04); }
+    .thumb { height:42px; border-radius:8px; background:linear-gradient(145deg,#aa9780,#ead8c0); }
+    .signal-card:nth-child(2) .thumb,.signal-card:nth-child(6) .thumb { background:linear-gradient(145deg,#8f9a91,#d9e2da); }
+    .signal-card:nth-child(3) .thumb,.signal-card:nth-child(5) .thumb { background:linear-gradient(145deg,#b39a9d,#ead4d6); }
+    .card-copy small { display:block; margin-bottom:4px; font-size:5px; font-weight:900; }
+    .type-lost { color:var(--clay); } .type-shelter { color:var(--forest); } .type-seen { color:var(--blue); }
+    .card-copy b { display:block; overflow:hidden; margin-bottom:3px; font-size:7px; white-space:nowrap; text-overflow:ellipsis; }
+    .card-copy span { color:#818681; font-size:5.5px; }
+    .time { align-self:start; padding:4px 6px; border-radius:999px; background:#eeeae3; color:#7b807c; font-size:5px; white-space:nowrap; }
+    .data-note { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:9px 20px 0; color:#7f847f; font-size:5px; }
+    .data-note b { color:#616964; }
+
+    .categories { padding:22px 20px 24px; }
+    .category-head { display:flex; align-items:end; justify-content:space-between; margin-bottom:11px; }
+    .category-head h3 { margin:0; font-family:"Noto Serif KR",Georgia,serif; font-size:21px; letter-spacing:-.045em; }
+    .category-head span { color:#7d837e; font-size:6px; }
+    .category-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .category { min-height:132px; padding:14px; border-radius:13px; color:white; }
+    .category:first-child { background:var(--wine); } .category:last-child { background:var(--forest); }
+    .category small { font-size:5.5px; opacity:.68; }
+    .category strong { display:block; margin:40px 0 6px; font-family:"Noto Serif KR",Georgia,serif; font-size:18px; line-height:1.2; }
+    .category p { margin:0; opacity:.65; font-size:6.5px; }
+    .principles { display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid var(--line); background:white; }
+    .principles div { padding:13px 14px; }
+    .principles div+div { border-left:1px solid var(--line); }
+    .principles b { display:block; margin-bottom:4px; color:var(--wine); font-size:6.5px; }
+    .principles span { color:#6f7671; font-size:6px; line-height:1.45; }
+    .approve { padding:16px; border-top:1px solid var(--line); background:var(--ink); color:white; text-align:center; }
+    .approve p { margin:0 0 10px; color:rgba(255,255,255,.62); font-size:8px; }
+    .choice { display:inline-flex; padding:8px 11px; border-radius:999px; background:var(--raised); color:var(--ink); font-size:8px; font-weight:900; cursor:pointer; }
+    .choice.selected { background:#dff0e5; }
+    .choice.selected::after { content:" · 선택됨"; color:var(--forest); }
+    @keyframes flow { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+    @keyframes pulse { 0%,100% { opacity:.55; transform:scale(.85); } 50% { opacity:1; transform:scale(1); } }
+    @media (prefers-reduced-motion:reduce) {
+      .track { animation:none; }
+      .signals-title i { animation:none; }
+      .marquee { overflow-x:auto; -webkit-mask-image:none; mask-image:none; }
+      .set:nth-child(2) { display:none; }
+    }
+    @media (max-width:780px) {
+      .page { width:min(100% - 18px,620px); padding-top:21px; }
+      .intro { grid-template-columns:1fr; align-items:start; } .motion-note { justify-self:start; white-space:normal; }
+      nav { grid-template-columns:1fr auto; padding:11px 13px; } .nav-links { display:none; } .nav-actions span:first-child { display:none; }
+      .hero { grid-template-columns:1fr; }
+      .hero h2 { font-size:33px; }
+      .visual { min-height:220px; }
+      .search { grid-template-columns:1fr auto; margin-left:15px; margin-right:15px; } .search span:nth-child(2) { display:none; }
+      .signal-card { flex-basis:246px; min-width:246px; }
+      .category-grid { grid-template-columns:1fr; }
+      .principles { grid-template-columns:1fr 1fr; }
+      .principles div:nth-child(3),.principles div:nth-child(5) { border-left:0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div><p class="eyebrow">Find My Pet · Home Motion 01</p><h1>최신 데이터가 홈에서 부드럽게 이어집니다</h1><p class="lead">통합안 G의 구조는 유지하고, 검색 아래에 실제 API 데이터 일부를 보여주는 한 줄 소식 흐름만 추가했습니다.</p></div>
+      <div class="motion-note">34초 완주 · hover/focus 정지 · reduced motion 정적</div>
+    </header>
+
+    <section class="mock">
+      <div class="browser"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+      <nav><div class="brand">Find My Pet</div><div class="nav-links"><span>함께 찾기</span><span>보호 동물</span><span>보호소·입양</span><span>이용 안내</span></div><div class="nav-actions"><span>알림</span><span>마이페이지</span><b>소식 등록</b></div></nav>
+      <section class="hero"><div class="hero-copy"><small>A SAFER WAY BACK HOME</small><h2>다시 만나는 길을,<br/><em>동네와 함께.</em></h2><p>실종 소식과 보호 정보를 가까운 곳부터 연결하고, 사람들과 함께 찾을 수 있도록 도와드려요.</p><div class="tasks"><div class="task"><small>반려동물을 잃어버렸다면</small><b>함께 찾기를 시작할게요 →</b></div><div class="task"><small>새로운 가족을 만나고 싶다면</small><b>보호 동물을 만나볼게요 →</b></div></div></div><div class="visual"><div class="visual-note">한 사람의 제보가 소중한 가족을 집으로 데려옵니다.</div></div></section>
+      <div class="search"><span>지역·품종·특징으로 찾아보세요</span><span>현재 위치: 서울 마포구</span><b>검색하기</b></div>
+
+      <section class="signals">
+        <div class="signals-head"><div class="signals-title"><i></i><div><small>NEW CONNECTIONS</small><h3>새로 이어지는 소식</h3></div></div><div class="signal-controls"><span>카드에 마우스를 올리면 멈춰요</span><button class="pause" type="button" aria-label="소식 흐름 일시정지" onclick="document.querySelector('.marquee').classList.toggle('paused'); this.textContent = this.textContent === 'Ⅱ' ? '▶' : 'Ⅱ'">Ⅱ</button></div></div>
+        <div class="marquee" tabindex="0" aria-label="최신 실종 및 보호 동물 소식">
+          <div class="track">
+            <div class="set">
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-lost">실종 소식</small><b>크림색 소형견을 찾고 있어요</b><span>서울 마포구 · 연남동</span></div><span class="time">12분 전</span></a>
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-shelter">보호 중</small><b>새 가족을 기다리는 세 살 고양이</b><span>경기 성남시 · 행복보호소</span></div><span class="time">오늘</span></a>
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-seen">목격 소식</small><b>공원 북쪽에서 비슷한 아이를 봤어요</b><span>서울 용산구 · 효창공원</span></div><span class="time">28분 전</span></a>
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-lost">실종 소식</small><b>갈색 중형견 보리를 함께 찾아요</b><span>서울 은평구 · 불광동</span></div><span class="time">1시간 전</span></a>
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-shelter">보호 중</small><b>사람을 좋아하는 흰색 강아지</b><span>인천 남동구 · 동물보호센터</span></div><span class="time">오늘</span></a>
+              <a class="signal-card" href="#"><div class="thumb"></div><div class="card-copy"><small class="type-seen">목격 소식</small><b>회색 고양이를 시장 근처에서 봤어요</b><span>서울 동작구 · 상도시장</span></div><span class="time">2시간 전</span></a>
+            </div>
+            <div class="set" aria-hidden="true">
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-lost">실종 소식</small><b>크림색 소형견을 찾고 있어요</b><span>서울 마포구 · 연남동</span></div><span class="time">12분 전</span></a>
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-shelter">보호 중</small><b>새 가족을 기다리는 세 살 고양이</b><span>경기 성남시 · 행복보호소</span></div><span class="time">오늘</span></a>
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-seen">목격 소식</small><b>공원 북쪽에서 비슷한 아이를 봤어요</b><span>서울 용산구 · 효창공원</span></div><span class="time">28분 전</span></a>
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-lost">실종 소식</small><b>갈색 중형견 보리를 함께 찾아요</b><span>서울 은평구 · 불광동</span></div><span class="time">1시간 전</span></a>
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-shelter">보호 중</small><b>사람을 좋아하는 흰색 강아지</b><span>인천 남동구 · 동물보호센터</span></div><span class="time">오늘</span></a>
+              <a class="signal-card" href="#" tabindex="-1"><div class="thumb"></div><div class="card-copy"><small class="type-seen">목격 소식</small><b>회색 고양이를 시장 근처에서 봤어요</b><span>서울 동작구 · 상도시장</span></div><span class="time">2시간 전</span></a>
+            </div>
+          </div>
+        </div>
+        <div class="data-note"><span><b>시안의 이름·장소·시간은 예시</b>이며 실제 구현은 API 응답만 사용합니다.</span><span>전체 소식은 기존 정적 목록에서 확인 →</span></div>
+      </section>
+
+      <section class="categories"><div class="category-head"><h3>무엇을 도와드릴까요?</h3><span>확정 카테고리명 그대로 사용</span></div><div class="category-grid"><div class="category"><small>01 · 지금 이용 가능</small><strong>집을 잃었어요</strong><p>실종 소식과 주변 제보를 확인해요</p></div><div class="category"><small>02 · 지금 이용 가능</small><strong>보호소에서 가족을 기다려요</strong><p>전국 보호 동물을 만나요</p></div></div></section>
+      <div class="principles"><div><b>데이터</b><span>최신 API 결과만</span></div><div><b>속도</b><span>한 바퀴 34초</span></div><div><b>상호작용</b><span>hover·focus 정지</span></div><div><b>접근성</b><span>정지 버튼·축소 모션</span></div><div><b>범위</b><span>홈 한 줄만</span></div></div>
+      <div class="approve"><p>움직이는 레일은 보조 탐색이며 기존 목록과 상세 기능은 그대로 유지합니다.</p><div class="choice" data-choice="approve-home-live-data-marquee" onclick="toggleSelect(this)">이 느낌으로 진행</div></div>
+    </section>
+  </main>
+</body>
+</html>

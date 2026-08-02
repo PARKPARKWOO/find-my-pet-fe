@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 상단 카테고리 크기 조정</title>
+  <style>
+    :root { color-scheme:light; --canvas:#e9e6df; --paper:#f5f0e8; --raised:#fffdf8; --ink:#202a26; --forest:#2f5a49; --clay:#d66f54; --wine:#704541; --muted:#737a75; --line:rgba(32,42,38,.13); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    .page { width:min(1460px,calc(100% - 36px)); margin:auto; padding:30px 0 64px; }
+    .intro { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:20px; }
+    .eyebrow { margin:0 0 8px; color:#5e655f; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(28px,3vw,46px); line-height:1.08; letter-spacing:-.055em; }
+    .lead { max-width:780px; margin:11px 0 0; color:#68706b; font-size:14px; line-height:1.65; }
+    .change { padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.55); color:#626964; font-size:11px; white-space:nowrap; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) 292px; gap:16px; align-items:start; }
+    .desktop { overflow:hidden; border:1px solid rgba(27,36,32,.16); border-radius:22px; background:var(--paper); box-shadow:0 14px 42px rgba(47,44,37,.075); }
+    .browser-bar { display:flex; align-items:center; gap:5px; height:27px; padding:0 11px; background:#272e2b; }
+    .browser-bar i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.26); }
+    .browser-bar span { margin-left:7px; color:rgba(255,255,255,.45); font-size:6px; }
+    nav { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:13px 20px; border-bottom:1px solid var(--line); }
+    .brand { font-family:"Noto Serif KR",Georgia,serif; font-size:14px; font-weight:600; }
+    .nav-links { display:flex; gap:16px; color:#68716b; font-size:7px; font-weight:750; }
+    .nav-end { justify-self:end; padding:7px 10px; border-radius:999px; background:var(--ink); color:white; font-size:7px; font-weight:850; }
+    .hero { display:flex; align-items:end; justify-content:space-between; gap:25px; padding:31px 25px 25px; }
+    .hero small { color:var(--clay); font-size:7px; font-weight:900; letter-spacing:.11em; }
+    .hero h2 { max-width:560px; margin:10px 0 9px; font-family:"Noto Serif KR",Georgia,serif; font-size:36px; font-weight:600; line-height:1.05; letter-spacing:-.055em; }
+    .hero h2 em { color:var(--clay); font-style:normal; }
+    .hero p { max-width:470px; margin:0; color:#6c746f; font-size:9px; line-height:1.6; }
+    .hero-search { display:flex; align-items:center; justify-content:space-between; flex:0 0 320px; padding:11px 11px 11px 13px; border:1px solid var(--line); border-radius:11px; background:var(--raised); color:#818682; font-size:7px; box-shadow:0 8px 20px rgba(45,54,48,.07); }
+    .hero-search b { padding:7px 9px; border-radius:7px; background:var(--forest); color:white; }
+    .category-section { padding:13px 20px 25px; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:15px; margin-bottom:13px; }
+    .section-head small { display:block; margin-bottom:4px; color:var(--wine); font-size:7px; font-weight:900; letter-spacing:.1em; }
+    .section-head h3 { margin:0; font-family:"Noto Serif KR",Georgia,serif; font-size:25px; font-weight:600; letter-spacing:-.045em; }
+    .section-head p { max-width:340px; margin:0; color:#7a807b; font-size:8px; line-height:1.5; text-align:right; }
+    .active-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .active-card { position:relative; display:flex; flex-direction:column; justify-content:space-between; min-height:192px; overflow:hidden; padding:18px; border-radius:16px; color:white; }
+    .active-card:first-child { background:var(--wine); }
+    .active-card:last-child { background:var(--forest); }
+    .active-card::after { content:""; position:absolute; width:170px; height:170px; right:-48px; bottom:-72px; border:1px solid rgba(255,255,255,.22); border-radius:50%; box-shadow:0 0 0 22px rgba(255,255,255,.045),0 0 0 45px rgba(255,255,255,.025); }
+    .active-top { position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; }
+    .active-top small { font-size:7px; font-weight:850; letter-spacing:.08em; opacity:.68; }
+    .active-top span { padding:5px 7px; border:1px solid rgba(255,255,255,.2); border-radius:999px; font-size:6px; }
+    .active-copy { position:relative; z-index:2; }
+    .active-copy strong { display:block; max-width:410px; margin-bottom:9px; font-family:"Noto Serif KR",Georgia,serif; font-size:26px; font-weight:600; line-height:1.2; letter-spacing:-.045em; }
+    .active-copy p { margin:0; color:rgba(255,255,255,.66); font-size:9px; line-height:1.5; }
+    .active-foot { position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; margin-top:17px; padding-top:11px; border-top:1px solid rgba(255,255,255,.19); font-size:7px; }
+    .active-foot b { display:grid; place-items:center; width:27px; height:27px; border:1px solid rgba(255,255,255,.35); border-radius:50%; font-size:10px; }
+    .planned-title { display:flex; align-items:center; gap:9px; margin:17px 1px 9px; color:#6c736e; font-size:8px; font-weight:850; }
+    .planned-title::after { content:""; flex:1; height:1px; background:var(--line); }
+    .planned-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .planned-card { display:flex; flex-direction:column; justify-content:space-between; min-height:115px; padding:13px; border:1px dashed rgba(32,42,38,.2); border-radius:12px; background:rgba(255,253,248,.45); }
+    .planned-card small { color:#8a8e8a; font-size:6px; font-weight:850; }
+    .planned-card strong { display:block; margin:15px 0 7px; font-family:"Noto Serif KR",Georgia,serif; font-size:15px; font-weight:600; line-height:1.3; letter-spacing:-.03em; }
+    .planned-card p { margin:0; color:#7d837e; font-size:7px; line-height:1.4; }
+    .planned-foot { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); color:#878b88; font-size:6px; }
+    .planned-foot b { padding:4px 6px; border-radius:999px; background:#e9e5de; font-size:5.5px; }
+
+    .side { display:flex; flex-direction:column; gap:12px; }
+    .phone-panel,.scale-note { padding:14px; border:1px solid var(--line); border-radius:17px; background:rgba(255,255,255,.62); }
+    .phone-head { display:flex; justify-content:space-between; margin-bottom:10px; }
+    .phone-head b { font-size:11px; } .phone-head span { color:#7c827d; font-size:7px; }
+    .phone { width:188px; margin:auto; overflow:hidden; border:5px solid #252c29; border-radius:25px; background:var(--paper); box-shadow:0 13px 31px rgba(35,40,36,.16); }
+    .notch { width:66px; height:11px; margin:auto; border-radius:0 0 8px 8px; background:#252c29; }
+    .m-nav { display:flex; justify-content:space-between; padding:8px 9px; font-size:6px; }
+    .m-nav b { font-family:Georgia,serif; }
+    .m-hero { padding:12px 9px 10px; }
+    .m-hero small { color:var(--clay); font-size:4px; font-weight:900; }
+    .m-hero h4 { margin:5px 0 4px; font-family:"Noto Serif KR",Georgia,serif; font-size:14px; line-height:1.08; letter-spacing:-.045em; }
+    .m-hero p { margin:0; color:#777e79; font-size:4.5px; line-height:1.45; }
+    .m-cat { padding:0 7px 8px; }
+    .m-cat > b { display:block; margin:5px 1px 6px; font-size:6px; }
+    .m-active { min-height:91px; margin-bottom:5px; padding:9px; border-radius:10px; color:white; }
+    .m-active:nth-of-type(2) { background:var(--wine); }
+    .m-active:nth-of-type(3) { background:var(--forest); }
+    .m-active small { font-size:4px; opacity:.67; }
+    .m-active strong { display:block; margin:17px 0 5px; font-family:"Noto Serif KR",Georgia,serif; font-size:9px; line-height:1.2; }
+    .m-active span { font-size:4px; opacity:.65; }
+    .m-planned { display:flex; align-items:center; justify-content:space-between; min-height:38px; margin-top:4px; padding:6px 7px; border:1px dashed rgba(32,42,38,.18); border-radius:7px; background:rgba(255,253,248,.45); font-size:4.3px; font-weight:700; }
+    .m-planned span { color:#8a8e8a; font-size:3.7px; }
+    .m-bottom { display:grid; grid-template-columns:repeat(3,1fr); padding:8px 5px 9px; border-top:1px solid var(--line); background:var(--raised); color:#777d78; font-size:4px; text-align:center; }
+    .m-bottom b { color:var(--forest); }
+    .scale-note h3 { margin:0 0 9px; font-size:12px; }
+    .scale-row { display:grid; grid-template-columns:70px 1fr; gap:8px; padding:8px 0; border-top:1px solid var(--line); font-size:7px; }
+    .scale-row b { color:var(--wine); } .scale-row span { color:#6d746f; line-height:1.45; }
+    .approve { margin-top:12px; padding:15px; border-radius:15px; background:var(--ink); color:white; text-align:center; }
+    .approve h3 { margin:0 0 6px; font-family:"Noto Serif KR",Georgia,serif; font-size:14px; font-weight:500; }
+    .approve p { margin:0 0 10px; color:rgba(255,255,255,.6); font-size:7px; line-height:1.5; }
+    .approve-choice { display:inline-flex; padding:8px 10px; border-radius:999px; background:var(--raised); color:var(--ink); font-size:7px; font-weight:900; cursor:pointer; }
+    .approve-choice.selected { background:#dff0e5; }
+    .approve-choice.selected::after { content:" · 선택됨"; color:var(--forest); }
+    @media (max-width:1000px) { .layout { grid-template-columns:1fr; } .side { display:grid; grid-template-columns:1fr 1fr; } .phone-panel { grid-row:span 2; } }
+    @media (max-width:720px) {
+      .page { width:min(100% - 18px,600px); padding-top:21px; }
+      .intro { align-items:start; flex-direction:column; }
+      .change { white-space:normal; }
+      nav { grid-template-columns:1fr auto; } .nav-links { display:none; }
+      .hero { align-items:start; flex-direction:column; padding:24px 16px 18px; }
+      .hero-search { width:100%; flex-basis:auto; }
+      .category-section { padding:12px 12px 20px; }
+      .section-head { align-items:start; flex-direction:column; }
+      .section-head p { text-align:left; }
+      .active-grid,.planned-grid { grid-template-columns:1fr; }
+      .side { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div><p class="eyebrow">Find My Pet · Category Scale V2</p><h1>상단 카테고리를 핵심 진입점답게 키웠습니다</h1><p class="lead">활성 카테고리 2개는 큰 행동 카드로, 준비 중인 3개는 충분히 읽히되 낮은 위계로 구분했습니다.</p></div>
+      <div class="change">제목 약 1.7배 · 활성 카드 높이 약 1.5배</div>
+    </header>
+
+    <div class="layout">
+      <section class="desktop">
+        <div class="browser-bar"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+        <nav><div class="brand">Find My Pet</div><div class="nav-links"><span>함께 찾기</span><span>보호 동물</span><span>보호소·입양</span><span>이용 안내</span></div><div class="nav-end">소식 등록</div></nav>
+        <div class="hero"><div><small>A SAFER WAY BACK HOME</small><h2>다시 만나는 길을,<br/><em>동네와 함께.</em></h2><p>실종 소식과 보호 정보를 가까운 곳부터 연결하고, 사람들과 함께 찾을 수 있도록 도와드려요.</p></div><div class="hero-search"><span>지역·품종·특징으로 찾아보세요</span><b>검색</b></div></div>
+        <section class="category-section">
+          <div class="section-head"><div><small>CHOOSE YOUR NEXT STEP</small><h3>무엇을 도와드릴까요?</h3></div><p>현재 이용 가능한 서비스를 먼저 크게 보여주고, 준비 중인 기능은 아래에서 구분합니다.</p></div>
+          <div class="active-grid">
+            <article class="active-card"><div class="active-top"><small>01 · 지금 이용 가능</small><span>/lost</span></div><div class="active-copy"><strong>집을 잃었어요</strong><p>가족이 찾고 있는 반려동물을 살펴보고 함께 찾아요.</p></div><div class="active-foot"><span>실종 소식과 주변 제보 보기</span><b>↗</b></div></article>
+            <article class="active-card"><div class="active-top"><small>02 · 지금 이용 가능</small><span>/abandonment</span></div><div class="active-copy"><strong>보호소에서 가족을 기다려요</strong><p>전국 보호소에서 새 가족을 기다리는 동물을 확인해요.</p></div><div class="active-foot"><span>보호 동물 만나기</span><b>↗</b></div></article>
+          </div>
+          <div class="planned-title">곧 더 많은 연결이 열려요</div>
+          <div class="planned-grid">
+            <article class="planned-card"><div><small>03 · PLANNED</small><strong>우리집 근처 보호소</strong><p>가까운 보호소 정보를 찾아봐요.</p></div><div class="planned-foot"><span>/shelters</span><b>준비 중</b></div></article>
+            <article class="planned-card"><div><small>04 · PLANNED</small><strong>반려동물을 입양하고 싶어요</strong><p>입양을 원하는 마음을 나눠요.</p></div><div class="planned-foot"><span>/adoption/wanted</span><b>준비 중</b></div></article>
+            <article class="planned-card"><div><small>05 · PLANNED</small><strong>반려동물의 새 가족을 찾아요</strong><p>새 가족이 필요한 반려동물을 알려요.</p></div><div class="planned-foot"><span>/adoption/offer</span><b>준비 중</b></div></article>
+          </div>
+        </section>
+      </section>
+
+      <aside class="side">
+        <section class="phone-panel"><div class="phone-head"><b>모바일 배치</b><span>활성 1열</span></div><div class="phone"><div class="notch"></div><div class="m-nav"><b>Find My Pet</b><span>☰</span></div><div class="m-hero"><small>다시 만나는 길을, 동네와 함께</small><h4>무엇을<br/>도와드릴까요?</h4><p>필요한 서비스부터 바로 선택해요.</p></div><div class="m-cat"><b>지금 이용할 수 있어요</b><div class="m-active"><small>01 · AVAILABLE</small><strong>집을 잃었어요</strong><span>실종 소식과 주변 제보 보기 →</span></div><div class="m-active"><small>02 · AVAILABLE</small><strong>보호소에서 가족을 기다려요</strong><span>보호 동물 만나기 →</span></div><div class="m-planned">우리집 근처 보호소 <span>준비 중</span></div><div class="m-planned">반려동물을 입양하고 싶어요 <span>준비 중</span></div><div class="m-planned">반려동물의 새 가족을 찾아요 <span>준비 중</span></div></div><div class="m-bottom"><b>홈</b><span>지도</span><span>내 활동</span></div></div></section>
+        <section class="scale-note"><h3>크기 변경 규칙</h3><div class="scale-row"><b>활성 제목</b><span>데스크톱 26px, 모바일에서도 두 줄 이내</span></div><div class="scale-row"><b>활성 카드</b><span>최소 높이 192px, 넓은 클릭 영역</span></div><div class="scale-row"><b>준비 중</b><span>데스크톱 15px, 모바일은 읽기 쉬운 목록형</span></div><div class="scale-row"><b>이름</b><span>확정 명칭을 축약하지 않음</span></div></section>
+        <section class="approve"><h3>이 크기로 반영할까요?</h3><p>선택하면 디자인 명세의 홈 카테고리 기준으로 고정합니다.</p><div class="approve-choice" data-choice="approve-larger-top-categories" onclick="toggleSelect(this)">이 크기로 진행</div></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

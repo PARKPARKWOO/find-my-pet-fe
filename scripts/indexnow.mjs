@@ -212,7 +212,7 @@ async function collectAbandonedUrls({ all, since, slack }) {
       `${API_BASE}/abandoned-animals?pageNo=${pageNo}&numOfRows=${LIST_PAGE_SIZE}&noticeStatus=OPEN`,
     );
     const contents = json?.data?.contents;
-    if (!Array.isArray(contents) || contents.length === 0) break;
+    if (!Array.isArray(contents)) break;
     scanned += contents.length;
 
     for (const item of contents) {
@@ -228,7 +228,7 @@ async function collectAbandonedUrls({ all, since, slack }) {
       urls.push(`${SITE}/abandonment/${encodeURIComponent(item.desertionNo)}`);
     }
 
-    if (json?.data?.hasNextPage === false) break;
+    if (json?.data?.hasNextPage !== true) break;
 
     // 목록은 happenDt 내림차순 — 페이지 전체가 여유분보다 오래되면 이후는 볼 필요가 없다.
     if (scanCutoff) {

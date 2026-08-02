@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 통합 방향 G</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#e8e5de;
+      --paper:#f5f0e8;
+      --cream:#fffdf8;
+      --ink:#202a26;
+      --forest:#2f5a49;
+      --clay:#d66f54;
+      --wine:#704541;
+      --olive:#75755d;
+      --muted:#727974;
+      --line:rgba(32,42,38,.13);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    button { font:inherit; }
+    .page { width:min(1500px,calc(100% - 36px)); margin:0 auto; padding:30px 0 64px; }
+    .intro { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:24px; margin-bottom:20px; }
+    .eyebrow { margin:0 0 8px; color:#5e655f; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { max-width:1000px; margin:0; font-size:clamp(28px,3vw,47px); line-height:1.08; letter-spacing:-.055em; }
+    .intro p:last-child { max-width:800px; margin:11px 0 0; color:#68706b; font-size:14px; line-height:1.65; }
+    .approval { display:flex; align-items:center; gap:8px; padding:10px 13px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.54); color:#5e655f; font-size:11px; white-space:nowrap; }
+    .approval i { width:7px; height:7px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 4px rgba(214,111,84,.13); }
+    .workbench { display:grid; grid-template-columns:minmax(0,1fr) 286px; gap:16px; align-items:start; }
+    .choice { position:relative; overflow:hidden; padding:0; border:1px solid rgba(29,38,34,.17); border-radius:23px; background:white; box-shadow:0 16px 45px rgba(47,44,37,.08); cursor:pointer; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
+    .choice:hover { transform:translateY(-3px); box-shadow:0 22px 56px rgba(47,44,37,.12); }
+    .choice.selected { border-color:#1d2622; box-shadow:0 0 0 3px rgba(29,38,34,.13),0 22px 56px rgba(47,44,37,.12); }
+    .choice.selected::after { content:"이 방향으로 선택"; position:absolute; z-index:30; top:15px; right:15px; padding:8px 11px; border-radius:999px; background:#1d2622; color:white; font-size:10px; font-weight:850; }
+    .browser { overflow:hidden; background:var(--paper); }
+    .browser-bar { display:flex; align-items:center; gap:5px; height:26px; padding:0 11px; background:#262d2a; }
+    .browser-bar i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.26); }
+    .browser-bar span { margin-left:7px; color:rgba(255,255,255,.46); font-size:6px; letter-spacing:.05em; }
+    .site-nav { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(245,240,232,.92); }
+    .brand { font-family:Georgia,"Times New Roman",serif; font-size:13px; font-weight:500; letter-spacing:-.035em; }
+    .nav-links { display:flex; align-items:center; gap:14px; color:#67706a; font-size:6.5px; font-weight:750; }
+    .nav-actions { justify-self:end; display:flex; align-items:center; gap:7px; color:#66706a; font-size:6.5px; }
+    .nav-actions b { padding:7px 9px; border-radius:999px; background:var(--ink); color:white; font-weight:800; }
+    .hero { display:grid; grid-template-columns:1.03fr .97fr; min-height:300px; padding:13px 13px 0; }
+    .hero-copy { display:flex; flex-direction:column; justify-content:center; padding:28px 26px 27px 20px; }
+    .hero-kicker { display:flex; align-items:center; gap:7px; color:var(--wine); font-size:6.5px; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }
+    .hero-kicker::before { content:""; width:25px; height:1px; background:var(--clay); }
+    .hero h2 { max-width:470px; margin:13px 0 12px; font-family:Georgia,"Times New Roman",serif; font-size:clamp(29px,3.1vw,45px); font-weight:400; line-height:.99; letter-spacing:-.065em; }
+    .hero h2 em { color:var(--clay); font-style:normal; }
+    .hero-copy > p { max-width:380px; margin:0; color:#68716b; font-size:8px; line-height:1.62; }
+    .task-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:19px; }
+    .task { min-height:76px; padding:10px 11px; border:1px solid var(--line); border-radius:10px; background:var(--cream); }
+    .task:first-child { border-color:var(--forest); background:var(--forest); color:white; }
+    .task small { font-size:5.7px; opacity:.67; }
+    .task strong { display:flex; justify-content:space-between; align-items:end; gap:8px; margin-top:13px; font-size:8px; line-height:1.3; }
+    .task strong i { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border:1px solid currentColor; border-radius:50%; font-style:normal; font-size:8px; opacity:.78; }
+    .hero-visual { position:relative; min-height:278px; overflow:hidden; border-radius:17px; background:linear-gradient(145deg,#777e68 0%,#a9a58e 42%,#d9c6af 100%); }
+    .hero-visual::before { content:""; position:absolute; width:250px; height:295px; right:-15px; bottom:-95px; border-radius:50% 50% 15px 15px; background:linear-gradient(155deg,rgba(245,226,204,.72),rgba(95,73,65,.39)); transform:rotate(7deg); }
+    .hero-visual::after { content:""; position:absolute; width:115px; height:115px; right:69px; top:56px; border:1px solid rgba(255,255,255,.55); border-radius:50%; box-shadow:0 0 0 19px rgba(255,255,255,.055),0 0 0 39px rgba(255,255,255,.035); }
+    .visual-label { position:absolute; z-index:2; top:15px; left:15px; padding:6px 8px; border:1px solid rgba(255,255,255,.3); border-radius:999px; background:rgba(30,42,36,.2); color:white; font-size:5.7px; backdrop-filter:blur(6px); }
+    .visual-note { position:absolute; z-index:2; left:15px; right:15px; bottom:14px; display:flex; align-items:end; justify-content:space-between; gap:10px; padding-top:9px; border-top:1px solid rgba(255,255,255,.4); color:white; }
+    .visual-note p { max-width:185px; margin:0; font-family:Georgia,serif; font-size:10px; line-height:1.25; }
+    .visual-note div { text-align:right; }
+    .visual-note b { display:block; font-family:Georgia,serif; font-size:17px; font-weight:400; }
+    .visual-note span { font-size:5.5px; opacity:.68; }
+    .search { position:relative; z-index:4; display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:9px; margin:-10px 28px 20px; padding:10px 10px 10px 12px; border:1px solid rgba(32,42,38,.11); border-radius:11px; background:rgba(255,253,248,.96); box-shadow:0 11px 25px rgba(48,54,49,.1); color:#7b817d; font-size:7px; }
+    .search span { padding-right:9px; border-right:1px solid var(--line); }
+    .search span:nth-child(2) { color:#5f6862; }
+    .search b { padding:7px 9px; border-radius:7px; background:var(--ink); color:white; font-size:6.5px; }
+    .response { margin:0 13px 20px; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:var(--cream); }
+    .section-top { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:17px 18px 12px; }
+    .section-top small { display:block; margin-bottom:4px; color:var(--clay); font-size:5.7px; font-weight:900; letter-spacing:.12em; }
+    .section-top h3 { margin:0; font-family:Georgia,"Times New Roman",serif; font-size:17px; font-weight:500; letter-spacing:-.035em; }
+    .section-top p { max-width:280px; margin:0; color:#7c817d; font-size:6.3px; line-height:1.5; text-align:right; }
+    .response-grid { display:grid; grid-template-columns:1.3fr .7fr; min-height:245px; border-top:1px solid var(--line); }
+    .map { position:relative; overflow:hidden; background:#dce4d8; }
+    .map::before { content:""; position:absolute; inset:-25%; background:repeating-linear-gradient(29deg,transparent 0 46px,rgba(255,255,255,.76) 47px 51px,transparent 52px 82px),repeating-linear-gradient(118deg,transparent 0 58px,rgba(255,255,255,.66) 59px 63px,transparent 64px 99px); opacity:.9; }
+    .map::after { content:""; position:absolute; width:640px; height:95px; left:-70px; top:105px; border:10px solid rgba(102,157,171,.37); border-left:0; border-right:0; border-radius:50%; transform:rotate(-8deg); }
+    .marker { position:absolute; z-index:3; display:grid; place-items:center; width:29px; height:29px; border:4px solid white; border-radius:50% 50% 50% 5px; color:white; font-size:7px; font-weight:900; box-shadow:0 6px 13px rgba(34,55,45,.2); transform:rotate(-45deg); }
+    .marker b { transform:rotate(45deg); }
+    .mark-1 { left:24%; top:27%; background:var(--clay); }
+    .mark-2 { left:55%; top:52%; background:var(--forest); }
+    .mark-3 { right:18%; top:24%; background:#c49d44; }
+    .map-filter { position:absolute; z-index:5; top:10px; left:10px; display:flex; gap:4px; }
+    .map-filter span { padding:6px 7px; border-radius:999px; background:rgba(255,253,248,.92); color:#657069; font-size:5.5px; box-shadow:0 4px 12px rgba(39,53,45,.1); }
+    .map-filter span:first-child { background:var(--ink); color:white; }
+    .map-card { position:absolute; z-index:5; left:10px; bottom:10px; display:grid; grid-template-columns:39px 1fr auto; align-items:center; gap:7px; width:min(325px,calc(100% - 20px)); padding:7px; border-radius:9px; background:rgba(255,253,248,.95); box-shadow:0 9px 21px rgba(40,54,46,.15); backdrop-filter:blur(7px); }
+    .map-photo { height:35px; border-radius:7px; background:linear-gradient(145deg,#b6a186,#e8d8c1); }
+    .map-card b { display:block; font-size:6.5px; }
+    .map-card span { color:#7c837e; font-size:5.5px; }
+    .map-status { padding:5px 6px; border-radius:999px; background:#f7dfd8; color:#ae4f3b !important; font-weight:850; }
+    .group-panel { padding:13px; border-left:1px solid var(--line); background:#f8f4ec; }
+    .group-head { display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:1px solid var(--line); }
+    .group-head b { font-size:8px; }
+    .group-head span { padding:4px 6px; border-radius:999px; background:#e7eee8; color:#3d6b55; font-size:5.5px; font-weight:850; }
+    .pet-brief { display:grid; grid-template-columns:48px 1fr; gap:8px; padding:11px 0; }
+    .brief-photo { height:47px; border-radius:9px; background:linear-gradient(145deg,#a9967e,#ead7bd); }
+    .pet-brief small { color:var(--wine); font-size:5.5px; font-weight:850; }
+    .pet-brief strong { display:block; margin:5px 0 3px; font-family:Georgia,serif; font-size:10px; font-weight:500; }
+    .pet-brief p { margin:0; color:#7c817d; font-size:5.5px; }
+    .group-stats { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--cream); }
+    .group-stats div { padding:8px 5px; text-align:center; }
+    .group-stats div+div { border-left:1px solid var(--line); }
+    .group-stats b { display:block; font-family:Georgia,serif; font-size:10px; font-weight:500; }
+    .group-stats span { color:#858984; font-size:5px; }
+    .group-event { display:flex; gap:7px; padding:10px 0 8px; color:#6f7671; font-size:5.5px; line-height:1.4; }
+    .group-event i { flex:0 0 6px; width:6px; height:6px; margin-top:2px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 3px rgba(214,111,84,.13); }
+    .group-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+    .group-actions span { padding:7px; border:1px solid var(--line); border-radius:7px; background:var(--cream); text-align:center; font-size:5.5px; font-weight:800; }
+    .group-actions span:first-child { border-color:var(--forest); background:var(--forest); color:white; }
+    .categories { padding:4px 17px 20px; }
+    .category-head { display:flex; align-items:end; justify-content:space-between; padding:8px 0 10px; }
+    .category-head h3 { margin:0; font-family:Georgia,serif; font-size:17px; font-weight:500; }
+    .category-head span { color:#7f847f; font-size:6px; }
+    .category-grid { display:grid; grid-template-columns:1fr 1fr .58fr; gap:7px; }
+    .category-card { min-height:90px; padding:11px; border:1px solid var(--line); border-radius:10px; background:var(--cream); }
+    .category-card:first-child { background:var(--wine); color:white; }
+    .category-card small { font-size:5.5px; opacity:.68; }
+    .category-card strong { display:block; margin:20px 0 4px; font-family:Georgia,serif; font-size:11px; font-weight:500; line-height:1.2; }
+    .category-card p { margin:0; opacity:.65; font-size:5.5px; }
+    .planned { display:flex; flex-direction:column; gap:5px; }
+    .planned div { flex:1; display:flex; align-items:center; justify-content:space-between; gap:6px; padding:7px; border:1px dashed rgba(32,42,38,.18); border-radius:8px; background:rgba(255,253,248,.45); color:#717872; font-size:5.4px; }
+    .planned span { opacity:.53; font-size:4.8px; text-transform:uppercase; }
+    .journal { display:grid; grid-template-columns:.8fr 1.2fr; min-height:140px; border-top:1px solid var(--line); background:var(--cream); }
+    .journal-lead { padding:19px 18px; background:var(--wine); color:white; }
+    .journal-lead small { font-size:5.5px; font-weight:850; letter-spacing:.12em; opacity:.63; }
+    .journal-lead h3 { margin:14px 0 8px; font-family:Georgia,serif; font-size:16px; font-weight:400; line-height:1.07; }
+    .journal-lead p { margin:0; color:rgba(255,255,255,.65); font-size:5.8px; line-height:1.45; }
+    .stories { display:grid; grid-template-columns:1fr 1fr; padding:13px; gap:7px; }
+    .story { padding:9px; border:1px solid var(--line); border-radius:9px; }
+    .story-img { height:48px; border-radius:7px; background:linear-gradient(145deg,#a69b88,#ddcdb8); }
+    .story:nth-child(2) .story-img { background:linear-gradient(145deg,#8c978c,#d8e0d7); }
+    .story small { display:block; margin-top:7px; color:var(--clay); font-size:4.8px; font-weight:850; }
+    .story b { display:block; margin:5px 0 2px; font-family:Georgia,serif; font-size:7.5px; font-weight:500; }
+    .story p { margin:0; color:#7f847f; font-size:5px; }
+    .site-foot { display:flex; justify-content:space-between; padding:14px 17px; background:var(--ink); color:rgba(255,255,255,.6); font-size:5.5px; }
+    .site-foot b { color:white; font-family:Georgia,serif; font-size:9px; font-weight:400; }
+
+    .side { display:flex; flex-direction:column; gap:12px; }
+    .logic { padding:16px; border:1px solid var(--line); border-radius:17px; background:rgba(255,255,255,.63); }
+    .logic h3 { margin:0 0 12px; font-size:13px; letter-spacing:-.025em; }
+    .logic-row { display:grid; grid-template-columns:24px 1fr; gap:8px; padding:9px 0; border-top:1px solid var(--line); }
+    .logic-row i { display:grid; place-items:center; width:24px; height:24px; border-radius:8px; color:white; font-size:10px; font-style:normal; font-weight:900; }
+    .logic-row:nth-child(2) i { background:var(--forest); }
+    .logic-row:nth-child(3) i { background:var(--clay); }
+    .logic-row:nth-child(4) i { background:var(--wine); }
+    .logic-row b { display:block; margin-bottom:3px; font-size:8px; }
+    .logic-row p { margin:0; color:#737974; font-size:7px; line-height:1.45; }
+    .phone-wrap { padding:15px 15px 16px; border:1px solid var(--line); border-radius:17px; background:rgba(255,255,255,.63); }
+    .phone-title { display:flex; justify-content:space-between; margin-bottom:11px; }
+    .phone-title b { font-size:11px; } .phone-title span { color:#7b807c; font-size:7px; }
+    .phone { width:176px; margin:auto; overflow:hidden; border:5px solid #252b28; border-radius:23px; background:var(--paper); box-shadow:0 13px 30px rgba(35,40,36,.16); }
+    .notch { width:61px; height:11px; margin:auto; border-radius:0 0 8px 8px; background:#252b28; }
+    .m-nav { display:flex; align-items:center; justify-content:space-between; padding:8px 9px; }
+    .m-nav b { font-family:Georgia,serif; font-size:7px; font-weight:500; }
+    .m-nav span { font-size:8px; }
+    .m-hero { padding:14px 10px 10px; }
+    .m-hero small { color:var(--clay); font-size:4px; font-weight:900; }
+    .m-hero h4 { margin:6px 0 5px; font-family:Georgia,serif; font-size:14px; font-weight:400; line-height:1.05; letter-spacing:-.05em; }
+    .m-hero p { margin:0; color:#777d78; font-size:4.5px; line-height:1.5; }
+    .m-tasks { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:8px; }
+    .m-task { padding:7px; border-radius:7px; background:var(--cream); border:1px solid var(--line); font-size:4.5px; font-weight:850; }
+    .m-task:first-child { background:var(--forest); color:white; }
+    .m-map { position:relative; height:106px; margin:0 7px; overflow:hidden; border-radius:10px; background:#dce4d8; }
+    .m-map::before { content:""; position:absolute; inset:-40%; background:repeating-linear-gradient(30deg,transparent 0 25px,rgba(255,255,255,.75) 26px 29px,transparent 30px 46px),repeating-linear-gradient(120deg,transparent 0 37px,rgba(255,255,255,.6) 38px 41px,transparent 42px 58px); }
+    .m-pin { position:absolute; z-index:2; width:15px; height:15px; border:3px solid white; border-radius:50%; background:var(--clay); box-shadow:0 3px 7px rgba(32,42,38,.2); }
+    .mp1 { left:30%; top:23%; } .mp2 { right:24%; top:46%; background:var(--forest); }
+    .m-group { position:absolute; z-index:3; left:5px; right:5px; bottom:5px; display:flex; justify-content:space-between; padding:5px; border-radius:6px; background:rgba(255,253,248,.94); font-size:3.9px; }
+    .m-section { padding:10px 8px 8px; }
+    .m-section b { display:block; margin-bottom:6px; font-size:6px; }
+    .m-cards { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .m-card { min-height:42px; padding:6px; border-radius:7px; background:var(--cream); border:1px solid var(--line); font-size:4.1px; }
+    .m-card:first-child { background:var(--wine); color:white; }
+    .m-bottom { display:grid; grid-template-columns:repeat(3,1fr); margin-top:5px; padding:7px 5px 9px; border-top:1px solid var(--line); background:var(--cream); text-align:center; color:#767d78; font-size:4px; }
+    .m-bottom b { color:var(--forest); font-weight:900; }
+    .flow { padding:15px 16px; border-radius:17px; background:var(--ink); color:white; }
+    .flow small { color:rgba(255,255,255,.55); font-size:6px; letter-spacing:.1em; }
+    .flow h3 { margin:7px 0 10px; font-family:Georgia,serif; font-size:13px; font-weight:400; }
+    .flow p { margin:0; color:rgba(255,255,255,.62); font-size:7px; line-height:1.55; }
+    .flow p + p { margin-top:5px; }
+    .caption { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:17px 19px 19px; border-top:1px solid var(--line); background:white; }
+    .caption h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+    .caption p { max-width:700px; margin:5px 0 0; color:#69706b; font-size:11px; line-height:1.55; }
+    .caption span { padding:7px 10px; border-radius:999px; background:#e8efe9; color:#346049; font-size:9px; font-weight:850; white-space:nowrap; }
+    @media (max-width:1100px) {
+      .workbench { grid-template-columns:1fr; }
+      .side { display:grid; grid-template-columns:1fr 1fr 1fr; }
+      .phone-wrap { grid-row:span 2; }
+    }
+    @media (max-width:760px) {
+      .page { width:min(100% - 18px,620px); padding-top:21px; }
+      .intro { grid-template-columns:1fr; align-items:start; }
+      .approval { justify-self:start; white-space:normal; }
+      .site-nav { grid-template-columns:1fr auto; }
+      .nav-links { display:none; }
+      .hero { grid-template-columns:1fr; }
+      .hero-visual { min-height:220px; }
+      .response-grid,.journal { grid-template-columns:1fr; }
+      .group-panel { border-left:0; border-top:1px solid var(--line); }
+      .category-grid { grid-template-columns:1fr 1fr; }
+      .planned { grid-column:1/-1; flex-direction:row; flex-wrap:wrap; }
+      .planned div { min-width:120px; }
+      .side { grid-template-columns:1fr; }
+      .caption { align-items:flex-start; flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div>
+        <p class="eyebrow">Find My Pet · Hybrid Direction G</p>
+        <h1>D의 구조, E의 직관성, F의 감성을 한 흐름으로 합쳤습니다</h1>
+        <p>핵심 행동과 지도는 숨기지 않고, 따뜻한 문장·사진·여백은 신뢰를 만드는 층으로 사용합니다. 아래 전체 시안을 눌러 이 방향을 선택할 수 있습니다.</p>
+      </div>
+      <div class="approval"><i></i> 통합안 G · 데스크톱과 모바일 동시 제안</div>
+    </header>
+
+    <div class="workbench">
+      <article class="choice" data-choice="g-warm-local-response-network" onclick="toggleSelect(this)">
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+          <nav class="site-nav">
+            <div class="brand">Find My Pet</div>
+            <div class="nav-links"><span>함께 찾기</span><span>보호 동물</span><span>보호소·입양</span><span>이용 안내</span></div>
+            <div class="nav-actions"><span>내 활동</span><b>소식 등록</b></div>
+          </nav>
+
+          <section class="hero">
+            <div class="hero-copy">
+              <div class="hero-kicker">A safer way back home</div>
+              <h2>다시 만나는 길을,<br/><em>동네와 함께.</em></h2>
+              <p>실종 소식과 보호 정보를 가까운 곳부터 연결하고, 사람들과 함께 찾을 수 있도록 도와드려요.</p>
+              <div class="task-actions">
+                <div class="task"><small>반려동물을 잃어버렸다면</small><strong>함께 찾기를 시작할게요 <i>↗</i></strong></div>
+                <div class="task"><small>새로운 가족을 만나고 싶다면</small><strong>보호 동물을 만나볼게요 <i>↗</i></strong></div>
+              </div>
+            </div>
+            <div class="hero-visual">
+              <div class="visual-label">오늘의 연결 기록 · 서울</div>
+              <div class="visual-note"><p>한 사람의 제보가 소중한 가족을 집으로 데려옵니다.</p><div><b>18</b><span>오늘 새로 연결된 소식</span></div></div>
+            </div>
+          </section>
+
+          <div class="search"><span>지역·품종·특징으로 찾아보세요</span><span>현재 위치: 서울 마포구</span><b>검색하기</b></div>
+
+          <section class="response">
+            <div class="section-top"><div><small>LOCAL RESPONSE MAP</small><h3>가까운 곳의 소식과 함께 찾는 사람들</h3></div><p>지도에서 제보를 확인하고, 개인 또는 팀으로 수색에 참여할 수 있어요.</p></div>
+            <div class="response-grid">
+              <div class="map">
+                <div class="map-filter"><span>전체</span><span>수색 중</span><span>제보</span><span>보호 중</span></div>
+                <div class="marker mark-1"><b>1</b></div><div class="marker mark-2"><b>2</b></div><div class="marker mark-3"><b>3</b></div>
+                <div class="map-card"><div class="map-photo"></div><div><b>연남동에서 초코를 찾고 있어요</b><span>마지막 목격 18:40 · 650m</span></div><span class="map-status">수색 중</span></div>
+              </div>
+              <aside class="group-panel">
+                <div class="group-head"><b>함께 찾는 반려동물</b><span>자유롭게 참여</span></div>
+                <div class="pet-brief"><div class="brief-photo"></div><div><small>초코 가족이 등록했어요</small><strong>크림색 소형견 초코</strong><p>서울 마포구 · 오늘 18:40</p></div></div>
+                <div class="group-stats"><div><b>9</b><span>함께 찾는 사람</span></div><div><b>3</b><span>새 제보</span></div><div><b>2</b><span>연결된 팀</span></div></div>
+                <div class="group-event"><i></i><span>12분 전 · 공원 북쪽 입구에서 비슷한 반려견을 봤다는 제보가 도착했어요.</span></div>
+                <div class="group-actions"><span>함께 찾기</span><span>카카오톡 공유</span></div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="categories">
+            <div class="category-head"><h3>필요한 정보부터 살펴보세요</h3><span>전체 서비스 안내 →</span></div>
+            <div class="category-grid">
+              <div class="category-card"><small>01 · 지금 이용 가능</small><strong>집을 잃었어요</strong><p>실종 소식과 주변 제보를 확인해요</p></div>
+              <div class="category-card"><small>02 · 지금 이용 가능</small><strong>보호소에서<br/>가족을 기다려요</strong><p>전국 보호 동물을 만나요</p></div>
+              <div class="planned"><div>우리집 근처 보호소 <span>soon</span></div><div>반려동물을 입양하고 싶어요 <span>soon</span></div><div>반려동물의 새 가족을 찾아요 <span>soon</span></div></div>
+            </div>
+          </section>
+
+          <section class="journal">
+            <div class="journal-lead"><small>STORIES OF CONNECTION</small><h3>가까운 곳에서<br/>이어지고 있는 이야기</h3><p>빠른 정보뿐 아니라, 서로를 돕는 과정도 따뜻하게 기록합니다.</p></div>
+            <div class="stories"><div class="story"><div class="story-img"></div><small>MISSING · MAPO</small><b>연남동에서 초코를 찾고 있어요</b><p>8명이 함께 찾는 중 · 제보 3개</p></div><div class="story"><div class="story-img"></div><small>SHELTER · SEONGNAM</small><b>세 살 고양이가 새 가족을 기다려요</b><p>건강검진 완료 · 입양 상담 가능</p></div></div>
+          </section>
+          <footer class="site-foot"><b>Find My Pet</b><span>안전 수칙 · 이용 안내 · 개인정보 처리방침 · 문의</span></footer>
+        </div>
+        <div class="caption"><div><h2>G. 따뜻한 지역 응답망</h2><p>첫 화면은 E처럼 바로 행동을 고르고, 중심 기능은 D처럼 지도·제보·그룹으로 연결하며, F의 사진·문장·타이포그래피로 신뢰와 감정을 만듭니다.</p></div><span>통합 권장안</span></div>
+      </article>
+
+      <aside class="side">
+        <section class="logic">
+          <h3>세 방향의 역할 분담</h3>
+          <div class="logic-row"><i>D</i><div><b>기능의 뼈대</b><p>지도, 제보, 함께 찾는 사람, 그룹 상태를 중심 모듈로 사용</p></div></div>
+          <div class="logic-row"><i>E</i><div><b>첫 진입의 직관성</b><p>“함께 찾기”와 “보호 동물 보기” 두 행동을 가장 먼저 제시</p></div></div>
+          <div class="logic-row"><i>F</i><div><b>브랜드의 온도</b><p>따뜻한 사진, 세리프 제목, 여백과 이야기로 감정적 신뢰 형성</p></div></div>
+        </section>
+
+        <section class="phone-wrap">
+          <div class="phone-title"><b>모바일 첫 화면</b><span>깊이 최소화</span></div>
+          <div class="phone">
+            <div class="notch"></div>
+            <div class="m-nav"><b>Find My Pet</b><span>☰</span></div>
+            <div class="m-hero"><small>다시 만나는 길을, 동네와 함께</small><h4>지금 어떤 도움이<br/>필요한가요?</h4><p>상황을 고르면 필요한 다음 행동으로 바로 이어져요.</p><div class="m-tasks"><div class="m-task">함께 찾기 →</div><div class="m-task">보호 동물 보기 →</div></div></div>
+            <div class="m-map"><div class="m-pin mp1"></div><div class="m-pin mp2"></div><div class="m-group"><b>내 주변 수색 소식 3개</b><span>지도 열기 →</span></div></div>
+            <div class="m-section"><b>바로 살펴보기</b><div class="m-cards"><div class="m-card">집을 잃었어요</div><div class="m-card">보호소에서 가족을 기다려요</div></div></div>
+            <div class="m-bottom"><b>홈</b><span>지도</span><span>내 활동</span></div>
+          </div>
+        </section>
+
+        <section class="flow">
+          <small>SHALLOW FLOW</small>
+          <h3>홈에서 1번만 선택</h3>
+          <p>함께 찾기 → 등록 또는 지도</p>
+          <p>보호 동물 → 목록 또는 상세</p>
+          <p>내 활동 → 함께 찾는 반려동물</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

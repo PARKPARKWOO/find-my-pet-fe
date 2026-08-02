@@ -9,7 +9,7 @@ export function loadTypeScriptModule(file) {
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
-  const module = { exports: {} };
-  new Function("module", "exports", output)(module, module.exports);
-  return module.exports;
+  const loadedModule = { exports: {} };
+  new Function("module", "exports", output)(loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }

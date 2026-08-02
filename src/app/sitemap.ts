@@ -211,8 +211,8 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
         stopped = true;
         break;
       }
-      const contents: ApiAbandonedSummary[] = json?.data?.contents ?? [];
-      if (contents.length === 0) {
+      const contents = json?.data?.contents;
+      if (!Array.isArray(contents)) {
         stopped = true;
         break;
       }
@@ -263,7 +263,7 @@ async function fetchAllAbandoned(deadline: Deadline): Promise<ApiAbandonedSummar
         stopped = true;
         break;
       }
-      if (!json?.data?.hasNextPage) {
+      if (json?.data?.hasNextPage !== true) {
         stopped = true;
         break;
       }

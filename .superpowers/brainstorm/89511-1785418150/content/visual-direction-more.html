@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 추가 UI 방향</title>
+  <style>
+    :root { color-scheme: light; --shell:#e8e6df; --ink:#18201d; --muted:#666c68; --line:rgba(24,32,29,.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--shell); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    .page { width:min(1580px,calc(100% - 40px)); margin:auto; padding:32px 0 64px; }
+    .head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:24px; margin-bottom:23px; }
+    .overline { margin:0 0 8px; color:#59605b; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; max-width:950px; font-size:clamp(27px,3vw,47px); line-height:1.08; letter-spacing:-.055em; }
+    .intro { max-width:760px; margin:11px 0 0; color:var(--muted); font-size:14px; line-height:1.65; }
+    .round-label { display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.52); color:#5d635f; font-size:11px; white-space:nowrap; }
+    .round-label i { width:7px; height:7px; border-radius:50%; background:#e46f51; box-shadow:0 0 0 4px rgba(228,111,81,.12); }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .direction { position:relative; overflow:hidden; padding:0; border:1px solid rgba(20,26,23,.17); border-radius:22px; background:#fff; box-shadow:0 10px 35px rgba(42,40,34,.06); cursor:pointer; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
+    .direction:hover { transform:translateY(-4px); box-shadow:0 18px 45px rgba(42,40,34,.11); }
+    .direction.selected { border-color:#17201c; box-shadow:0 0 0 3px rgba(23,32,28,.13),0 18px 45px rgba(42,40,34,.12); }
+    .direction.selected::after { content:"선택됨"; position:absolute; z-index:20; top:14px; right:14px; padding:7px 10px; border-radius:999px; background:#17201c; color:white; font-size:10px; font-weight:850; }
+    .preview { min-height:650px; overflow:hidden; }
+    .meta { min-height:119px; padding:18px 20px 20px; border-top:1px solid var(--line); background:white; }
+    .meta-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .meta h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+    .badge { padding:5px 8px; border-radius:999px; background:#f0eee8; color:#626762; font-size:10px; font-weight:800; }
+    .badge.best { background:#e8efe9; color:#2e604a; }
+    .meta p { margin:8px 0 0; color:#6b706c; font-size:12px; line-height:1.58; }
+
+    /* D — Local Search Atlas */
+    .d { --paper:#f2efe7; --paper2:#faf8f2; --forest:#244b3d; --orange:#e9784d; --dink:#18251f; }
+    .d .preview { background:var(--paper); color:var(--dink); }
+    .d-nav { display:flex; align-items:center; justify-content:space-between; padding:13px 17px; border-bottom:1px solid rgba(24,37,31,.12); }
+    .brand { font-size:13px; font-weight:900; letter-spacing:-.04em; }
+    .d-links { display:flex; align-items:center; gap:11px; color:#66716b; font-size:7px; font-weight:750; }
+    .d-links b { padding:7px 9px; border-radius:7px; background:var(--forest); color:white; }
+    .d-hero { display:grid; grid-template-columns:.9fr 1.1fr; min-height:232px; }
+    .d-copy { display:flex; flex-direction:column; justify-content:center; padding:25px 16px 22px; }
+    .d-copy small { color:var(--orange); font-size:7px; font-weight:900; letter-spacing:.12em; }
+    .d-copy h3 { margin:9px 0 11px; font-size:26px; line-height:1.03; letter-spacing:-.065em; }
+    .d-copy p { margin:0; color:#68736d; font-size:8px; line-height:1.55; }
+    .d-actions { display:flex; gap:5px; margin-top:15px; }
+    .d-actions span { padding:7px 8px; border-radius:7px; border:1px solid rgba(24,37,31,.14); background:var(--paper2); font-size:6.5px; font-weight:800; }
+    .d-actions span:first-child { border-color:var(--orange); background:var(--orange); color:white; }
+    .map { position:relative; margin:14px 13px 14px 0; overflow:hidden; border-radius:14px; background:#dce3d5; box-shadow:inset 0 0 0 1px rgba(36,75,61,.08); }
+    .map::before { content:""; position:absolute; inset:-20%; background:repeating-linear-gradient(28deg,transparent 0 37px,rgba(255,255,255,.75) 38px 42px,transparent 43px 68px),repeating-linear-gradient(118deg,transparent 0 51px,rgba(255,255,255,.6) 52px 55px,transparent 56px 88px); opacity:.86; }
+    .river { position:absolute; z-index:1; width:260px; height:48px; left:-55px; top:84px; border:8px solid rgba(112,163,174,.45); border-left:0; border-right:0; border-radius:50%; transform:rotate(-15deg); }
+    .marker { position:absolute; z-index:3; display:grid; place-items:center; width:26px; height:26px; border:4px solid white; border-radius:50% 50% 50% 4px; background:var(--orange); color:white; font-size:7px; font-weight:900; box-shadow:0 5px 12px rgba(35,56,46,.2); transform:rotate(-45deg); }
+    .marker b { transform:rotate(45deg); }
+    .m1 { left:32%; top:30%; } .m2 { right:20%; top:50%; background:var(--forest); } .m3 { left:43%; bottom:17%; background:#d3a448; }
+    .map-panel { position:absolute; z-index:5; left:9px; right:9px; bottom:9px; display:flex; align-items:center; justify-content:space-between; gap:7px; padding:8px 9px; border-radius:9px; background:rgba(255,253,248,.93); backdrop-filter:blur(6px); font-size:6.5px; box-shadow:0 6px 18px rgba(41,51,44,.12); }
+    .map-panel b { font-size:7px; }
+    .map-panel span { color:#727a75; }
+    .d-strip { padding:0 16px 18px; }
+    .d-strip-head { display:flex; justify-content:space-between; padding:4px 0 9px; font-size:7px; }
+    .d-strip-head b { font-size:11px; }
+    .d-categories { display:flex; gap:6px; overflow:hidden; }
+    .d-category { flex:0 0 117px; min-height:81px; padding:10px; border:1px solid rgba(24,37,31,.1); border-radius:10px; background:var(--paper2); }
+    .d-category:first-child { background:var(--forest); color:white; }
+    .d-category small { font-size:6px; opacity:.66; }
+    .d-category strong { display:block; margin:19px 0 4px; font-size:9px; line-height:1.2; }
+    .d-category p { margin:0; opacity:.65; font-size:6px; }
+    .d-category.soon { flex-basis:82px; opacity:.55; border-style:dashed; }
+    .d-team { padding:17px 16px 20px; background:var(--paper2); }
+    .d-team-title { display:flex; justify-content:space-between; align-items:end; margin-bottom:10px; }
+    .d-team-title b { font-size:11px; } .d-team-title span { color:#778079; font-size:6px; }
+    .team-card { display:grid; grid-template-columns:53px 1fr auto; align-items:center; gap:9px; padding:9px; border:1px solid rgba(24,37,31,.09); border-radius:10px; background:white; }
+    .team-photo { height:45px; border-radius:8px; background:linear-gradient(145deg,#bda88e,#eadbc6); }
+    .team-info b { display:block; font-size:8px; } .team-info span { color:#7c837e; font-size:6px; }
+    .team-count { display:flex; align-items:center; gap:3px; color:#4e6258; font-size:6px; }
+    .team-count i { width:16px; height:16px; border-radius:50%; background:#d8e1da; border:2px solid white; }
+    .d-foot { display:flex; justify-content:space-between; padding:14px 16px; background:var(--forest); color:rgba(255,255,255,.63); font-size:6px; }
+
+    /* E — Guided Action */
+    .e { --e-paper:#fbf7ef; --e-ink:#252824; --e-red:#df6b50; --e-green:#50745f; --e-yellow:#e9c978; }
+    .e .preview { background:var(--e-paper); color:var(--e-ink); }
+    .e-nav { display:flex; align-items:center; justify-content:space-between; padding:14px 17px; }
+    .e-nav div { display:flex; align-items:center; gap:14px; color:#757770; font-size:7px; }
+    .e-nav strong { color:var(--e-ink); font-size:13px; letter-spacing:-.04em; }
+    .e-nav b { padding:7px 9px; border:1px solid rgba(37,40,36,.14); border-radius:999px; color:var(--e-ink); }
+    .e-hero { padding:28px 17px 19px; text-align:center; }
+    .e-hero small { display:inline-flex; align-items:center; gap:6px; color:#6d716b; font-size:7px; font-weight:800; }
+    .e-hero small::before { content:""; width:22px; height:1px; background:var(--e-red); }
+    .e-hero h3 { max-width:330px; margin:10px auto 8px; font-size:28px; line-height:1.06; letter-spacing:-.065em; }
+    .e-hero p { margin:0 auto; max-width:270px; color:#747770; font-size:8px; line-height:1.55; }
+    .e-choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 14px 16px; }
+    .e-choice { position:relative; min-height:157px; overflow:hidden; padding:14px; border-radius:15px; color:white; }
+    .e-choice:first-child { background:var(--e-red); }
+    .e-choice:last-child { background:var(--e-green); }
+    .e-choice::after { content:""; position:absolute; width:94px; height:94px; right:-25px; bottom:-29px; border:1px solid rgba(255,255,255,.28); border-radius:50%; box-shadow:0 0 0 15px rgba(255,255,255,.06),0 0 0 31px rgba(255,255,255,.04); }
+    .e-choice small { font-size:6.5px; opacity:.72; }
+    .e-choice strong { display:block; margin:21px 0 7px; font-size:14px; line-height:1.18; letter-spacing:-.035em; }
+    .e-choice p { width:82%; margin:0; opacity:.72; font-size:6.5px; line-height:1.45; }
+    .e-choice span { position:absolute; z-index:2; left:14px; bottom:14px; font-size:7px; font-weight:850; }
+    .e-search { display:flex; align-items:center; justify-content:space-between; margin:0 14px 18px; padding:10px 11px; border:1px solid rgba(37,40,36,.12); border-radius:10px; background:white; color:#7a7c76; font-size:7px; }
+    .e-search b { padding:5px 7px; border-radius:6px; background:var(--e-ink); color:white; }
+    .e-guide { padding:17px 15px; border-top:1px solid rgba(37,40,36,.12); border-bottom:1px solid rgba(37,40,36,.12); background:#fffdf9; }
+    .e-guide-head { display:flex; justify-content:space-between; align-items:end; margin-bottom:11px; }
+    .e-guide-head b { font-size:11px; } .e-guide-head span { color:#898a84; font-size:6px; }
+    .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .step { padding:9px; border-radius:9px; background:#f5f0e7; }
+    .step i { display:grid; place-items:center; width:19px; height:19px; border-radius:50%; background:var(--e-yellow); color:#5a4a22; font-size:6px; font-style:normal; font-weight:900; }
+    .step b { display:block; margin:10px 0 3px; font-size:7px; } .step p { margin:0; color:#7d7f79; font-size:5.7px; line-height:1.35; }
+    .e-more { padding:17px 15px 20px; }
+    .e-more h4 { margin:0 0 10px; font-size:11px; }
+    .e-more-list { display:flex; flex-direction:column; gap:5px; }
+    .e-more-row { display:flex; align-items:center; justify-content:space-between; min-height:31px; padding:7px 9px; border-radius:8px; background:#f1ede5; color:#6d706a; font-size:6.5px; }
+    .e-more-row b { color:#464a45; font-size:7px; } .e-more-row span { padding:4px 6px; border-radius:999px; background:#e6e2da; font-size:5.5px; }
+    .e-foot { display:flex; justify-content:center; gap:17px; padding:13px; background:var(--e-ink); color:rgba(255,255,255,.64); font-size:6px; }
+
+    /* F — Quiet Care Brand */
+    .f { --f-paper:#f0ebe4; --wine:#6c403d; --olive:#70725a; --fink:#25211f; }
+    .f .preview { background:var(--f-paper); color:var(--fink); }
+    .f-nav { display:flex; align-items:center; justify-content:space-between; padding:14px 17px; font-family:Georgia,"Times New Roman",serif; }
+    .f-nav strong { font-size:14px; font-weight:500; letter-spacing:-.04em; }
+    .f-nav div { display:flex; align-items:center; gap:13px; font-family:Pretendard,system-ui,sans-serif; color:#746f69; font-size:7px; }
+    .f-nav b { display:grid; place-items:center; width:25px; height:25px; border-radius:50%; background:var(--wine); color:white; font-size:10px; }
+    .f-hero { position:relative; min-height:285px; margin:0 12px; overflow:hidden; border-radius:18px; background:linear-gradient(140deg,#8c8b75 0%,#bcb49d 45%,#d7c5af 100%); }
+    .f-hero::before { content:""; position:absolute; width:190px; height:235px; right:-15px; bottom:-32px; border-radius:48% 48% 18px 18px; background:linear-gradient(155deg,rgba(242,227,209,.8),rgba(102,75,65,.42)); filter:blur(.2px); transform:rotate(7deg); }
+    .f-hero::after { content:""; position:absolute; width:108px; height:108px; right:38px; top:59px; border:1px solid rgba(255,255,255,.55); border-radius:50%; box-shadow:0 0 0 18px rgba(255,255,255,.05); }
+    .f-caption { position:absolute; z-index:2; left:16px; top:17px; max-width:255px; color:white; }
+    .f-caption small { font-family:Pretendard,system-ui,sans-serif; font-size:6px; font-weight:850; letter-spacing:.15em; text-transform:uppercase; }
+    .f-caption h3 { margin:15px 0 10px; font-family:Georgia,"Times New Roman",serif; font-size:28px; font-weight:400; line-height:1.02; letter-spacing:-.06em; }
+    .f-caption p { width:72%; margin:0; color:rgba(255,255,255,.76); font-size:7px; line-height:1.5; }
+    .f-stat { position:absolute; z-index:3; left:15px; right:15px; bottom:13px; display:flex; align-items:center; justify-content:space-between; padding:9px 10px; border-top:1px solid rgba(255,255,255,.45); color:white; font-size:6px; }
+    .f-stat b { font-family:Georgia,serif; font-size:12px; font-weight:400; }
+    .f-dock { position:relative; z-index:4; display:grid; grid-template-columns:1fr 1fr; gap:7px; margin:-1px 21px 17px; padding-top:9px; }
+    .f-dock-card { min-height:79px; padding:11px; border-radius:11px; background:#faf7f2; box-shadow:0 8px 23px rgba(58,46,40,.1); }
+    .f-dock-card small { color:var(--wine); font-size:6px; font-weight:850; }
+    .f-dock-card b { display:block; margin:15px 0 3px; font-family:Georgia,serif; font-size:10px; font-weight:500; line-height:1.18; }
+    .f-dock-card span { color:#827c75; font-size:6px; }
+    .f-journal { padding:0 16px 18px; }
+    .f-journal-head { display:flex; align-items:end; justify-content:space-between; padding:6px 0 10px; border-bottom:1px solid rgba(37,33,31,.17); }
+    .f-journal-head b { font-family:Georgia,serif; font-size:12px; font-weight:500; }
+    .f-journal-head span { color:#817b74; font-size:6px; }
+    .f-story { display:grid; grid-template-columns:77px 1fr; gap:10px; padding:10px 0; border-bottom:1px solid rgba(37,33,31,.13); }
+    .f-story-img { height:57px; border-radius:9px; background:linear-gradient(145deg,#a69c88,#d9cbb8); }
+    .f-story:nth-child(3) .f-story-img { background:linear-gradient(145deg,#8c978b,#d3ddd2); }
+    .f-story small { color:var(--wine); font-size:5.5px; font-weight:850; }
+    .f-story b { display:block; margin:7px 0 3px; font-family:Georgia,serif; font-size:9px; font-weight:500; }
+    .f-story p { margin:0; color:#817b75; font-size:6px; }
+    .f-coming { display:flex; flex-wrap:wrap; gap:5px; padding:0 16px 18px; }
+    .f-coming span { padding:6px 7px; border:1px solid rgba(37,33,31,.13); border-radius:999px; color:#77726c; font-size:6px; }
+    .f-coming span::after { content:" · soon"; opacity:.5; }
+    .f-foot { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:var(--wine); color:rgba(255,255,255,.68); font-size:6px; }
+    .f-foot b { color:white; font-family:Georgia,serif; font-size:10px; font-weight:400; }
+
+    .notes { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; color:#656a66; font-size:11px; }
+    .notes span { padding:7px 9px; border:1px solid rgba(23,30,27,.11); border-radius:999px; background:rgba(255,255,255,.42); }
+    @media (max-width:1120px) {
+      .grid { grid-template-columns:1fr; }
+      .direction { display:grid; grid-template-columns:minmax(360px,.82fr) 1fr; }
+      .meta { display:flex; flex-direction:column; justify-content:center; border-top:0; border-left:1px solid var(--line); }
+      .meta p { max-width:360px; }
+    }
+    @media (max-width:700px) {
+      .page { width:min(100% - 20px,520px); padding-top:22px; }
+      .head { grid-template-columns:1fr; align-items:start; }
+      .round-label { justify-self:start; white-space:normal; }
+      .direction { display:block; }
+      .meta { border-top:1px solid var(--line); border-left:0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="head">
+      <div>
+        <p class="overline">Find My Pet · Visual Direction 02</p>
+        <h1>기능 확장성과 첫 사용 경험을 더 강하게 잡은 3가지 추가안</h1>
+        <p class="intro">D는 지도와 함께 찾기, E는 명확한 행동 선택, F는 감정적 신뢰에 초점을 맞췄습니다. 마음에 드는 카드를 눌러 주세요.</p>
+      </div>
+      <div class="round-label"><i></i> D안: 그룹·지도 확장에 가장 유리</div>
+    </header>
+
+    <section class="grid">
+      <article class="direction d" data-choice="d-local-search-atlas" onclick="toggleSelect(this)">
+        <div class="preview">
+          <nav class="d-nav"><div class="brand">Find My Pet</div><div class="d-links"><span>함께 찾기</span><span>보호 동물</span><span>내 그룹</span><b>소식 등록</b></div></nav>
+          <section class="d-hero">
+            <div class="d-copy"><small>NEARBY SEARCH NETWORK</small><h3>우리 동네에서<br/>함께 찾는 지도.</h3><p>실종 소식과 보호 정보를 가까운 거리부터 확인하고, 팀과 함께 움직여요.</p><div class="d-actions"><span>지금 함께 찾기</span><span>보호 동물 보기</span></div></div>
+            <div class="map"><div class="river"></div><div class="marker m1"><b>1</b></div><div class="marker m2"><b>2</b></div><div class="marker m3"><b>3</b></div><div class="map-panel"><div><b>내 주변 3개의 소식</b><br/><span>반경 5km 기준</span></div><b>전체 지도 →</b></div></div>
+          </section>
+          <section class="d-strip">
+            <div class="d-strip-head"><b>목적별로 살펴보기</b><span>전체 카테고리 →</span></div>
+            <div class="d-categories">
+              <div class="d-category"><small>01 · LIVE</small><strong>집을 잃었어요</strong><p>실종 소식과 제보</p></div>
+              <div class="d-category"><small>02 · LIVE</small><strong>보호소에서<br/>가족을 기다려요</strong><p>전국 보호 동물</p></div>
+              <div class="d-category soon"><small>03 · SOON</small><strong>근처 보호소</strong></div>
+              <div class="d-category soon"><small>04 · SOON</small><strong>입양하기</strong></div>
+            </div>
+          </section>
+          <section class="d-team">
+            <div class="d-team-title"><b>함께 찾는 반려동물</b><span>내 그룹 관리 →</span></div>
+            <div class="team-card"><div class="team-photo"></div><div class="team-info"><b>마포구에서 초코를 찾고 있어요</b><span>마지막 제보 12분 전 · 수색 중</span></div><div class="team-count"><i></i><i></i><b>+6</b></div></div>
+          </section>
+          <footer class="d-foot"><span>Find My Pet</span><span>안전 수칙 · 이용 안내 · 문의</span></footer>
+        </div>
+        <div class="meta"><div class="meta-top"><h2>D. 지역 지도 중심</h2><span class="badge best">기능 확장 적합</span></div><p>지도·제보·그룹이 한 흐름으로 연결됩니다. 앞으로 추가할 ‘함께 찾기’의 정체성을 가장 잘 드러내는 안입니다.</p></div>
+      </article>
+
+      <article class="direction e" data-choice="e-guided-action" onclick="toggleSelect(this)">
+        <div class="preview">
+          <nav class="e-nav"><div><strong>Find My Pet</strong><span>서비스 안내</span><span>안전 수칙</span></div><div><span>로그인</span><b>마이페이지</b></div></nav>
+          <section class="e-hero"><small>어려운 순간, 가장 쉬운 첫걸음</small><h3>지금 어떤 도움이<br/>필요한가요?</h3><p>상황에 맞는 길을 고르면 필요한 정보와 다음 행동을 바로 안내해 드려요.</p></section>
+          <section class="e-choices">
+            <div class="e-choice"><small>반려동물을 잃어버렸다면</small><strong>함께 찾기를<br/>시작할게요</strong><p>실종 소식을 등록하고 주변 제보를 받아요.</p><span>시작하기 →</span></div>
+            <div class="e-choice"><small>새로운 가족을 만나고 싶다면</small><strong>보호 동물을<br/>만나볼게요</strong><p>보호소에서 기다리는 동물을 살펴봐요.</p><span>둘러보기 →</span></div>
+          </section>
+          <div class="e-search"><span>지역·품종·특징으로 바로 검색할 수도 있어요</span><b>검색</b></div>
+          <section class="e-guide">
+            <div class="e-guide-head"><b>잃어버렸을 때 이렇게 시작해요</b><span>전체 안내 보기 →</span></div>
+            <div class="steps"><div class="step"><i>1</i><b>소식 등록</b><p>사진과 마지막 위치를 알려주세요</p></div><div class="step"><i>2</i><b>사람 연결</b><p>자유 참여 또는 승인 참여를 받아요</p></div><div class="step"><i>3</i><b>제보 확인</b><p>알림과 지도로 함께 확인해요</p></div></div>
+          </section>
+          <section class="e-more"><h4>곧 더 많은 연결이 열려요</h4><div class="e-more-list"><div class="e-more-row"><b>우리집 근처 보호소</b><span>준비 중</span></div><div class="e-more-row"><b>반려동물을 입양하고 싶어요</b><span>준비 중</span></div><div class="e-more-row"><b>반려동물의 새 가족을 찾아요</b><span>준비 중</span></div></div></section>
+          <footer class="e-foot"><span>이용 안내</span><span>안전 수칙</span><span>문의하기</span></footer>
+        </div>
+        <div class="meta"><div class="meta-top"><h2>E. 행동 안내 중심</h2><span class="badge best">가장 직관적</span></div><p>‘무엇을 눌러야 하지?’를 최소화합니다. 긴급한 사용자와 처음 방문한 사용자에게 가장 편한 구조입니다.</p></div>
+      </article>
+
+      <article class="direction f" data-choice="f-quiet-care-brand" onclick="toggleSelect(this)">
+        <div class="preview">
+          <nav class="f-nav"><strong>Find My Pet</strong><div><span>함께 찾기</span><span>보호 기록</span><span>내 활동</span><b>↗</b></div></nav>
+          <section class="f-hero"><div class="f-caption"><small>A safer way back home</small><h3>다시 만나는 길을<br/>함께 만듭니다.</h3><p>한 사람의 기록이 누군가의 소중한 가족을 집으로 데려옵니다.</p></div><div class="f-stat"><span>오늘 가까운 곳에서<br/>새로 연결된 소식</span><b>18</b></div></section>
+          <section class="f-dock"><div class="f-dock-card"><small>FOR MISSING PETS</small><b>집을 잃었어요</b><span>실종 소식과 제보 보기 →</span></div><div class="f-dock-card"><small>FOR NEW FAMILIES</small><b>보호소에서<br/>가족을 기다려요</b><span>보호 동물 만나기 →</span></div></section>
+          <section class="f-journal">
+            <div class="f-journal-head"><b>가까운 곳의 새로운 기록</b><span>모두 보기 →</span></div>
+            <div class="f-story"><div class="f-story-img"></div><div><small>MISSING · MAPO</small><b>연남동에서 초코를 찾고 있습니다</b><p>오늘 18:40 마지막 목격 · 함께 찾는 중</p></div></div>
+            <div class="f-story"><div class="f-story-img"></div><div><small>SHELTER · SEONGNAM</small><b>세 살 고양이가 새 가족을 기다려요</b><p>건강검진 완료 · 입양 상담 가능</p></div></div>
+          </section>
+          <div class="f-coming"><span>우리집 근처 보호소</span><span>입양하고 싶어요</span><span>새 가족을 찾아요</span></div>
+          <footer class="f-foot"><b>Find My Pet</b><span>Guide · Safety · Contact</span></footer>
+        </div>
+        <div class="meta"><div class="meta-top"><h2>F. 감성 브랜드 중심</h2><span class="badge">신뢰·정서</span></div><p>사진과 이야기로 서비스의 진정성을 강조합니다. 브랜드 인상은 강하지만 빠른 기능 탐색은 보완이 필요합니다.</p></div>
+      </article>
+    </section>
+
+    <div class="notes"><span>D · 지도와 그룹 중심</span><span>E · 행동 선택과 안내 중심</span><span>F · 사진과 이야기 중심</span><span>선택한 안은 A안과 혼합 가능</span></div>
+  </main>
+</body>
+</html>

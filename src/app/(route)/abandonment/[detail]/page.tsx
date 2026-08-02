@@ -5,7 +5,12 @@ import { ArrowLeft } from "lucide-react";
 import { BASE_URL } from "@/app/constant/api";
 import { Button } from "@/app/_components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { formatYyyyMmDdKo, happenDtToDate, isNoticeClosed } from "@/lib/abandonment";
+import {
+  formatYyyyMmDdKo,
+  happenDtToDate,
+  isNoticeClosed,
+  resolveDisplayedNoticeEdt,
+} from "@/lib/abandonment";
 import { formatKindLabel } from "@/lib/animalType";
 import AbandonmentMaps, { ShelterMap } from "./AbandonmentMaps";
 import ShareButtons from "@/app/_components/share/ShareButtons";
@@ -86,7 +91,7 @@ export async function generateMetadata({
   const closed = isNoticeClosed(pet);
   const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
   const place = pet.happenPlace ?? pet.careAddr ?? "";
-  const displayedNoticeEdt = pet.effectiveNoticeEdt ?? pet.noticeEdt;
+  const displayedNoticeEdt = resolveDisplayedNoticeEdt(pet);
   const endedOn = formatYyyyMmDdKo(displayedNoticeEdt);
   const title = closed
     ? `${kind} - ${place} 공고 종료 | 파인드마이펫`
@@ -154,7 +159,7 @@ export default async function AbandonmentDetailPage({
 
   const closed = isNoticeClosed(pet);
   const kind = formatKindLabel(pet.kindCd) ?? "구조동물";
-  const displayedNoticeEdt = pet.effectiveNoticeEdt ?? pet.noticeEdt;
+  const displayedNoticeEdt = resolveDisplayedNoticeEdt(pet);
   const endedOn = formatYyyyMmDdKo(displayedNoticeEdt);
   const noticeStart = happenDtToDate(pet.noticeSdt) ?? happenDtToDate(pet.happenDt);
   const noticeEnd = happenDtToDate(displayedNoticeEdt);

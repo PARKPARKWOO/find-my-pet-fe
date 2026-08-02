@@ -42,6 +42,20 @@ export interface NoticeClosableFields {
   processState?: string | null;
 }
 
+/**
+ * 화면에 표시할 공고 종료일을 고른다.
+ * 새 백엔드가 `effectiveNoticeEdt: null`을 명시하면 "판정 불가"이므로 원본 날짜를 쓰지 않는다.
+ * 키 자체가 없는 구 백엔드 응답만 `noticeEdt`로 호환 폴백한다.
+ */
+export function resolveDisplayedNoticeEdt(
+  pet: Pick<NoticeClosableFields, "noticeEdt" | "effectiveNoticeEdt">,
+): string | null {
+  const value = Object.prototype.hasOwnProperty.call(pet, "effectiveNoticeEdt")
+    ? pet.effectiveNoticeEdt
+    : pet.noticeEdt;
+  return value ?? null;
+}
+
 /** `"YYYYMMDD"` 고정폭 날짜 문자열 검증. 형식이 어긋나면(null·공백·길이 불일치) null 반환. */
 export function normalizeYyyyMmDd(raw: string | null | undefined): string | null {
   if (typeof raw !== "string") return null;

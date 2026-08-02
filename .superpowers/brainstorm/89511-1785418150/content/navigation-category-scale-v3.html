@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 카테고리 네비게이션 비교</title>
+  <style>
+    :root { color-scheme:light; --canvas:#e9e6df; --paper:#f5f0e8; --raised:#fffdf8; --ink:#202a26; --forest:#2f5a49; --clay:#d66f54; --wine:#704541; --muted:#747a76; --line:rgba(32,42,38,.13); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    .page { width:min(1480px,calc(100% - 36px)); margin:auto; padding:30px 0 64px; }
+    .intro { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:24px; margin-bottom:20px; }
+    .eyebrow { margin:0 0 8px; color:#5e655f; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(28px,3vw,46px); line-height:1.08; letter-spacing:-.055em; }
+    .lead { max-width:790px; margin:11px 0 0; color:#68706b; font-size:14px; line-height:1.65; }
+    .note { padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.55); color:#626964; font-size:11px; white-space:nowrap; }
+    .options { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .option { position:relative; overflow:hidden; padding:0; border:1px solid rgba(27,36,32,.16); border-radius:22px; background:var(--raised); box-shadow:0 13px 40px rgba(47,44,37,.07); cursor:pointer; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
+    .option:hover { transform:translateY(-3px); box-shadow:0 19px 50px rgba(47,44,37,.11); }
+    .option.selected { border-color:#1d2622; box-shadow:0 0 0 3px rgba(29,38,34,.13),0 19px 50px rgba(47,44,37,.11); }
+    .option.selected::after { content:"선택됨"; position:absolute; z-index:30; top:14px; right:14px; padding:7px 10px; border-radius:999px; background:var(--ink); color:white; font-size:10px; font-weight:850; }
+    .browser { min-height:640px; background:var(--paper); }
+    .browser-bar { display:flex; align-items:center; gap:5px; height:27px; padding:0 11px; background:#272e2b; }
+    .browser-bar i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.26); }
+    .browser-bar span { margin-left:7px; color:rgba(255,255,255,.45); font-size:6px; }
+    .top-nav { display:grid; grid-template-columns:1fr minmax(180px,270px) 1fr; align-items:center; min-height:66px; padding:0 18px; background:var(--raised); }
+    .brand { font-family:"Noto Serif KR",Georgia,serif; font-size:16px; font-weight:600; letter-spacing:-.04em; }
+    .search { display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 10px 0 12px; border:1px solid var(--line); border-radius:999px; background:#f7f3ec; color:#858a86; font-size:7px; }
+    .search b { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--forest); color:white; font-size:8px; }
+    .nav-actions { justify-self:end; display:flex; align-items:center; gap:10px; color:#69716b; font-size:7px; font-weight:750; }
+    .bell { position:relative; display:grid; place-items:center; width:29px; height:29px; border:1px solid var(--line); border-radius:50%; background:white; font-size:9px; }
+    .bell i { position:absolute; right:-1px; top:-1px; display:grid; place-items:center; width:13px; height:13px; border-radius:50%; background:var(--clay); color:white; font-size:5px; font-style:normal; }
+    .register { padding:9px 11px; border-radius:999px; background:var(--ink); color:white; }
+
+    /* A */
+    .category-rail { display:grid; grid-template-columns:1fr 1.35fr .95fr 1.2fr 1.25fr; min-height:58px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#f1ece4; }
+    .rail-item { position:relative; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px 8px; color:#7c827d; text-align:center; font-size:10px; font-weight:700; line-height:1.25; }
+    .rail-item + .rail-item { border-left:1px solid var(--line); }
+    .rail-item.live { color:var(--ink); font-size:12px; font-weight:900; }
+    .rail-item.live::after { content:""; position:absolute; left:18%; right:18%; bottom:-1px; height:3px; border-radius:3px 3px 0 0; background:var(--clay); }
+    .rail-item:nth-child(2).live::after { background:var(--forest); }
+    .rail-item small { padding:3px 5px; border-radius:999px; background:#e5e1da; color:#8e928f; font-size:5px; font-weight:850; }
+    .rail-item.live small { background:#e7efe9; color:#3f6854; }
+    .hero { display:grid; grid-template-columns:1fr .78fr; gap:16px; align-items:center; padding:34px 23px 26px; }
+    .hero small { color:var(--clay); font-size:7px; font-weight:900; letter-spacing:.11em; }
+    .hero h2 { margin:10px 0 9px; font-family:"Noto Serif KR",Georgia,serif; font-size:33px; line-height:1.06; letter-spacing:-.055em; }
+    .hero h2 em { color:var(--clay); font-style:normal; }
+    .hero p { max-width:390px; margin:0; color:#6e756f; font-size:8px; line-height:1.55; }
+    .hero-visual { position:relative; min-height:183px; overflow:hidden; border-radius:15px; background:linear-gradient(145deg,#7c826f,#b0aa91 48%,#dac7b1); }
+    .hero-visual::before { content:""; position:absolute; width:170px; height:205px; right:-18px; bottom:-74px; border-radius:50% 50% 14px 14px; background:linear-gradient(155deg,rgba(245,226,204,.72),rgba(95,73,65,.38)); transform:rotate(7deg); }
+    .hero-visual span { position:absolute; left:12px; bottom:11px; color:white; font-family:Georgia,serif; font-size:9px; }
+    .content-preview { padding:0 22px 24px; }
+    .content-preview h3 { margin:0 0 10px; font-family:"Noto Serif KR",Georgia,serif; font-size:17px; }
+    .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .preview-card { min-height:88px; padding:11px; border-radius:11px; color:white; }
+    .preview-card:first-child { background:var(--wine); } .preview-card:last-child { background:var(--forest); }
+    .preview-card small { font-size:5.5px; opacity:.65; } .preview-card b { display:block; margin-top:22px; font-size:9px; }
+
+    /* B */
+    .single-nav { display:grid; grid-template-columns:auto 1fr auto; align-items:center; min-height:82px; padding:0 18px; border-bottom:1px solid var(--line); background:var(--raised); }
+    .single-menu { justify-self:center; display:flex; align-items:center; gap:20px; }
+    .single-menu span { color:#313b36; font-size:12px; font-weight:850; }
+    .single-menu span:nth-child(3) { display:flex; align-items:center; gap:6px; color:#6e756f; }
+    .single-menu span:nth-child(3)::after { content:"3"; display:grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#e8e4dc; color:#777d78; font-size:6px; }
+    .single-actions { display:flex; align-items:center; gap:8px; font-size:7px; }
+    .mega { margin:0 15px; padding:13px; border:1px solid var(--line); border-top:0; border-radius:0 0 13px 13px; background:rgba(255,253,248,.97); box-shadow:0 12px 24px rgba(46,52,48,.09); }
+    .mega-label { margin-bottom:8px; color:#8a8e8a; font-size:6px; font-weight:850; letter-spacing:.08em; }
+    .mega-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .mega-item { min-height:62px; padding:9px; border:1px dashed var(--line); border-radius:9px; background:#f6f2eb; }
+    .mega-item b { display:block; font-size:8px; line-height:1.25; } .mega-item span { display:block; margin-top:7px; color:#8c908d; font-size:5.5px; }
+    .b-hero { padding:29px 23px 22px; }
+    .b-hero small { color:var(--clay); font-size:7px; font-weight:900; letter-spacing:.1em; }
+    .b-hero h2 { margin:9px 0 8px; font-family:"Noto Serif KR",Georgia,serif; font-size:32px; line-height:1.06; letter-spacing:-.055em; }
+    .b-hero p { margin:0; color:#6d746f; font-size:8px; }
+    .b-visual { display:grid; grid-template-columns:1.3fr .7fr; gap:8px; padding:0 22px 24px; }
+    .b-map { position:relative; min-height:170px; overflow:hidden; border-radius:13px; background:#dce4d8; }
+    .b-map::before { content:""; position:absolute; inset:-35%; background:repeating-linear-gradient(30deg,transparent 0 32px,rgba(255,255,255,.76) 33px 37px,transparent 38px 56px),repeating-linear-gradient(120deg,transparent 0 47px,rgba(255,255,255,.62) 48px 52px,transparent 53px 71px); }
+    .b-side { padding:12px; border-radius:13px; background:var(--wine); color:white; }
+    .b-side small { font-size:5.5px; opacity:.65; } .b-side b { display:block; margin:28px 0 6px; font-family:"Noto Serif KR",Georgia,serif; font-size:12px; line-height:1.2; } .b-side p { margin:0; opacity:.62; font-size:6px; line-height:1.45; }
+
+    .meta { padding:18px 19px 20px; border-top:1px solid var(--line); background:white; }
+    .meta-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .meta h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+    .badge { padding:5px 8px; border-radius:999px; background:#f0eee8; color:#646a65; font-size:9px; font-weight:850; }
+    .badge.recommended { background:#e7efe9; color:#36614c; }
+    .meta p { margin:8px 0 0; color:#6b726d; font-size:11px; line-height:1.55; }
+    .spec { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+    .spec span { padding:5px 7px; border:1px solid var(--line); border-radius:999px; color:#747a76; font-size:6px; }
+
+    .mobile-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+    .mobile-panel { display:grid; grid-template-columns:auto 1fr; gap:17px; align-items:center; padding:16px 18px; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.62); }
+    .phone { width:152px; overflow:hidden; border:5px solid #252c29; border-radius:22px; background:var(--paper); box-shadow:0 12px 28px rgba(35,40,36,.15); }
+    .notch { width:55px; height:9px; margin:auto; border-radius:0 0 7px 7px; background:#252c29; }
+    .m-top { display:flex; align-items:center; justify-content:space-between; padding:8px 8px 7px; background:var(--raised); }
+    .m-top b { font-family:Georgia,serif; font-size:6px; } .m-top span { font-size:7px; }
+    .m-rail { display:flex; gap:4px; overflow:hidden; padding:6px 6px 7px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#f1ece4; }
+    .m-chip { flex:0 0 auto; padding:6px 7px; border-radius:999px; background:#e7efe9; color:#355f4b; font-size:4.5px; font-weight:850; white-space:nowrap; }
+    .m-chip:first-child { background:var(--wine); color:white; }
+    .m-chip.soon { background:#e8e4dc; color:#868b87; }
+    .m-hero { padding:14px 8px 11px; }
+    .m-hero small { color:var(--clay); font-size:3.6px; font-weight:900; }
+    .m-hero h4 { margin:5px 0; font-family:"Noto Serif KR",Georgia,serif; font-size:12px; line-height:1.08; }
+    .m-hero p { margin:0; color:#7b817c; font-size:4px; line-height:1.5; }
+    .m-cards { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:0 7px 9px; }
+    .m-card { min-height:48px; padding:6px; border-radius:7px; color:white; font-size:4px; }
+    .m-card:first-child { background:var(--wine); } .m-card:last-child { background:var(--forest); }
+    .m-card b { display:block; margin-top:15px; font-size:4.6px; }
+    .mobile-copy h3 { margin:0 0 8px; font-size:13px; }
+    .mobile-copy p { margin:0; color:#6d746f; font-size:8px; line-height:1.55; }
+    .mobile-copy ul { margin:10px 0 0; padding:0; list-style:none; color:#707772; font-size:7px; line-height:1.7; }
+    .mobile-copy li::before { content:"— "; color:var(--clay); }
+    @media (max-width:1000px) { .options,.mobile-row { grid-template-columns:1fr; } }
+    @media (max-width:700px) {
+      .page { width:min(100% - 18px,600px); padding-top:21px; }
+      .intro { grid-template-columns:1fr; align-items:start; } .note { justify-self:start; white-space:normal; }
+      .top-nav { grid-template-columns:1fr auto; min-height:58px; } .search { display:none; }
+      .nav-actions span:not(.register),.nav-actions .bell { display:none; }
+      .category-rail { display:flex; overflow-x:auto; min-height:52px; }
+      .rail-item { flex:0 0 auto; min-width:150px; padding:10px 13px; }
+      .hero { grid-template-columns:1fr; }
+      .hero-visual { min-height:150px; }
+      .single-menu span:nth-child(2),.single-menu span:nth-child(3) { display:none; }
+      .single-nav { min-height:66px; }
+      .mega-grid { grid-template-columns:1fr; }
+      .mobile-panel { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div><p class="eyebrow">Find My Pet · Navigation V3</p><h1>이번에는 상단 네비게이션 카테고리를 크게 조정했습니다</h1><p class="lead">V2의 큰 홈 카드는 유지하고, 상단에서 카테고리를 바로 읽고 이동할 수 있는 두 가지 방식을 비교합니다.</p></div>
+      <div class="note">실제 구현 기준 14–16px · 터치 높이 최소 48px</div>
+    </header>
+
+    <section class="options">
+      <article class="option" data-choice="nav-a-two-level-category-rail" onclick="toggleSelect(this)">
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+          <div class="top-nav"><div class="brand">Find My Pet</div><div class="search"><span>지역·품종·특징 검색</span><b>⌕</b></div><div class="nav-actions"><span>이용 안내</span><div class="bell">●<i>3</i></div><span>마이페이지</span><span class="register">소식 등록</span></div></div>
+          <div class="category-rail">
+            <div class="rail-item live">집을 잃었어요 <small>이용 가능</small></div>
+            <div class="rail-item live">보호소에서 가족을 기다려요 <small>이용 가능</small></div>
+            <div class="rail-item">우리집 근처 보호소 <small>준비 중</small></div>
+            <div class="rail-item">반려동물을 입양하고 싶어요 <small>준비 중</small></div>
+            <div class="rail-item">반려동물의 새 가족을 찾아요 <small>준비 중</small></div>
+          </div>
+          <section class="hero"><div><small>A SAFER WAY BACK HOME</small><h2>다시 만나는 길을,<br/><em>동네와 함께.</em></h2><p>실종 소식과 보호 정보를 가까운 곳부터 연결하고, 사람들과 함께 찾을 수 있도록 도와드려요.</p></div><div class="hero-visual"><span>한 사람의 제보가<br/>가족을 집으로 데려옵니다.</span></div></section>
+          <section class="content-preview"><h3>무엇을 도와드릴까요?</h3><div class="preview-grid"><div class="preview-card"><small>01 · AVAILABLE</small><b>집을 잃었어요</b></div><div class="preview-card"><small>02 · AVAILABLE</small><b>보호소에서 가족을 기다려요</b></div></div></section>
+        </div>
+        <div class="meta"><div class="meta-head"><h2>A. 2단 카테고리 레일</h2><span class="badge recommended">권장</span></div><p>모든 확정 명칭이 항상 보이고 추가 클릭이 없습니다. 활성 2개는 16px, 준비 중 3개는 14px로 위계를 나눕니다.</p><div class="spec"><span>전체 높이 124px</span><span>카테고리 줄 58px</span><span>5개 항상 노출</span><span>깊이 0</span></div></div>
+      </article>
+
+      <article class="option" data-choice="nav-b-active-first-mega-menu" onclick="toggleSelect(this)">
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+          <div class="single-nav"><div class="brand">Find My Pet</div><div class="single-menu"><span>집을 잃었어요</span><span>보호소에서 가족을 기다려요</span><span>보호소·입양</span></div><div class="single-actions"><span>마이페이지</span><span class="register">소식 등록</span></div></div>
+          <div class="mega"><div class="mega-label">보호소·입양 · 준비 중인 서비스</div><div class="mega-grid"><div class="mega-item"><b>우리집 근처 보호소</b><span>준비 중</span></div><div class="mega-item"><b>반려동물을 입양하고 싶어요</b><span>준비 중</span></div><div class="mega-item"><b>반려동물의 새 가족을 찾아요</b><span>준비 중</span></div></div></div>
+          <section class="b-hero"><small>A SAFER WAY BACK HOME</small><h2>다시 만나는 길을,<br/>동네와 함께.</h2><p>현재 이용 가능한 두 카테고리를 가장 크게 보여주는 한 줄 네비게이션입니다.</p></section>
+          <div class="b-visual"><div class="b-map"></div><div class="b-side"><small>LOCAL RESPONSE</small><b>가까운 곳의<br/>함께 찾기</b><p>지도·제보·그룹을 한곳에서 확인해요.</p></div></div>
+        </div>
+        <div class="meta"><div class="meta-head"><h2>B. 활성 카테고리 우선</h2><span class="badge">한 줄형</span></div><p>활성 2개를 16px로 크게 유지하지만 준비 중 3개는 ‘보호소·입양’을 한 번 열어야 볼 수 있습니다.</p><div class="spec"><span>기본 높이 82px</span><span>활성 2개 상시 노출</span><span>준비 중 1단계</span><span>화면 절약</span></div></div>
+      </article>
+    </section>
+
+    <section class="mobile-row">
+      <div class="mobile-panel"><div class="phone"><div class="notch"></div><div class="m-top"><b>Find My Pet</b><span>☰</span></div><div class="m-rail"><span class="m-chip">집을 잃었어요</span><span class="m-chip">보호소에서 가족을 기다려요</span><span class="m-chip soon">우리집 근처 보호소 · 준비 중</span></div><div class="m-hero"><small>A SAFER WAY BACK HOME</small><h4>다시 만나는 길을,<br/>동네와 함께.</h4><p>카테고리 레일은 가로 스크롤되며 활성 항목부터 보여요.</p></div><div class="m-cards"><div class="m-card"><span>01</span><b>집을 잃었어요</b></div><div class="m-card"><span>02</span><b>보호소에서 가족을 기다려요</b></div></div></div><div class="mobile-copy"><h3>A안의 모바일 규칙</h3><p>작은 화면에서는 긴 이름을 줄이거나 억지로 5등분하지 않고 가로 카테고리 레일로 전환합니다.</p><ul><li>글자 14px</li><li>터치 높이 44px 이상</li><li>활성 2개 먼저 표시</li><li>준비 중은 비활성 상태</li></ul></div></div>
+      <div class="mobile-panel"><div class="phone"><div class="notch"></div><div class="m-top"><b>Find My Pet</b><span>☰</span></div><div class="m-hero"><small>현재 이용 가능한 서비스</small><h4>무엇을<br/>도와드릴까요?</h4><p>메뉴를 열면 두 활성 카테고리와 보호소·입양 묶음을 보여요.</p></div><div class="m-cards"><div class="m-card"><span>01</span><b>집을 잃었어요</b></div><div class="m-card"><span>02</span><b>보호소에서 가족을 기다려요</b></div></div></div><div class="mobile-copy"><h3>B안의 모바일 규칙</h3><p>헤더가 짧지만 모든 카테고리가 닫힌 메뉴 안으로 들어가 탐색 단계가 하나 늘어납니다.</p><ul><li>헤더 높이 최소</li><li>활성 2개 메뉴 상단</li><li>준비 중은 하위 묶음</li><li>탐색 깊이 1</li></ul></div></div>
+    </section>
+  </main>
+</body>
+</html>

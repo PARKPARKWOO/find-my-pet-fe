@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find My Pet — 네비게이션 중간 크기</title>
+  <style>
+    :root { color-scheme:light; --canvas:#e9e6df; --paper:#f5f0e8; --raised:#fffdf8; --ink:#202a26; --forest:#2f5a49; --clay:#d66f54; --wine:#704541; --muted:#747a76; --line:rgba(32,42,38,.13); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo",Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+    .page { width:min(1380px,calc(100% - 36px)); margin:auto; padding:30px 0 64px; }
+    .intro { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:24px; margin-bottom:20px; }
+    .eyebrow { margin:0 0 8px; color:#5e655f; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(28px,3vw,44px); line-height:1.08; letter-spacing:-.055em; }
+    .lead { max-width:760px; margin:11px 0 0; color:#68706b; font-size:14px; line-height:1.65; }
+    .measure { display:flex; gap:7px; padding:8px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.55); }
+    .measure span { padding:5px 7px; border-radius:999px; color:#727974; font-size:9px; }
+    .measure span:nth-child(2) { background:var(--ink); color:white; font-weight:850; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:16px; align-items:start; }
+    .mock { overflow:hidden; border:1px solid rgba(27,36,32,.16); border-radius:22px; background:var(--paper); box-shadow:0 14px 42px rgba(47,44,37,.075); }
+    .browser { display:flex; align-items:center; gap:5px; height:27px; padding:0 11px; background:#272e2b; }
+    .browser i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.26); }
+    .browser span { margin-left:7px; color:rgba(255,255,255,.45); font-size:6px; }
+    .utility { display:grid; grid-template-columns:1fr minmax(180px,260px) 1fr; align-items:center; min-height:60px; padding:0 18px; background:var(--raised); }
+    .brand { font-family:"Noto Serif KR",Georgia,serif; font-size:15px; font-weight:600; letter-spacing:-.04em; }
+    .search { display:flex; align-items:center; justify-content:space-between; height:34px; padding:0 9px 0 11px; border:1px solid var(--line); border-radius:999px; background:#f7f3ec; color:#858a86; font-size:7px; }
+    .search b { display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--forest); color:white; font-size:8px; }
+    .actions { justify-self:end; display:flex; align-items:center; gap:10px; color:#6a716c; font-size:7px; font-weight:750; }
+    .actions b { padding:8px 10px; border-radius:999px; background:var(--ink); color:white; }
+    .category-nav { display:grid; grid-template-columns:.85fr 1.35fr 1fr 1.18fr 1.22fr; min-height:48px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#f2eee7; }
+    .category { position:relative; display:flex; align-items:center; justify-content:center; gap:5px; padding:7px 9px; color:#777e79; text-align:center; font-size:9px; font-weight:700; line-height:1.25; }
+    .category + .category { border-left:1px solid rgba(32,42,38,.08); }
+    .category.active { color:var(--ink); font-size:10px; font-weight:850; }
+    .category.active::after { content:""; position:absolute; left:27%; right:27%; bottom:-1px; height:2px; border-radius:2px 2px 0 0; background:var(--clay); }
+    .category:nth-child(2).active::after { background:var(--forest); }
+    .category small { color:#a0a39f; font-size:5px; font-weight:700; white-space:nowrap; }
+    .hero { display:grid; grid-template-columns:1fr .78fr; align-items:center; gap:18px; padding:35px 23px 26px; }
+    .hero small { color:var(--clay); font-size:7px; font-weight:900; letter-spacing:.11em; }
+    .hero h2 { margin:10px 0 9px; font-family:"Noto Serif KR",Georgia,serif; font-size:34px; line-height:1.06; letter-spacing:-.055em; }
+    .hero h2 em { color:var(--clay); font-style:normal; }
+    .hero p { max-width:400px; margin:0; color:#6e756f; font-size:8px; line-height:1.55; }
+    .visual { position:relative; min-height:190px; overflow:hidden; border-radius:15px; background:linear-gradient(145deg,#7c826f,#b0aa91 48%,#dac7b1); }
+    .visual::before { content:""; position:absolute; width:180px; height:210px; right:-18px; bottom:-76px; border-radius:50% 50% 14px 14px; background:linear-gradient(155deg,rgba(245,226,204,.72),rgba(95,73,65,.38)); transform:rotate(7deg); }
+    .visual span { position:absolute; left:13px; bottom:12px; color:white; font-family:Georgia,serif; font-size:9px; line-height:1.3; }
+    .cards { padding:0 22px 25px; }
+    .cards h3 { margin:0 0 10px; font-family:"Noto Serif KR",Georgia,serif; font-size:18px; }
+    .card-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .card { min-height:95px; padding:11px; border-radius:11px; color:white; }
+    .card:first-child { background:var(--wine); } .card:last-child { background:var(--forest); }
+    .card small { font-size:5.5px; opacity:.65; } .card b { display:block; margin-top:28px; font-size:10px; }
+    .caption { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:17px 19px 19px; border-top:1px solid var(--line); background:white; }
+    .caption h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+    .caption p { margin:6px 0 0; color:#6b726d; font-size:10px; line-height:1.55; }
+    .caption span { padding:6px 8px; border-radius:999px; background:#e7efe9; color:#37614d; font-size:8px; font-weight:850; white-space:nowrap; }
+    .side { display:flex; flex-direction:column; gap:12px; }
+    .phone-panel,.spec,.approve { padding:14px; border:1px solid var(--line); border-radius:17px; background:rgba(255,255,255,.62); }
+    .phone-head { display:flex; justify-content:space-between; margin-bottom:10px; }
+    .phone-head b { font-size:11px; } .phone-head span { color:#7b817c; font-size:7px; }
+    .phone { width:178px; margin:auto; overflow:hidden; border:5px solid #252c29; border-radius:24px; background:var(--paper); box-shadow:0 12px 29px rgba(35,40,36,.15); }
+    .notch { width:62px; height:10px; margin:auto; border-radius:0 0 8px 8px; background:#252c29; }
+    .m-top { display:flex; justify-content:space-between; align-items:center; padding:8px 9px; background:var(--raised); }
+    .m-top b { font-family:Georgia,serif; font-size:6px; } .m-top span { font-size:7px; }
+    .m-rail { display:flex; gap:4px; overflow:hidden; padding:6px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#f2eee7; }
+    .m-chip { flex:0 0 auto; padding:6px 7px; border-radius:999px; background:#e8eee9; color:#355d4a; font-size:4.3px; font-weight:850; white-space:nowrap; }
+    .m-chip:first-child { background:var(--wine); color:white; }
+    .m-chip.soon { background:#e8e4dc; color:#8a8e8a; }
+    .m-hero { padding:15px 9px 12px; }
+    .m-hero small { color:var(--clay); font-size:3.8px; font-weight:900; }
+    .m-hero h4 { margin:5px 0; font-family:"Noto Serif KR",Georgia,serif; font-size:13px; line-height:1.08; }
+    .m-hero p { margin:0; color:#7a807b; font-size:4.2px; line-height:1.5; }
+    .m-cards { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:0 7px 10px; }
+    .m-card { min-height:52px; padding:6px; border-radius:7px; color:white; font-size:4px; }
+    .m-card:first-child { background:var(--wine); } .m-card:last-child { background:var(--forest); }
+    .m-card b { display:block; margin-top:17px; font-size:4.8px; }
+    .spec h3,.approve h3 { margin:0 0 9px; font-size:12px; }
+    .spec-row { display:grid; grid-template-columns:74px 1fr; gap:8px; padding:8px 0; border-top:1px solid var(--line); font-size:7px; }
+    .spec-row b { color:var(--wine); } .spec-row span { color:#6d746f; line-height:1.45; }
+    .approve { background:var(--ink); color:white; text-align:center; }
+    .approve p { margin:0 0 10px; color:rgba(255,255,255,.62); font-size:7px; line-height:1.5; }
+    .approve-choice { display:inline-flex; padding:8px 10px; border-radius:999px; background:var(--raised); color:var(--ink); font-size:7px; font-weight:900; cursor:pointer; }
+    .approve-choice.selected { background:#dff0e5; }
+    .approve-choice.selected::after { content:" · 선택됨"; color:var(--forest); }
+    @media (max-width:980px) { .layout { grid-template-columns:1fr; } .side { display:grid; grid-template-columns:1fr 1fr; } .phone-panel { grid-row:span 2; } }
+    @media (max-width:700px) {
+      .page { width:min(100% - 18px,600px); padding-top:21px; }
+      .intro { grid-template-columns:1fr; align-items:start; } .measure { justify-self:start; }
+      .utility { grid-template-columns:1fr auto; min-height:56px; } .search { display:none; }
+      .actions span:not(.register) { display:none; }
+      .category-nav { display:flex; overflow-x:auto; min-height:44px; }
+      .category { flex:0 0 auto; min-width:130px; padding:7px 10px; }
+      .hero { grid-template-columns:1fr; }
+      .visual { min-height:155px; }
+      .side { grid-template-columns:1fr; }
+      .caption { align-items:flex-start; flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div><p class="eyebrow">Find My Pet · Navigation V4</p><h1>본문보다 튀지 않는 중간 크기로 낮췄습니다</h1><p class="lead">카테고리는 분명히 읽히지만 헤더 전체가 무거워지지 않도록 높이와 상태 표현을 함께 줄였습니다.</p></div>
+      <div class="measure"><span>기존</span><span>중간</span><span>직전 시안</span></div>
+    </header>
+
+    <div class="layout">
+      <section class="mock">
+        <div class="browser"><i></i><i></i><i></i><span>findmypet.kr</span></div>
+        <div class="utility"><div class="brand">Find My Pet</div><div class="search"><span>지역·품종·특징 검색</span><b>⌕</b></div><div class="actions"><span>이용 안내</span><span>알림</span><span>마이페이지</span><b>소식 등록</b></div></div>
+        <div class="category-nav">
+          <div class="category active">집을 잃었어요</div>
+          <div class="category active">보호소에서 가족을 기다려요</div>
+          <div class="category">우리집 근처 보호소 <small>준비 중</small></div>
+          <div class="category">반려동물을 입양하고 싶어요 <small>준비 중</small></div>
+          <div class="category">반려동물의 새 가족을 찾아요 <small>준비 중</small></div>
+        </div>
+        <section class="hero"><div><small>A SAFER WAY BACK HOME</small><h2>다시 만나는 길을,<br/><em>동네와 함께.</em></h2><p>실종 소식과 보호 정보를 가까운 곳부터 연결하고, 사람들과 함께 찾을 수 있도록 도와드려요.</p></div><div class="visual"><span>한 사람의 제보가<br/>가족을 집으로 데려옵니다.</span></div></section>
+        <section class="cards"><h3>무엇을 도와드릴까요?</h3><div class="card-grid"><div class="card"><small>01 · AVAILABLE</small><b>집을 잃었어요</b></div><div class="card"><small>02 · AVAILABLE</small><b>보호소에서 가족을 기다려요</b></div></div></section>
+        <div class="caption"><div><h2>균형형 카테고리 네비게이션</h2><p>활성 14px·준비 중 13px, 카테고리 줄 48px. 상태 pill을 제거하고 글자색과 얇은 밑줄만으로 위계를 구분합니다.</p></div><span>조정안</span></div>
+      </section>
+
+      <aside class="side">
+        <section class="phone-panel"><div class="phone-head"><b>모바일</b><span>13px · 44px</span></div><div class="phone"><div class="notch"></div><div class="m-top"><b>Find My Pet</b><span>☰</span></div><div class="m-rail"><span class="m-chip">집을 잃었어요</span><span class="m-chip">보호소에서 가족을 기다려요</span><span class="m-chip soon">우리집 근처 보호소 · 준비 중</span></div><div class="m-hero"><small>A SAFER WAY BACK HOME</small><h4>다시 만나는 길을,<br/>동네와 함께.</h4><p>가로 레일은 활성 카테고리부터 보여요.</p></div><div class="m-cards"><div class="m-card">01<b>집을 잃었어요</b></div><div class="m-card">02<b>보호소에서 가족을 기다려요</b></div></div></div></section>
+        <section class="spec"><h3>조정 기준</h3><div class="spec-row"><b>활성 항목</b><span>14px / font-weight 700</span></div><div class="spec-row"><b>준비 중</b><span>13px / 낮은 대비</span></div><div class="spec-row"><b>레일 높이</b><span>48px, 모바일 44px</span></div><div class="spec-row"><b>상태 표시</b><span>pill 제거, 짧은 보조문구만</span></div></section>
+        <section class="approve"><h3>이 정도면 적당할까요?</h3><p>선택하면 이전의 큰 홈 카드와 이 중간 크기 네비게이션을 함께 적용합니다.</p><div class="approve-choice" data-choice="approve-balanced-category-navigation" onclick="toggleSelect(this)">이 크기로 진행</div></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

@@ -64,18 +64,59 @@ test("region requests explicitly ask for OPEN notices and retain noticeClosed", 
   assert.match(source, /effectiveNoticeEdt\??\s*:\s*string\s*\|\s*null/);
 });
 
-test("display and JSON-LD expiry prefer the backend effective notice end date", () => {
+test("explicit null effective end suppresses raw display while a missing key keeps legacy fallback", () => {
+  const abandonment = loadTypeScriptModule(
+    path.join(root, "src/lib/abandonment.ts"),
+  );
   const detailSource = read("src/app/(route)/abandonment/[detail]/page.tsx");
 
-  assert.match(
-    detailSource,
-    /displayedNoticeEdt\s*=\s*pet\.effectiveNoticeEdt\s*\?\?\s*pet\.noticeEdt/,
+  assert.equal(typeof abandonment.resolveDisplayedNoticeEdt, "function");
+  const explicitUnknown = abandonment.resolveDisplayedNoticeEdt({
+    effectiveNoticeEdt: null,
+    noticeEdt: "20261340",
+  });
+  assert.equal(explicitUnknown, null);
+  assert.equal(abandonment.formatYyyyMmDdKo(explicitUnknown), null);
+  assert.equal(abandonment.happenDtToDate(explicitUnknown), null);
+  assert.equal(
+    abandonment.resolveDisplayedNoticeEdt({ noticeEdt: "20260730" }),
+    "20260730",
+  );
+  assert.equal(
+    detailSource.match(
+      /displayedNoticeEdt\s*=\s*resolveDisplayedNoticeEdt\(pet\)/g,
+    )?.length,
+    2,
   );
   assert.match(
     detailSource,
     /noticeEnd\s*=\s*happenDtToDate\(displayedNoticeEdt\)/,
   );
   assert.match(detailSource, /expires:\s*noticeEnd\.toISOString\(\)/);
+});
+
+test("notice collectors continue past an empty page only when hasNextPage is true", () => {
+  const indexNowSource = read("scripts/indexnow.mjs");
+  const sitemapSource = read("src/app/sitemap.ts");
+  const indexNowCollector = indexNowSource.match(
+    /async function collectAbandonedUrls[\s\S]*?(?=\/\*\* 지역별 공고 페이지)/,
+  )?.[0];
+  const sitemapCollector = sitemapSource.match(
+    /async function fetchAllAbandoned[\s\S]*?(?=async function safeGetAllPosts)/,
+  )?.[0];
+
+  assert.ok(indexNowCollector, "IndexNow abandoned collector must exist");
+  assert.ok(sitemapCollector, "sitemap abandoned collector must exist");
+  assert.doesNotMatch(indexNowCollector, /contents\.length\s*===\s*0[^;{]*(?:break|\{)/);
+  assert.match(indexNowCollector, /hasNextPage\s*!==\s*true\)\s*break/);
+  assert.doesNotMatch(
+    sitemapCollector,
+    /contents\.length\s*===\s*0[\s\S]{0,80}(?:stopped\s*=\s*true|break)/,
+  );
+  assert.match(
+    sitemapCollector,
+    /hasNextPage\s*!==\s*true\)\s*\{[\s\S]{0,80}stopped\s*=\s*true[\s\S]{0,40}break/,
+  );
 });
 
 test("closed-notice fallback copy does not claim a displayed future date passed", () => {
