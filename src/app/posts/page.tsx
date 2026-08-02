@@ -1,8 +1,40 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getAllPosts, test } from "@/lib/parsePost";
 import image from "@/static/image/posts_banner.jpg";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+
+const SITE_DOMAIN = "https://findmypet.platformholder.site";
+const PAGE_URL = `${SITE_DOMAIN}/posts`;
+const TITLE = "반려동물 실종 예방·대처 자료실";
+const DESC =
+  "반려견 실종 시 대처법, 반려묘가 집을 나가는 이유, 산책 중 도망 예방까지 — 실종을 막고 빠르게 찾기 위해 알아야 할 정보를 정리했습니다.";
+
+/**
+ * 이 페이지에 `metadata` 가 없어 루트 layout 의 사이트 기본값을 그대로 상속했다.
+ * 그 결과 홈과 제목·설명이 **완전히 동일**해져 검색엔진이 두 페이지를 구분하지 못했다.
+ */
+export const metadata: Metadata = {
+  title: `${TITLE} | 파인드마이펫`,
+  description: DESC,
+  alternates: { canonical: PAGE_URL },
+  openGraph: {
+    type: "website",
+    url: PAGE_URL,
+    siteName: "파인드마이펫",
+    locale: "ko_KR",
+    title: `${TITLE} | 파인드마이펫`,
+    description: DESC,
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: TITLE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${TITLE} | 파인드마이펫`,
+    description: DESC,
+    images: ["/og.jpg"],
+  },
+};
 
 export type PostMatter = {
   title: string;
@@ -51,7 +83,9 @@ export default async function PostPage() {
             />
           </div>
           <div className="w-full h-full md:p-6 p-3 flex flex-col justify-center items-end md:gap-6 gap-3 break-keep">
-            <p className="font-bold md:text-xl lg:text-2xl text-sm">
+            {/* 배너 문구가 이 화면의 유일한 제목이었는데 <p> 라 문서에 h1 이 없었다. */}
+            <h1 className="font-bold md:text-xl lg:text-2xl text-sm text-right">{TITLE}</h1>
+            <p className="text-xs md:text-sm text-gray-600 text-right">
               소중한 반려동물을 위해 꼭 알아야 할 정보를 제공합니다.
             </p>
           </div>
