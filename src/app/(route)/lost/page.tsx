@@ -59,7 +59,7 @@ export default function LostIndexPage() {
       </nav>
       <h1 className="mt-2 text-2xl font-bold">{TITLE}</h1>
       <p className="mt-2 text-sm text-muted-foreground">{DESCRIPTION}</p>
-      <div className="mt-4 flex flex-wrap gap-3 text-sm text-blue-600 underline">
+      <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium text-action-primary underline underline-offset-4">
         <Link href="/register">실종 소식 등록</Link>
         <Link href="/flyer">전단지 먼저 만들기</Link>
         <Link href="/guide">실종 대응 가이드</Link>

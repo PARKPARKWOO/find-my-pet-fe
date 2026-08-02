@@ -143,11 +143,11 @@ export default function LostList({ initialPage }: LostListProps) {
           </div>
         ) : lostPetList.length === 0 ? (
           <div className="col-span-full py-10 text-center">
-            <h3 className="text-lg font-semibold">지금 등록된 실종 소식이 없어요</h3>
-            <p className="mt-2 text-sm text-gray-500">
+            <h3 className="text-lg font-semibold text-content-primary">지금 등록된 실종 소식이 없어요</h3>
+            <p className="mt-2 text-sm text-content-secondary">
               다행이에요. 반려동물을 잃어버리셨다면 바로 주변에 알려주세요.
             </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm text-blue-600 underline">
+            <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm font-medium text-action-primary underline underline-offset-4">
               <Link href="/register">실종 소식 등록</Link>
               <Link href="/flyer">전단지 먼저 만들기</Link>
               <Link href="/guide">실종 대응 가이드</Link>
@@ -156,7 +156,7 @@ export default function LostList({ initialPage }: LostListProps) {
         ) : (
           lostPetList.flatMap((pet, idx) => {
             const node = (
-              <Link href={`/lost/${pet.id}`} key={pet.id}>
+              <Link href={`/lost/${pet.id}`} key={pet.id} className="block h-full">
                 <LostCard {...pet} />
               </Link>
             );

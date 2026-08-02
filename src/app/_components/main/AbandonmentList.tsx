@@ -304,17 +304,17 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
   ]);
 
   const chipClass = (active: boolean) =>
-    `px-4 py-2 text-sm rounded-full transition-colors ${
+    `px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
       active
-        ? "bg-action-primary text-content-inverse"
-        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        ? "border-transparent bg-action-primary text-content-inverse"
+        : "border-border bg-surface-raised text-content-secondary hover:border-clay/60 hover:text-content-primary"
     }`;
 
   const statusChipClass = (active: boolean) =>
-    `px-3 py-1.5 text-xs rounded-full border transition-colors ${
+    `px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
       active
-        ? "bg-gray-800 text-white border-gray-800"
-        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+        ? "bg-surface-inverse text-content-inverse border-surface-inverse"
+        : "bg-surface-raised text-content-secondary border-border hover:border-clay/60"
     }`;
 
   return (
@@ -373,7 +373,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
           aria-label="시도 선택"
           value={uprCd}
           onChange={(e) => applyFilter({ sido: e.target.value, sigungu: "" })}
-          className="border rounded-md px-3 py-1.5 text-sm bg-white"
+          className="border border-border rounded-md px-3 py-1.5 text-sm bg-surface-raised"
         >
           <option value="">전국</option>
           {sidoList.map((s) => (
@@ -387,7 +387,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
           value={orgCd}
           onChange={(e) => applyFilter({ sigungu: e.target.value })}
           disabled={!uprCd || sigunguList.length === 0}
-          className="border rounded-md px-3 py-1.5 text-sm bg-white disabled:bg-gray-100 disabled:text-gray-400"
+          className="border border-border rounded-md px-3 py-1.5 text-sm bg-surface-raised disabled:bg-surface-canvas disabled:text-content-muted"
         >
           <option value="">시군구 전체</option>
           {sigunguList.map((s) => (
@@ -400,7 +400,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
           <button
             type="button"
             onClick={() => applyFilter({ sido: "", sigungu: "" })}
-            className="text-xs text-gray-500 hover:underline px-2"
+            className="text-xs text-content-muted hover:underline px-2"
           >
             지역 해제
           </button>
@@ -412,8 +412,8 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
             disabled={!isLogin || subBusy}
             className={`text-xs px-3 py-1.5 rounded-md border flex items-center gap-1 ${
               matchedSub
-                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-forest/10 text-forest border-forest/40"
+                : "bg-surface-raised text-content-secondary border-border hover:border-clay/60"
             } disabled:opacity-50`}
             title={!isLogin ? "로그인 후 사용 가능" : matchedSub ? "알림 해제" : "이 지역 신규 등록 시 알림 받기"}
           >
@@ -443,6 +443,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
             <Link
               key={pet.desertionNo}
               href={`/abandonment/${pet.desertionNo}`}
+              className="block h-full"
             >
               <AbandonmentCard {...pet} />
             </Link>
@@ -451,7 +452,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
       </div>
 
       {!isLoading && !loadError && abandonmentPetList.length === 0 && (
-        <p className="py-10 text-center text-sm text-gray-500">
+        <p className="py-10 text-center text-sm text-content-muted">
           조건에 맞는 공고가 없습니다. 필터를 넓혀 보세요.
         </p>
       )}

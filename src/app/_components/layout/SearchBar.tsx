@@ -17,7 +17,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
         <div className="relative">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none"
           />
           <input
             id={`site-search-${variant}`}
@@ -26,7 +26,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
             defaultValue={defaultQ}
             required
             placeholder="실종 / 보호중 동물 검색 — 지역, 품종, 특징 등"
-            className="pl-10 pr-20 py-3 text-base border-2 border-gray-200 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors shadow-sm"
+            className="pl-11 pr-20 py-3 text-base bg-surface-raised border border-border rounded-full w-full placeholder:text-content-muted/70 focus:outline-none focus:ring-2 focus:ring-action-primary focus:border-action-primary transition-colors shadow-raised"
           />
           <button
             type="submit"
@@ -47,7 +47,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
       <div className="relative">
         <Search
           size={14}
-          className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none"
         />
         <input
           id={`site-search-${variant}`}
@@ -56,7 +56,7 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
           defaultValue={defaultQ}
           required
           placeholder="실종 / 보호중 검색"
-          className="pl-7 pr-3 py-1.5 text-sm border rounded-md w-44 lg:w-64 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="pl-7 pr-3 py-1.5 text-sm bg-surface-raised border border-border rounded-md w-44 lg:w-64 placeholder:text-content-muted/70 focus:outline-none focus:ring-2 focus:ring-action-primary"
         />
       </div>
     </form>

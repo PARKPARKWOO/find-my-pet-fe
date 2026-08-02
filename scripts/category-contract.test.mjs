@@ -153,7 +153,7 @@ test("목록은 오류와 빈 결과를 구분하고 보호 카드를 링크로 
     /if \(!controller\.signal\.aborted && !keepLoadingForRedirect\) setIsLoading\(false\);/,
   );
   assert.match(lostPagination, /if \(totalPages <= 0\) return null/);
-  assert.match(abandonmentCard, /className="h-\[350px\] w-full/);
+  assert.match(abandonmentCard, /className="group flex h-full w-full/);
 });
 
 test("홈 서버 시드는 정규 요청에서 한 번만 쓰고 목록의 기존 요청 계약은 보존한다", () => {
@@ -243,9 +243,10 @@ test("공유된 nullable 카드 타입은 빈 필드를 꾸며내지 않는다",
   assert.doesNotMatch(abandonmentCard, /homeFeed\.server/);
   assert.doesNotMatch(abandoned, /interface IPet/);
   assert.doesNotMatch(lost, /interface ILostPet/);
-  assert.match(abandonmentCard, /pet\.sexCd &&/);
-  assert.match(abandonmentCard, /pet\.weight &&/);
-  assert.match(abandonmentCard, /pet\.processState &&/);
+  assert.match(abandonmentCard, /pet\.sexCd \?/);
+  assert.match(abandonmentCard, /pet\.weight \?/);
+  assert.match(abandonmentCard, /pet\.happenPlace && \(/);
+  assert.match(abandonmentCard, /pet\.careNm && \(/);
   assert.match(abandonmentCard, /formatKindLabel\(pet\.kindCd\) \?\? "구조동물"/);
 });
 

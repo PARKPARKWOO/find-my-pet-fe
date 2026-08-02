@@ -34,10 +34,10 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
   };
 
   const chipClass = (key: FeedView) =>
-    `px-4 py-2 text-sm rounded-full transition-colors ${
+    `px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
       view === key
-        ? "bg-action-primary text-content-inverse"
-        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        ? "border-transparent bg-action-primary text-content-inverse"
+        : "border-border bg-surface-raised text-content-secondary hover:border-clay/60 hover:text-content-primary"
     }`;
 
   const showLost = view === "all" || view === "lost";
@@ -69,13 +69,13 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
       </div>
       <section hidden={!showLost} className="w-full">
         {view === "all" && (
-          <h2 className="text-base font-semibold text-gray-700 mb-3 px-1">집을 잃었어요</h2>
+          <h2 className="font-editorial text-xl font-semibold text-content-primary mb-4 px-1">집을 잃었어요</h2>
         )}
         <LostList initialPage={lostSeed} />
       </section>
       <section hidden={!showAbandonment} className="w-full">
         {view === "all" && (
-          <h2 className="text-base font-semibold text-gray-700 mb-3 px-1 mt-2">
+          <h2 className="font-editorial text-xl font-semibold text-content-primary mb-4 px-1 mt-2">
             보호소에서 가족을 기다려요
           </h2>
         )}

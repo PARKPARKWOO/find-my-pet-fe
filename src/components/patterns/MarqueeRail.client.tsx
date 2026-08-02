@@ -1,13 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import {
-  type FocusEvent,
-  type PointerEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ArrowUpRight, PawPrint } from "lucide-react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 
 import { formatMarqueeDate, type MarqueeItem } from "@/lib/homeFeed";
 
@@ -15,6 +11,12 @@ const STATUS_LABEL: Record<MarqueeItem["kind"], string> = {
   SEARCHING: "찾는 중",
   SEEN: "목격",
   PROTECTED: "보호 중",
+};
+
+const STATUS_CHIP_CLASS: Record<MarqueeItem["kind"], string> = {
+  SEARCHING: "bg-state-searching/10 text-state-searching",
+  SEEN: "bg-state-sighting/10 text-state-sighting",
+  PROTECTED: "bg-forest/10 text-forest",
 };
 
 interface RailDimensions {
@@ -182,17 +184,19 @@ export function MarqueeRail({ items }: MarqueeRailProps) {
     setFocusWithin(false);
   };
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setPointerDown(true);
-  };
+  // 포인터 캡처를 걸면 click 이 카드(Link)가 아니라 캡처한 컨테이너로 리타게팅되어
+  // 상세 페이지 이동이 막힌다 — 뷰포트 밖에서 떼는 경우는 window 리스너로 해제한다.
+  useEffect(() => {
+    if (!pointerDown) return;
 
-  const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setPointerDown(false);
-  };
+    const end = () => setPointerDown(false);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+  }, [pointerDown]);
 
   const renderItems = (duplicate: boolean) =>
     items.map((item, index) => {
@@ -208,21 +212,52 @@ export function MarqueeRail({ items }: MarqueeRailProps) {
         <li
           key={duplicate ? `${item.key}-duplicate` : item.key}
           ref={!duplicate && index === 0 ? firstCardRef : undefined}
-          className="w-72 shrink-0 snap-start"
+          className="w-80 shrink-0 snap-start"
         >
           <Link
             href={item.href}
             tabIndex={duplicate ? -1 : undefined}
-            className="flex h-full min-h-40 flex-col rounded-2xl border border-border bg-surface-raised p-5 shadow-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary"
+            className="group flex h-full min-h-28 items-stretch gap-4 rounded-2xl border border-border bg-surface-raised p-4 shadow-raised transition-all duration-200 hover:-translate-y-0.5 hover:border-clay/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary"
           >
-            <span className="text-xs font-semibold text-accent-readable">{STATUS_LABEL[item.kind]}</span>
-            <strong className="mt-3 line-clamp-2 text-base text-content-primary">{item.title}</strong>
-            {item.place ? <span className="mt-2 text-sm text-content-secondary">{item.place}</span> : null}
-            {dateTime && formattedDate ? (
-              <time dateTime={dateTime} className="mt-auto pt-4 text-xs text-content-muted">
-                {formattedDate}
-              </time>
-            ) : null}
+            <div className="relative size-20 shrink-0 self-center overflow-hidden rounded-xl bg-surface-canvas">
+              {item.thumbnail ? (
+                <Image
+                  src={item.thumbnail}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-content-muted/60">
+                  <PawPrint aria-hidden className="size-7" />
+                </span>
+              )}
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_CHIP_CLASS[item.kind]}`}
+                >
+                  {STATUS_LABEL[item.kind]}
+                </span>
+                <ArrowUpRight
+                  aria-hidden
+                  className="size-4 shrink-0 text-content-muted/50 transition-colors group-hover:text-accent-readable"
+                />
+              </div>
+              <strong className="mt-2 line-clamp-1 text-base font-semibold text-content-primary">
+                {item.title}
+              </strong>
+              {item.place ? (
+                <span className="mt-1 line-clamp-1 text-sm text-content-secondary">{item.place}</span>
+              ) : null}
+              {dateTime && formattedDate ? (
+                <time dateTime={dateTime} className="mt-auto pt-2 text-xs text-content-muted">
+                  {formattedDate}
+                </time>
+              ) : null}
+            </div>
           </Link>
         </li>
       );
@@ -240,9 +275,7 @@ export function MarqueeRail({ items }: MarqueeRailProps) {
         onPointerLeave={() => setHovered(false)}
         onFocusCapture={() => setFocusWithin(true)}
         onBlurCapture={handleBlur}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
+        onPointerDown={() => setPointerDown(true)}
         className={canLoop ? "overflow-hidden" : "overflow-x-auto pb-3"}
       >
         <div ref={trackRef} data-marquee-track className="flex w-max gap-0">

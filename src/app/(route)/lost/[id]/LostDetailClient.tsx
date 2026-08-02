@@ -104,7 +104,7 @@ export default function LostDetail({ params }: { params: { id: string } }) {
           }
         </div>
       </div>
-      {post.missingAnimalStatus === "FOUND" && <div className="w-full flex justify-center items-center bg-gray-300 py-4 my-4 rounded-md font-bold">완료된 게시물입니다.</div>}
+      {post.missingAnimalStatus === "FOUND" && <div className="w-full flex justify-center items-center bg-forest/10 text-forest py-4 my-4 rounded-xl font-bold">가족을 만나 완료된 게시물이에요.</div>}
       {post.missingAnimalStatus !== "FOUND" && (
         <div className="mb-4">
           <ShareButtons
@@ -150,46 +150,46 @@ export default function LostDetail({ params }: { params: { id: string } }) {
               <CarouselNext />
             </Carousel>
             :
-            <div className="h-[300px] w-[300px]  rounded-md flex justify-center relative bg-gray-100">
-              <div className="flex justify-center items-center font-bold">NO IMAGE</div>
+            <div className="h-[300px] w-[300px] rounded-xl flex flex-col gap-2 justify-center items-center bg-surface-canvas text-content-muted">
+              <span className="text-sm font-medium">등록된 사진이 없어요</span>
             </div>
           }
           <div className="flex flex-col sm:h-full sm:justify-between sm:gap-0 gap-2">
             <div className="flex justify-between items-center w-[300px]">
-              <span>작성자</span>
-              <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center p-2 text-sm ">{post.author}</div>
+              <span className="text-sm font-medium text-content-secondary">작성자</span>
+              <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center p-2 text-sm text-content-primary ">{post.author}</div>
             </div>
             <div className="flex justify-between items-center w-[300px]">
-              <span>연락처</span>
-              <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center p-2 text-sm ">{post.missingAnimalStatus === "FOUND" ? "-" : post.phoneNum}</div>
+              <span className="text-sm font-medium text-content-secondary">연락처</span>
+              <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center p-2 text-sm text-content-primary ">{post.missingAnimalStatus === "FOUND" ? "-" : post.phoneNum}</div>
             </div>
             <div className="flex justify-between items-center w-[300px]">
-              <span>위치</span>
-              <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center p-2 text-sm ">
+              <span className="text-sm font-medium text-content-secondary">위치</span>
+              <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center p-2 text-sm text-content-primary ">
                 {post.place}
               </div>
             </div>
             <div className="flex justify-between items-center w-[300px]">
-              <span>날짜</span>
-              <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center p-2 text-sm ">{formatDateToKorean(post.time)}</div>
+              <span className="text-sm font-medium text-content-secondary">날짜</span>
+              <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center p-2 text-sm text-content-primary ">{formatDateToKorean(post.time)}</div>
             </div>
             <div className="flex justify-between items-center w-[300px]">
-              <span>사례금</span>
-              <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center p-2 text-sm ">{parseGratuityValue(post.gratuity, post.missingAnimalStatus)}</div>
+              <span className="text-sm font-medium text-content-secondary">사례금</span>
+              <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center p-2 text-sm text-content-primary ">{parseGratuityValue(post.gratuity, post.missingAnimalStatus)}</div>
             </div>
           </div>
         </div>
 
-        <div className="w-full py-4 bg-blue-100 rounded-md flex justify-start items-center px-4 text-sm">
-          💡 {post.description}
+        <div className="w-full py-4 rounded-xl border border-forest/20 bg-forest/5 flex justify-start items-center px-4 text-sm text-content-primary">
+          {post.description}
         </div>
 
         <TimePhaseBanner missingTime={post.time} />
 
-        <div className="w-full flex flex-col bg-gray-50 rounded-md p-4">
+        <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="font-bold">📍 탐색 범위</h1>
-            <span className="text-xs text-gray-500">{post.place}</span>
+            <h1 className="font-editorial text-lg font-semibold text-content-primary">탐색 범위</h1>
+            <span className="text-xs text-content-muted">{post.place}</span>
           </div>
           {post.coordinate ? (
             <SearchRadiusMap

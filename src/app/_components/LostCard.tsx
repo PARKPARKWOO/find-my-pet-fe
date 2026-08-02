@@ -1,56 +1,66 @@
 import Image from "next/image";
+import { CalendarDays, MapPin, PawPrint } from "lucide-react";
 import { Card } from "./ui/card";
-import { formatDateToKorean, parseGratuityValue, truncateText } from "@/lib/utils";
+import { formatDateToKorean, parseGratuityValue } from "@/lib/utils";
 import type { LostPetSummary } from "@/lib/homeFeed";
 
+const STATUS_BADGE: Record<
+  LostPetSummary["missingAnimalStatus"],
+  { label: string; className: string }
+> = {
+  SEARCHING: { label: "찾는 중", className: "bg-state-searching" },
+  SEEN: { label: "목격", className: "bg-state-sighting" },
+  FOUND: { label: "완료", className: "bg-state-found" },
+};
+
 export default function LostCard({ ...pet }: LostPetSummary) {
-  const renderStatusLabel = (missingStatus: LostPetSummary["missingAnimalStatus"]) => {
-    switch (missingStatus) {
-      case "FOUND":
-        return <div className="bg-state-found text-content-inverse rounded-md p-2 text-xs font-bold">완료</div>;
-      case "SEARCHING":
-        return <div className="bg-state-searching text-content-inverse rounded-md p-2 text-xs font-bold">실종</div>;
-      case "SEEN":
-        return <div className="bg-state-sighting text-content-inverse rounded-md p-2 text-xs font-bold">목격</div>;
-    }
-  };
+  const status = STATUS_BADGE[pet.missingAnimalStatus];
+  const showGratuity = pet.missingAnimalStatus === "SEARCHING" && pet.gratuity !== 0;
 
   return (
-    <Card className="h-[450px] w-full hover:cursor-pointer flex flex-col gap-4">
-      <div className="h-[200px] rounded-md flex justify-center relative">
+    <Card className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border-border bg-surface-raised transition-all duration-200 hover:-translate-y-1 hover:border-clay/60 hover:shadow-raised">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-canvas">
         {pet.thumbnail ? (
           <Image
             src={pet.thumbnail}
-            layout="fill"
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 480px) 50vw, 100vw"
             alt={`${pet.title} - ${pet.place} 실종 동물 사진`}
-            className="rounded-t-lg object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex justify-center items-center font-bold">NO IMAGE</div>
-        )}
-      </div>
-      <div className="font-bold items-center text-center w-full h-12 px-4">{pet.title}</div>
-      <div className="px-2">
-        <div className="flex gap-1 flex-col text-sm">
-          <div className="bg-gray-100 p-2 rounded-md">📍 {pet.place}</div>
-          <div className="p-2 rounded-md flex gap-2 flex-wrap">
-            {renderStatusLabel(pet.missingAnimalStatus)}
-            <div className="bg-action-primary text-content-inverse rounded-md p-2 text-xs font-bold">
-              📅 {formatDateToKorean(pet.time)}
-            </div>
-            {pet.distanceKm !== undefined && (
-              <div className="bg-action-primary text-content-inverse rounded-md p-2 text-xs font-bold">
-                📍 {pet.distanceKm.toFixed(1)}km
-              </div>
-            )}
-            {pet.missingAnimalStatus === "SEARCHING" && pet.gratuity !== 0 && (
-              <div className="bg-action-secondary text-content-inverse rounded-md p-2 text-xs font-bold">
-                사례금 {parseGratuityValue(pet.gratuity, pet.missingAnimalStatus)}
-              </div>
-            )}
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+            <PawPrint aria-hidden className="size-8 text-content-muted/60" />
+            <span className="text-xs font-medium text-content-muted">등록된 사진이 없어요</span>
           </div>
+        )}
+        <span
+          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold text-content-inverse ${status.className}`}
+        >
+          {status.label}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <strong className="line-clamp-1 text-base font-semibold text-content-primary">{pet.title}</strong>
+        <div className="flex flex-col gap-1 text-sm text-content-secondary">
+          <span className="flex items-center gap-1.5">
+            <MapPin aria-hidden="true" className="size-3.5 shrink-0 text-content-muted" />
+            <span className="line-clamp-1">
+              {pet.place}
+              {pet.distanceKm !== undefined ? ` · ${pet.distanceKm.toFixed(1)}km` : ""}
+            </span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-content-muted" />
+            {formatDateToKorean(pet.time)}
+          </span>
         </div>
-        <span className="text-sm">{truncateText(pet.description)}</span>
+        <p className="line-clamp-2 text-sm leading-6 text-content-muted">{pet.description}</p>
+        {showGratuity && (
+          <span className="mt-auto inline-flex w-fit rounded-full bg-wine/10 px-2.5 py-1 text-xs font-bold text-wine">
+            사례금 {parseGratuityValue(pet.gratuity, pet.missingAnimalStatus)}
+          </span>
+        )}
       </div>
     </Card>
   );

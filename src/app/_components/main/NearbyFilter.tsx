@@ -43,8 +43,8 @@ export default function NearbyFilter({ value, onChange }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md mb-4">
-      <span className="text-sm font-medium">📍 내 주변</span>
+    <div className="flex flex-wrap items-center gap-2 p-3 bg-surface-canvas border border-border rounded-xl mb-4">
+      <span className="text-sm font-medium text-content-primary">내 주변</span>
       {OPTIONS.map((km) => {
         const active = value.enabled && value.radiusKm === km;
         return (
@@ -53,10 +53,10 @@ export default function NearbyFilter({ value, onChange }: Props) {
             type="button"
             disabled={loading}
             onClick={() => enable(km)}
-            className={`px-3 py-1 text-xs rounded-full border transition ${
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
               active
                 ? "border-action-primary bg-action-primary text-content-inverse"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                : "bg-surface-raised text-content-secondary border-border hover:border-clay/60"
             } ${loading ? "opacity-60" : ""}`}
           >
             {km}km
@@ -67,13 +67,13 @@ export default function NearbyFilter({ value, onChange }: Props) {
         <button
           type="button"
           onClick={() => onChange({ enabled: false })}
-          className="px-3 py-1 text-xs rounded-full border bg-white text-gray-500 hover:bg-gray-100"
+          className="px-3 py-1 text-xs font-medium rounded-full border border-border bg-surface-raised text-content-muted hover:border-clay/60"
         >
           초기화
         </button>
       )}
-      {loading && <span className="text-xs text-gray-500">위치 확인 중...</span>}
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      {loading && <span className="text-xs text-content-muted">위치 확인 중...</span>}
+      {error && <span className="text-xs font-medium text-action-destructive">{error}</span>}
     </div>
   );
 }

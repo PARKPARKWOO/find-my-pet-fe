@@ -742,7 +742,10 @@ test("latest marquee renders only actual items and valid absolute dates", () => 
   assert.match(marquee, /dateTime && formattedDate \? \(/);
   assert.match(marquee, /<time dateTime=\{dateTime\}/);
   assert.match(marquee, /overflow-x-auto/);
-  assert.doesNotMatch(marquee, /next\/image|<Image|Date\.now|setInterval/);
+  assert.doesNotMatch(marquee, /Date\.now|setInterval/);
+  // 썸네일은 nullable — 없으면 아이콘 폴백, 있으면 unoptimized next/image 로 원본을 그대로 쓴다.
+  assert.match(marquee, /item\.thumbnail \?/);
+  assert.match(marquee, /sizes="80px"/);
 });
 
 test("nearby map keys preserve duplicate public records without collisions", () => {

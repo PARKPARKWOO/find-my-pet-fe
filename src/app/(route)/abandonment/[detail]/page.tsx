@@ -147,7 +147,7 @@ export default async function AbandonmentDetailPage({
     return (
       <div className="w-full max-w-2xl mx-auto py-20 text-center">
         <h1 className="text-xl font-bold mb-2">공고 정보를 찾을 수 없어요</h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-content-muted mb-6">
           이미 보관 기간이 지나 내려갔거나, 등록 전 단계일 수 있습니다.
         </p>
         <Link href="/">
@@ -223,62 +223,63 @@ export default async function AbandonmentDetailPage({
 
         <div className="flex flex-col w-full h-full gap-10">
           <div className="flex w-full sm:justify-between sm:flex-row sm:items-start items-center flex-col gap-6">
-            <div className="w-[300px] h-[300px] rounded-md relative bg-gray-100">
+            <div className="w-[300px] h-[300px] rounded-xl relative overflow-hidden bg-surface-canvas">
               {pet.filename ? (
                 <Image
                   src={pet.filename}
-                  layout="fill"
+                  fill
+                  sizes="300px"
                   alt={`${kind} - ${pet.happenPlace ?? ""} ${closed ? "공고 종료" : "보호중"}`}
-                  className="rounded-lg object-cover"
+                  className="object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                <div className="w-full h-full flex items-center justify-center text-content-muted text-sm">
                   사진 없음
                 </div>
               )}
             </div>
             <div className="flex flex-col sm:h-full sm:justify-between sm:gap-0 gap-2">
               <Row label="품종" value={kind} />
-              <Row label="성별" value={pet.sexCd} />
-              <Row label="나이" value={pet.age} />
-              <Row label="체중" value={pet.weight} />
+              <Row label="성별" value={formatSexLabel(pet.sexCd)} />
+              <Row label="나이" value={formatAgeLabel(pet.age)} />
+              <Row label="체중" value={formatWeightLabel(pet.weight)} />
             </div>
           </div>
 
           {pet.specialMark && (
-            <div className="w-full bg-blue-100 rounded-md flex justify-start items-center px-4 py-2 text-sm">
-              💡 {pet.specialMark}
+            <div className="w-full rounded-xl border border-forest/20 bg-forest/5 flex justify-start items-center px-4 py-3 text-sm text-content-primary">
+              {pet.specialMark}
             </div>
           )}
 
-          <div className="w-full flex flex-col bg-gray-100 rounded-md p-3">
-            <h2 className="font-bold mb-2">📍 발견 정보</h2>
+          <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
+            <h2 className="font-editorial text-lg font-semibold text-content-primary mb-3">발견 정보</h2>
             <div className="grid grid-cols-2 w-full gap-4 text-sm">
               <div>
-                <h3 className="font-bold text-xs text-gray-500">발견 위치</h3>
+                <h3 className="font-semibold text-xs text-content-muted">발견 위치</h3>
                 <span>{pet.happenPlace ?? "-"}</span>
               </div>
               <div>
-                <h3 className="font-bold text-xs text-gray-500">발견 일시</h3>
+                <h3 className="font-semibold text-xs text-content-muted">발견 일시</h3>
                 <span>{pet.happenDt ? formatDate(pet.happenDt) : "-"}</span>
               </div>
             </div>
             {pet.happenPlace && <AbandonmentMaps happenPlace={pet.happenPlace} careAddr={pet.careAddr ?? ""} />}
           </div>
 
-          <div className="w-full flex flex-col bg-gray-100 rounded-md p-3">
-            <h2 className="font-bold mb-2">📍 보호소 정보</h2>
+          <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
+            <h2 className="font-editorial text-lg font-semibold text-content-primary mb-3">보호소 정보</h2>
             <div className="grid grid-cols-2 w-full gap-4 text-sm">
               <div>
-                <h3 className="font-bold text-xs text-gray-500">보호소</h3>
+                <h3 className="font-semibold text-xs text-content-muted">보호소</h3>
                 <span>{pet.careNm ?? "-"}</span>
               </div>
               <div>
-                <h3 className="font-bold text-xs text-gray-500">주소</h3>
+                <h3 className="font-semibold text-xs text-content-muted">주소</h3>
                 <span>{pet.careAddr ?? "-"}</span>
               </div>
               <div>
-                <h3 className="font-bold text-xs text-gray-500">연락처</h3>
+                <h3 className="font-semibold text-xs text-content-muted">연락처</h3>
                 {pet.careTel ? (
                   <a href={`tel:${pet.careTel}`} className="underline">
                     {pet.careTel}
@@ -288,7 +289,7 @@ export default async function AbandonmentDetailPage({
                 )}
               </div>
               <div>
-                <h3 className="font-bold text-xs text-gray-500">상태</h3>
+                <h3 className="font-semibold text-xs text-content-muted">상태</h3>
                 {/* 공공데이터 원본값은 위조하지 않고 그대로 둔다. 백엔드가 판정한 CLOSED 공고는
                     별도 보조 표기로 덧붙이되 기간 경과나 동물의 현재 상태를 추론하지 않는다. */}
                 <span>{pet.processState ?? "-"}</span>
@@ -302,7 +303,7 @@ export default async function AbandonmentDetailPage({
             {pet.careAddr && <ShelterMap careAddr={pet.careAddr} />}
           </div>
 
-          <div className="border-t pt-6 text-center text-sm text-gray-600">
+          <div className="border-t border-border pt-6 text-center text-sm text-content-secondary">
             {/* "강아지/고양이" 로 한정하면 그 외 반려동물 공고가 배제된다. */}
             <p className="mb-3">혹시 우리 아이 같으신가요?</p>
             <Link href="/register">
@@ -318,10 +319,23 @@ export default async function AbandonmentDetailPage({
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex justify-between items-center w-[300px]">
-      <span>{label}</span>
-      <div className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center px-2 text-sm">
+      <span className="text-sm font-medium text-content-secondary">{label}</span>
+      <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center px-2 text-sm text-content-primary">
         {value ?? "-"}
       </div>
     </div>
   );
+}
+
+function formatSexLabel(sexCd: string | null): string | null {
+  if (!sexCd) return null;
+  return { M: "수컷", F: "암컷", Q: "성별 미상" }[sexCd] ?? sexCd;
+}
+
+function formatAgeLabel(age: string | null): string | null {
+  return age ? age.replace("(년생)", "년생").trim() : null;
+}
+
+function formatWeightLabel(weight: string | null): string | null {
+  return weight ? weight.replace(/\(?kg\)?/i, "kg").trim() : null;
 }

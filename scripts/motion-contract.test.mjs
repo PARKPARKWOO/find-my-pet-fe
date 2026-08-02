@@ -70,11 +70,13 @@ function assertPauseContract(source) {
   assert.match(source, /const paused = hovered \|\| focusWithin \|\| pointerDown \|\| userPaused/);
   assert.match(source, /onPointerEnter=\{\(\) => setHovered\(true\)\}/);
   assert.match(source, /onPointerLeave=\{\(\) => setHovered\(false\)\}/);
-  assert.match(source, /onPointerDown=\{handlePointerDown\}/);
-  assert.match(source, /onPointerUp=\{handlePointerEnd\}/);
-  assert.match(source, /onPointerCancel=\{handlePointerEnd\}/);
-  assert.match(source, /setPointerCapture\(event\.pointerId\)/);
-  assert.match(source, /releasePointerCapture\(event\.pointerId\)/);
+  assert.match(source, /onPointerDown=\{\(\) => setPointerDown\(true\)\}/);
+  // 포인터 캡처는 click 을 뷰포트로 리타게팅해 카드 링크 이동을 막는다(실제 발생했던 버그).
+  // 뷰포트 밖에서 떼는 경우는 window 리스너로 해제해야 한다.
+  assert.doesNotMatch(source, /setPointerCapture/);
+  assert.match(source, /window\.addEventListener\("pointerup", end\)/);
+  assert.match(source, /window\.addEventListener\("pointercancel", end\)/);
+  assert.match(source, /window\.removeEventListener\("pointerup", end\)/);
   assert.match(source, /currentTarget\.contains\(event\.relatedTarget as Node \| null\)/);
   assert.match(source, /tweenRef\.current\?\.pause\(\)/);
   assert.match(source, /tweenRef\.current\?\.play\(\)/);
@@ -88,8 +90,6 @@ function assertPauseContract(source) {
     "onFocusCapture=",
     "onBlurCapture=",
     "onPointerDown=",
-    "onPointerUp=",
-    "onPointerCancel=",
   ]) {
     const handlerIndex = source.indexOf(handler);
     assert.ok(
