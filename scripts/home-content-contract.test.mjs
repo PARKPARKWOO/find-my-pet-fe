@@ -178,7 +178,13 @@ function assertExplicitNearbyButtonContract(source) {
 const SERVER_COMPONENT_ALLOWED_MODULES = new Map([
   [
     "HomeHero.tsx",
-    new Set(["@/app/_components/category/PurposeCategoryNav", "./SituationGuide"]),
+    new Set([
+      "@/app/_components/category/PurposeCategoryNav",
+      "./SituationGuide",
+      // 리뉴얼: 목적 카드 실데이터 썸네일 + 검색 슬롯(children)용 타입 전용 임포트.
+      "@/lib/homeFeed",
+      "react",
+    ]),
   ],
   [
     "SituationGuide.tsx",
@@ -817,7 +823,7 @@ test("both site search variants remain accessible native GET forms", () => {
   }
 
   const [heroForm, compactForm] = forms;
-  assert.match(heroForm, /placeholder="실종 \/ 보호중 동물 검색 — 지역, 품종, 특징 등"/);
+  assert.match(heroForm, /placeholder="지역, 품종, 특징으로 검색해보세요"/);
   assert.match(compactForm, /placeholder="실종 \/ 보호중 검색"/);
   assert.match(compactForm, /className="flex items-center"/);
   assert.match(compactForm, /w-44 lg:w-64/);

@@ -78,7 +78,7 @@ export default async function SearchPage({
 
   return (
     <div className="w-full max-w-4xl mx-auto py-6 px-2">
-      <h1 className="text-xl font-bold mb-3">🔎 통합 검색</h1>
+      <h1 className="text-xl font-bold mb-3">통합 검색</h1>
 
       {/* 결과 페이지 자체 검색창 — 재검색 편의 (현재 검색어 prefill) */}
       <div className="mb-4">
@@ -86,11 +86,11 @@ export default async function SearchPage({
       </div>
 
       {!q && (
-        <p className="text-sm text-gray-500">검색창에 키워드를 입력해 주세요.</p>
+        <p className="text-sm text-content-muted">검색창에 키워드를 입력해 주세요.</p>
       )}
 
       {q && !data && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-content-muted">
           &quot;{q}&quot; 검색 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.
         </p>
       )}
@@ -106,7 +106,7 @@ export default async function SearchPage({
           </div>
 
           {data.items.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center border-dashed border-2 rounded">
+            <p className="text-sm text-content-muted py-8 text-center border-dashed border-2 rounded">
               &quot;{q}&quot; 와 일치하는 결과가 없습니다.
             </p>
           ) : (
@@ -115,9 +115,9 @@ export default async function SearchPage({
                 <li key={`${item.type}-${item.id}`}>
                   <Link
                     href={item.link}
-                    className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex gap-3 p-3 border rounded-lg hover:bg-surface-canvas transition-colors"
                   >
-                    <div className="w-20 h-20 rounded shrink-0 relative bg-gray-100">
+                    <div className="w-20 h-20 rounded shrink-0 relative bg-surface-canvas">
                       {item.thumbnail ? (
                         <Image
                           src={item.thumbnail}
@@ -126,7 +126,7 @@ export default async function SearchPage({
                           className="rounded object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-xs text-content-muted">
                           {item.type === "LOST" ? "실종" : "보호"}
                         </div>
                       )}
@@ -136,10 +136,10 @@ export default async function SearchPage({
                         <span
                           className={`text-xs px-1.5 py-0.5 rounded font-bold ${
                             item.type === "LOST"
-                              ? "bg-red-100 text-red-700"
+                              ? "bg-destructive/10 text-action-destructive"
                               : item.noticeClosed
-                                ? "bg-gray-200 text-gray-600"
-                                : "bg-blue-100 text-blue-700"
+                                ? "bg-border text-content-secondary"
+                                : "bg-forest/10 text-forest-strong"
                           }`}
                         >
                           {item.type === "LOST"
@@ -157,10 +157,10 @@ export default async function SearchPage({
                         </span>
                       </div>
                       {item.place && (
-                        <p className="text-xs text-gray-600 mb-0.5">📍 {item.place}</p>
+                        <p className="text-xs text-content-secondary mb-0.5">{item.place}</p>
                       )}
                       {item.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
+                        <p className="text-xs text-content-muted line-clamp-2">{item.description}</p>
                       )}
                     </div>
                   </Link>
@@ -173,7 +173,7 @@ export default async function SearchPage({
             <div className="flex justify-center mt-4">
               <Link
                 href={`/search?q=${encodeURIComponent(q)}&page=${pageNo + 1}&type=${type}`}
-                className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
+                className="px-4 py-2 text-sm border rounded hover:bg-surface-canvas"
               >
                 다음 페이지
               </Link>
@@ -201,7 +201,7 @@ function FilterTab({
     <Link
       href={`/search?q=${encodeURIComponent(q)}&type=${target}`}
       className={`px-3 py-1.5 rounded-full ${
-        active ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        active ? "bg-action-primary text-content-inverse" : "bg-surface-canvas text-content-secondary hover:bg-border"
       }`}
     >
       {label}

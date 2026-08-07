@@ -25,12 +25,12 @@ export default function SearchBar({ variant = "compact", defaultQ = "" }: Search
             type="search"
             defaultValue={defaultQ}
             required
-            placeholder="실종 / 보호중 동물 검색 — 지역, 품종, 특징 등"
-            className="pl-11 pr-20 py-3 text-base bg-surface-raised border border-border rounded-full w-full placeholder:text-content-muted/70 focus:outline-none focus:ring-2 focus:ring-action-primary focus:border-action-primary transition-colors shadow-raised"
+            placeholder="지역, 품종, 특징으로 검색해보세요"
+            className="pl-12 pr-24 h-14 text-base bg-surface-raised border border-border rounded-2xl w-full placeholder:text-content-muted/70 focus:outline-none focus:ring-2 focus:ring-action-primary focus:border-action-primary transition-colors shadow-raised"
           />
           <button
             type="submit"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-action-primary text-content-inverse text-sm font-semibold rounded-full hover:bg-action-primary/90"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-action-primary text-content-inverse text-sm font-semibold rounded-xl hover:bg-forest-strong transition-colors active:scale-[0.98]"
           >
             검색
           </button>

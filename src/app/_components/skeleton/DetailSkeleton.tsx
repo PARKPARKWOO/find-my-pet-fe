@@ -19,27 +19,27 @@ export default function DetailSkeleton() {
           <div className="flex flex-col sm:h-full sm:justify-between sm:gap-0 gap-2">
             <div className="flex justify-between items-center w-[300px]">
               <span>작성자</span>
-              <Skeleton className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center"/>
+              <Skeleton className="w-[250px] h-[50px] rounded-md bg-surface-canvas flex justify-center items-center"/>
             </div>
             <div className="flex justify-between items-center w-[300px]">
               <span>연락처</span>
-              <Skeleton className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center"/>
+              <Skeleton className="w-[250px] h-[50px] rounded-md bg-surface-canvas flex justify-center items-center"/>
             </div>
             <div className="flex justify-between items-center w-[300px]">
               <span>위치</span>
-              <Skeleton className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center"/>
+              <Skeleton className="w-[250px] h-[50px] rounded-md bg-surface-canvas flex justify-center items-center"/>
             </div>
             <div className="flex justify-between items-center w-[300px]">
               <span>시간</span>
-              <Skeleton className="w-[250px] h-[50px] rounded-md bg-gray-100 flex justify-center items-center"/>
+              <Skeleton className="w-[250px] h-[50px] rounded-md bg-surface-canvas flex justify-center items-center"/>
             </div>
           </div>
         </div>
 
-        <Skeleton className="w-full h-[70px] bg-blue-100 rounded-md flex justify-start items-center px-4 text-sm"/>
-        <div className="w-full h-[400px] flex flex-col bg-gray-100 rounded-md">
+        <Skeleton className="w-full h-[70px] border border-forest/20 bg-forest/5 rounded-md flex justify-start items-center px-4 text-sm"/>
+        <div className="w-full h-[400px] flex flex-col bg-surface-canvas rounded-md">
         <div className="flex-col flex grow-1 rounded-t-md p-2 gap-1">
-            <h1 className="font-bold">📍 실종 정보</h1>
+            <h1 className="font-bold">실종 정보</h1>
             <div className="grid grid-cols-2 w-full gap-4">
               <div className="flex flex-col">
                 <h1 className="font-bold text-sm">실종 위치</h1>

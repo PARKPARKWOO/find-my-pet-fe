@@ -572,16 +572,16 @@ export default function FlyerPrintDialog(props: Props) {
       */}
       <DialogContent className="max-w-4xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>📱 전단지 QR 만들기</DialogTitle>
+          <DialogTitle>전단지 QR 만들기</DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm text-gray-500 mb-2">
+        <p className="text-sm text-content-muted mb-2">
           A4 한 장 전단지로 출력됩니다. 아래 텍스트는 자유롭게 수정한 다음 인쇄하실 수 있어요.
         </p>
 
         {/* 용지 선택 — 조판은 A4 하나로 하고 균일 배율로 앉히므로, 어느 걸 골라도 넘치지 않는다. */}
         <div className="mb-3">
-          <p className="text-xs text-gray-600 mb-1">용지</p>
+          <p className="text-xs text-content-secondary mb-1">용지</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {(Object.keys(PAPERS) as PaperSize[]).map((key) => {
               const p = PAPERS[key];
@@ -593,14 +593,14 @@ export default function FlyerPrintDialog(props: Props) {
                   onClick={() => setPaper(key)}
                   aria-pressed={active}
                   className={`text-left p-2 rounded border text-xs transition-colors ${
-                    active ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
+                    active ? "border-action-primary bg-forest/5" : "border-border hover:bg-surface-canvas"
                   }`}
                 >
                   <span className="font-bold">{p.label}</span>
-                  <span className="ml-1.5 text-[10px] text-gray-400">
+                  <span className="ml-1.5 text-[10px] text-content-muted">
                     {Math.round(p.widthMm)}×{Math.round(p.heightMm)}mm
                   </span>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{p.caption}</p>
+                  <p className="text-[10px] text-content-muted mt-0.5">{p.caption}</p>
                 </button>
               );
             })}
@@ -609,7 +609,7 @@ export default function FlyerPrintDialog(props: Props) {
 
         {/* 템플릿 선택 */}
         <div className="mb-3">
-          <p className="text-xs text-gray-600 mb-1">템플릿</p>
+          <p className="text-xs text-content-secondary mb-1">템플릿</p>
           {/* flex-1 한 줄이 아니라 그리드인 이유: 템플릿이 6개라 한 줄에 밀어 넣으면 caption 이
               한 글자씩 끊긴다. caption 은 "어디에 붙일 것인가"를 알려주는 유일한 단서라 잘리면 안 된다. */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -623,7 +623,7 @@ export default function FlyerPrintDialog(props: Props) {
                   onClick={() => setTemplate(key)}
                   aria-pressed={active}
                   className={`text-left p-2 rounded border text-xs transition-colors ${
-                    active ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
+                    active ? "border-action-primary bg-forest/5" : "border-border hover:bg-surface-canvas"
                   }`}
                 >
                   <span
@@ -631,7 +631,7 @@ export default function FlyerPrintDialog(props: Props) {
                     style={{ backgroundColor: t.primary }}
                   />
                   <span className="font-bold">{t.label}</span>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{t.caption}</p>
+                  <p className="text-[10px] text-content-muted mt-0.5">{t.caption}</p>
                 </button>
               );
             })}
@@ -641,7 +641,7 @@ export default function FlyerPrintDialog(props: Props) {
         {/* 블록 구성 — 어떤 블록을 넣고 어떤 순서로 보일지. 체크박스 + 위/아래 버튼만 쓰는
             이유와 297mm 산수는 FlyerBlockComposer/compositionFits 주석 참고. */}
         <div className="mb-3">
-          <p className="text-xs text-gray-600 mb-1">구성</p>
+          <p className="text-xs text-content-secondary mb-1">구성</p>
           <FlyerBlockComposer composition={composition} onChange={setComposition} />
         </div>
 
@@ -652,7 +652,7 @@ export default function FlyerPrintDialog(props: Props) {
           <FieldInput label="헤드라인" value={headline} onChange={setHeadline} />
           <FieldInput label="제목" value={title} onChange={setTitle} />
           <div className="col-span-2">
-            <label className="block text-xs text-gray-600 mb-1">특징 · 메모</label>
+            <label className="block text-xs text-content-secondary mb-1">특징 · 메모</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -664,7 +664,7 @@ export default function FlyerPrintDialog(props: Props) {
             <button
               type="button"
               onClick={reset}
-              className="text-xs text-gray-500 hover:underline"
+              className="text-xs text-content-muted hover:underline"
             >
               ↺ 기본 문구로 되돌리기
             </button>
@@ -717,7 +717,7 @@ export default function FlyerPrintDialog(props: Props) {
           <Button variant="outline" onClick={() => navigator.clipboard.writeText(shareUrl)}>
             링크 복사
           </Button>
-          <Button onClick={() => handlePrint()}>🖨️ 인쇄 / PDF 저장</Button>
+          <Button onClick={() => handlePrint()}>인쇄 / PDF 저장</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -1031,7 +1031,7 @@ const FieldInput = ({
   onChange: (v: string) => void;
 }) => (
   <div>
-    <label className="block text-xs text-gray-600 mb-1">{label}</label>
+    <label className="block text-xs text-content-secondary mb-1">{label}</label>
     <input
       type="text"
       value={value}

@@ -208,7 +208,7 @@ export default function TermsPage() {
       </Section>
 
       <Section id="disclosure" no={9} title="게시물의 공개 범위">
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-foreground">
+        <div className="rounded-lg border border-waiting/40 bg-waiting/10 p-4 text-foreground">
           <p className="font-semibold">
             실종 신고 게시글과 목격 제보는 로그인하지 않은 누구에게나 공개됩니다.
           </p>

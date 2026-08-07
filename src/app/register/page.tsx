@@ -202,8 +202,8 @@ export default function LostPetRegister() {
                           type="button"
                           className={`px-4 py-2 rounded-md text-sm border ${
                             field.value === t
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              ? "bg-action-primary text-content-inverse border-action-primary"
+                              : "bg-surface-raised text-content-secondary border-border hover:bg-surface-canvas"
                           }`}
                           onClick={() => {
                             field.onChange(t);
@@ -227,7 +227,7 @@ export default function LostPetRegister() {
                 <FormItem>
                   <FormLabel>
                     품종
-                    <span className="text-xs text-gray-400 ml-1">(선택)</span>
+                    <span className="text-xs text-content-muted ml-1">(선택)</span>
                   </FormLabel>
                   <FormControl>
                     <BreedSelect
@@ -491,8 +491,8 @@ export default function LostPetRegister() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>사진</FormLabel>
-                  <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-xs text-gray-700 space-y-1">
-                    <p className="font-medium text-blue-700">📸 찾을 확률을 높이는 사진 가이드</p>
+                  <div className="rounded-md border border-forest/20 bg-forest/5 p-3 text-xs text-content-secondary space-y-1">
+                    <p className="font-medium text-forest">찾을 확률을 높이는 사진 가이드</p>
                     <ul className="list-disc pl-5 space-y-0.5">
                       <li><b>정면 얼굴</b> 1장 + <b>전신 측면</b> 1장은 꼭 포함해 주세요. AI 유사도 매칭에 가장 중요합니다.</li>
                       <li><b>밝은 자연광</b>에서 찍은 최근 사진이 좋아요. 어둡거나 흐릿한 사진은 목격자 식별이 어렵습니다.</li>
@@ -513,7 +513,7 @@ export default function LostPetRegister() {
                       }}
                     />
                   </FormControl>
-                  {error && <p className="text-red-500">{error}</p>}
+                  {error && <p className="text-action-destructive">{error}</p>}
                   <div className="grid grid-cols-3 gap-4 mt-4">
                     {imagePreviews.map((src, index) => (
                       <img

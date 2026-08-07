@@ -85,7 +85,7 @@ test("keyboard order starts with skip link, logo, and the four global groups", a
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "본문으로 바로가기" })).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Find My Pet" })).toBeFocused();
+  await expect(page.getByRole("link", { name: "파인드마이펫" })).toBeFocused();
   for (const name of NAVIGATION_NAMES) {
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name, exact: true })).toBeFocused();

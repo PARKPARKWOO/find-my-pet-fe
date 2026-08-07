@@ -68,20 +68,20 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">🔔 알림</h1>
+        <h1 className="text-xl font-bold">알림</h1>
         <button
           type="button"
           onClick={markAllRead}
-          className="text-sm text-blue-500 hover:underline"
+          className="text-sm text-forest hover:underline"
         >
           모두 읽음 처리
         </button>
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-gray-400 text-sm">로딩 중...</div>
+        <div className="py-12 text-center text-content-muted text-sm">로딩 중...</div>
       ) : items.length === 0 ? (
-        <div className="py-12 text-center text-gray-400 text-sm border-dashed border-2 rounded">
+        <div className="py-12 text-center text-content-muted text-sm border-dashed border-2 rounded">
           알림이 없습니다.
         </div>
       ) : (
@@ -90,23 +90,23 @@ export default function NotificationsPage() {
             <li
               key={it.id}
               onClick={() => handleClick(it)}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50 ${
-                it.isRead ? "bg-white" : "bg-blue-50/40 border-blue-200"
+              className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-surface-canvas ${
+                it.isRead ? "bg-surface-raised" : "bg-forest/5 border-forest/20"
               }`}
             >
               <div className="flex gap-3">
                 {!it.isRead && (
-                  <span className="mt-2 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                  <span className="mt-2 w-2 h-2 rounded-full bg-action-primary shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold">{it.title}</p>
                   {/* 알림 body 는 백엔드가 kindFullNm("[개] 말티즈 (발견장소)")로 조립한다. */}
                   {it.body && (
-                    <p className="text-sm text-gray-700 mt-1">
+                    <p className="text-sm text-content-secondary mt-1">
                       {formatKindLeadingText(it.body)}
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-content-muted mt-2">
                     {new Date(it.createdAt).toLocaleString("ko-KR")}
                   </p>
                 </div>

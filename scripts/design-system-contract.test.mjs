@@ -40,15 +40,17 @@ const assertMobileNavigationContract = (navigation) => {
 test("승인된 색을 semantic token으로 제공한다", () => {
   const css = read(globalsPath);
 
-  assert.match(css, /--fmp-canvas:\s*233 230 223;\s*\/\* #E9E6DF \*\//);
-  assert.match(css, /--fmp-paper:\s*245 240 232;\s*\/\* #F5F0E8 \*\//);
-  assert.match(css, /--fmp-raised:\s*255 253 248;\s*\/\* #FFFDF8 \*\//);
-  assert.match(css, /--fmp-ink:\s*32 42 38;\s*\/\* #202A26 \*\//);
-  assert.match(css, /--fmp-forest:\s*47 90 73;\s*\/\* #2F5A49 \*\//);
-  assert.match(css, /--fmp-clay:\s*214 111 84;\s*\/\* #D66F54 \*\//);
-  assert.match(css, /--fmp-wine:\s*112 69 65;\s*\/\* #704541 \*\//);
-  assert.match(css, /--fmp-sighting:\s*75 127 163;\s*\/\* #4B7FA3 \*\//);
-  assert.match(css, /--fmp-waiting:\s*185 137 59;\s*\/\* #B9893B \*\//);
+  // 2026-08-07 밝은 캔온 리뉴얼 — 흰 바탕 + 웜 그린. 이름은 유지, 값은 새 시스템.
+  assert.match(css, /--fmp-canvas:\s*247 247 245;\s*\/\* #F7F7F5/);
+  assert.match(css, /--fmp-paper:\s*255 255 255;\s*\/\* #FFFFFF/);
+  assert.match(css, /--fmp-raised:\s*255 255 255;\s*\/\* #FFFFFF/);
+  assert.match(css, /--fmp-ink:\s*26 28 26;\s*\/\* #1A1C1A/);
+  assert.match(css, /--fmp-forest:\s*13 131 72;\s*\/\* #0D8348/);
+  assert.match(css, /--fmp-clay:\s*229 72 77;\s*\/\* #E5484D/);
+  assert.match(css, /--fmp-wine:\s*176 82 34;\s*\/\* #B05222/);
+  assert.match(css, /--fmp-sighting:\s*37 99 191;\s*\/\* #2563BF/);
+  assert.match(css, /--fmp-waiting:\s*154 93 0;\s*\/\* #9A5D00/);
+  assert.match(css, /--fmp-kakao:\s*254 229 0;/);
   for (const token of [
     "text-secondary", "text-muted", "text-inverse", "action-primary",
     "action-secondary", "action-destructive", "action-brand", "state-searching",
@@ -57,9 +59,9 @@ test("승인된 색을 semantic token으로 제공한다", () => {
   ]) {
     assert.match(css, new RegExp(`--fmp-${token}:`));
   }
-  assert.match(css, /--background:\s*37 39% 94%/);
-  assert.match(css, /--foreground:\s*156 14% 15%/);
-  assert.match(css, /font-family:\s*var\(--font-geist-sans\)/);
+  assert.match(css, /--background:\s*0 0% 100%/);
+  assert.match(css, /--foreground:\s*120 4% 11%/);
+  assert.match(css, /font-family:\s*var\(--font-pretendard\)/);
   assert.match(css, /:focus-visible\s*\{/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });
@@ -93,9 +95,9 @@ test("semantic Tailwind maps와 canonical Button 변형을 제공한다", () => 
   assert.match(tailwind, /page:\s*["']80rem["']/);
   assert.match(tailwind, /reading:\s*["']48rem["']/);
   assert.match(tailwind, /raised:\s*["']var\(--fmp-shadow-raised\)["']/);
-  assert.match(button, /action:\s*["']bg-forest text-white hover:bg-forest\/90["']/);
-  assert.match(button, /signal:\s*["']bg-clay text-\[#111513\] hover:bg-clay\/90["']/);
-  assert.match(button, /brand:\s*["']bg-kakao text-\[#191919\] hover:bg-kakao\/90["']/);
+  assert.match(button, /action:\s*["']bg-action-primary text-content-inverse hover:bg-forest-strong["']/);
+  assert.match(button, /signal:\s*["']bg-clay text-white hover:bg-clay\/90["']/);
+  assert.match(button, /brand:\s*["']bg-kakao text-\[#191919\] hover:brightness-95["']/);
 });
 
 test("layout과 typography primitive의 선언된 public interface를 제공한다", () => {

@@ -12,11 +12,9 @@ export default function TimePhaseBanner({ missingTime }: { missingTime: string }
   const elapsed = formatElapsed(missingTime);
 
   return (
-    <div
-      className={`border-l-4 px-4 py-3 rounded-r-md text-sm ${STAGE_TONE[stage]}`}
-    >
+    <div className={`rounded-xl border px-4 py-3 text-sm ${STAGE_TONE[stage]}`}>
       <div className="font-bold">{elapsed}</div>
-      <div>{STAGE_LABEL[stage]}</div>
+      <div className="mt-0.5">{STAGE_LABEL[stage]}</div>
     </div>
   );
 }

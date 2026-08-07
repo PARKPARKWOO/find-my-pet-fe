@@ -12,7 +12,7 @@ const SectionHeading = React.forwardRef<HTMLDivElement, SectionHeadingProps>(
   ({ className, eyebrow, title, description, ...props }, ref) => (
     <div ref={ref} className={cn("space-y-3", className)} {...props}>
       {eyebrow ? <p className="text-sm font-medium text-content-secondary">{eyebrow}</p> : null}
-      <h2 className="font-editorial text-2xl font-semibold tracking-tight text-content-primary sm:text-3xl">
+      <h2 className="text-2xl font-bold tracking-tight text-content-primary sm:text-3xl">
         {title}
       </h2>
       {description ? <p className="max-w-reading text-content-secondary">{description}</p> : null}

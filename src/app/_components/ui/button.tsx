@@ -18,6 +18,7 @@ const buttonVariants = cva(
         secondary: "bg-action-secondary text-content-inverse hover:bg-action-secondary/90",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        brand: "bg-kakao text-[#191919] hover:brightness-95",
       },
       size: {
         default: "h-10 px-4 py-2",

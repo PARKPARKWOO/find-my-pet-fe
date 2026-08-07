@@ -361,7 +361,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
       </div>
 
       {noticeStatus !== "OPEN" && (
-        <p className="mb-3 text-xs text-amber-800 bg-amber-50 border-l-4 border-amber-400 rounded-r-md px-3 py-2">
+        <p className="mb-3 text-xs text-waiting bg-waiting/10 border border-waiting/40 rounded-xl px-3 py-2">
           종료된 공고가 포함될 수 있습니다. 현재 보호·입양·반환 상태는 이 공고만으로 알 수 없으니
           보호소에 직접 확인해 주세요.
         </p>
@@ -412,7 +412,7 @@ export default function AbandonmentList({ initialPage }: AbandonmentListProps) {
             disabled={!isLogin || subBusy}
             className={`text-xs px-3 py-1.5 rounded-md border flex items-center gap-1 ${
               matchedSub
-                ? "bg-forest/10 text-forest border-forest/40"
+                ? "bg-forest/10 text-forest-strong border-forest/40"
                 : "bg-surface-raised text-content-secondary border-border hover:border-clay/60"
             } disabled:opacity-50`}
             title={!isLogin ? "로그인 후 사용 가능" : matchedSub ? "알림 해제" : "이 지역 신규 등록 시 알림 받기"}

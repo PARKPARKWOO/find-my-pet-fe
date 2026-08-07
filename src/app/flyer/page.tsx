@@ -37,8 +37,8 @@ export default function FlyerPage() {
   return (
     <main>
       <FlyerStandaloneClient />
-      <section className="mx-auto w-full max-w-2xl px-4 pb-12 text-sm text-gray-600">
-        <h2 className="font-semibold text-gray-800">전단지를 붙인 다음엔?</h2>
+      <section className="mx-auto w-full max-w-2xl px-4 pb-12 text-sm text-content-secondary">
+        <h2 className="font-semibold text-content-primary">전단지를 붙인 다음엔?</h2>
         <p className="mt-2 leading-relaxed">
           실종 소식을{" "}
           <Link href="/register" className="underline">

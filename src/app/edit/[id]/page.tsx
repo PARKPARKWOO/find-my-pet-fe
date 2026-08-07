@@ -158,8 +158,8 @@ export default function LostPetRegister({ params }: { params: { id: string } }) 
                           type="button"
                           className={`px-4 py-2 rounded-md text-sm border ${
                             field.value === t
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              ? "bg-action-primary text-content-inverse border-action-primary"
+                              : "bg-surface-raised text-content-secondary border-border hover:bg-surface-canvas"
                           }`}
                           onClick={() => {
                             field.onChange(t);
@@ -183,7 +183,7 @@ export default function LostPetRegister({ params }: { params: { id: string } }) 
                 <FormItem>
                   <FormLabel>
                     품종
-                    <span className="text-xs text-gray-400 ml-1">(선택)</span>
+                    <span className="text-xs text-content-muted ml-1">(선택)</span>
                   </FormLabel>
                   <FormControl>
                     <BreedSelect

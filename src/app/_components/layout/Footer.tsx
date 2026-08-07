@@ -1,38 +1,40 @@
 import Link from "next/link";
+import { PawPrint } from "lucide-react";
 import FooterAd from "@/app/_components/ads/FooterAd";
 
-/**
- * 링크가 늘어나면서 고정폭(`w-[1280px]`)이 실제로 화면을 넘겼다. 뷰포트보다 넓은 고정폭은 좁은
- * 화면에서 가로 스크롤을 만들고 오른쪽 링크를 잘라먹는다 — 상한만 두고 폭 자체는 흐르게 한다.
- * 링크 묶음도 wrap 시켜 한 줄에 다 못 들어가면 아래로 접히게 한다.
- */
 export default function Footer() {
   return (
-    <div className="flex flex-col items-center bg-surface-paper text-ink">
+    <div className="w-full bg-surface-canvas text-ink">
       {/* 본문과 푸터 링크 사이. 읽던 흐름은 끊지 않으면서 스크롤 끝에서 실제로 보이는 자리다. */}
       <FooterAd />
-      <footer className="w-full max-w-page flex justify-center border-t border-ink/10">
-        <div className="w-[90%] md:w-[80%] flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between py-8">
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-bold">파인드마이펫 🐶</div>
-            <div className="text-xs text-ink/80">
-              <b>Contact</b> wy9295@naver.com <br />
+      <footer className="mx-auto w-full max-w-page border-t border-border px-4 md:px-6">
+        <div className="flex flex-col gap-6 py-10 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-2 text-sm font-bold">
+              <span aria-hidden="true" className="flex size-6 items-center justify-center rounded-lg bg-forest text-content-inverse">
+                <PawPrint className="size-3.5" strokeWidth={2.2} />
+              </span>
+              파인드마이펫
+            </div>
+            <div className="text-xs leading-5 text-content-muted">
+              Contact wy9295@naver.com
+              <br />
               Copyright findmypet. All rights reserved
             </div>
           </div>
-          <nav aria-label="푸터" className="flex flex-wrap items-center gap-x-4 gap-y-2 md:gap-x-8">
+          <nav aria-label="푸터" className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link
               target="_blank"
               href="https://equinox-cemetery-0bf.notion.site/1582b2350b22803f8a82c010dd708efd"
-              className="md:text-base text-xs font-bold break-keep text-ink/80 hover:text-forest"
+              className="text-sm font-medium break-keep text-content-secondary hover:text-content-primary"
             >
               서비스 소개
             </Link>
-            <Link href="/terms" className="md:text-base text-xs font-bold break-keep text-ink/80 hover:text-forest">
+            <Link href="/terms" className="text-sm font-medium break-keep text-content-secondary hover:text-content-primary">
               이용약관
             </Link>
             {/* 개인정보 처리방침은 AdSense 필수 요건이라 외부 문서가 아니라 자사 도메인 경로여야 한다. */}
-            <Link href="/privacy" className="md:text-base text-xs font-bold break-keep text-ink/80 hover:text-forest">
+            <Link href="/privacy" className="text-sm font-medium break-keep text-content-secondary hover:text-content-primary">
               개인정보 처리방침
             </Link>
           </nav>

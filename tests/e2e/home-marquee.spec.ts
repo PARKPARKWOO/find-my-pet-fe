@@ -86,8 +86,11 @@ test("overflowing marquee clones only presentation and honors every stop reason"
   await expect(duplicateLinks).toHaveCount(8);
   for (const link of await duplicateLinks.all()) await expect(link).toHaveAttribute("tabindex", "-1");
 
-  await page.getByRole("button", { name: "검색", exact: true }).focus();
-  for (let index = 0; index < 8; index += 1) {
+  // 리뉴얼로 검색이 히어로로 이동 — 레일 자체의 키보드 순서 불변식만 검증한다:
+  // 원본 링크들이 순서대로 탭되고(중복은 tabindex=-1로 건너뜀) 마지막에 정지 버튼이 온다.
+  await originalLinks.first().focus();
+  await expect(originalLinks.first()).toBeFocused();
+  for (let index = 1; index < 8; index += 1) {
     await page.keyboard.press("Tab");
     await expect(originalLinks.nth(index)).toBeFocused();
   }

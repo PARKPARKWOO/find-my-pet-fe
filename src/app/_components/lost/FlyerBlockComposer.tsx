@@ -120,21 +120,21 @@ function BlockRow({
         onChange={onToggle}
         aria-describedby={reasonText ? reasonId : undefined}
         className={cn(
-          "h-4 w-4 shrink-0 rounded-sm border-input text-gray-900",
+          "h-4 w-4 shrink-0 rounded-sm border-input text-content-primary",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
         )}
       />
       <label htmlFor={inputId} className="min-w-0 flex-1 cursor-pointer">
-        <span className="block text-sm font-medium text-gray-900">{label}</span>
+        <span className="block text-sm font-medium text-content-primary">{label}</span>
         {reasonText && (
-          <span id={reasonId} className="block text-[11px] text-gray-500">
+          <span id={reasonId} className="block text-[11px] text-content-muted">
             {reasonText}
           </span>
         )}
       </label>
       {pinnedNote ? (
-        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+        <span className="shrink-0 rounded-full bg-surface-canvas px-2 py-0.5 text-[11px] font-medium text-content-muted">
           {pinnedNote}
         </span>
       ) : (
@@ -144,7 +144,7 @@ function BlockRow({
             onClick={onMoveUp}
             disabled={moveUpDisabled}
             aria-label={`${label} 위로 이동`}
-            className="flex h-7 w-7 items-center justify-center rounded-sm border border-input text-gray-600 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-sm border border-input text-content-secondary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronUp size={14} aria-hidden />
           </button>
@@ -153,7 +153,7 @@ function BlockRow({
             onClick={onMoveDown}
             disabled={moveDownDisabled}
             aria-label={`${label} 아래로 이동`}
-            className="flex h-7 w-7 items-center justify-center rounded-sm border border-input text-gray-600 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-sm border border-input text-content-secondary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronDown size={14} aria-hidden />
           </button>

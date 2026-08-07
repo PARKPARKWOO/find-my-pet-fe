@@ -46,8 +46,8 @@ export default function SimilarCandidatesSection({ postId }: { postId: string })
   if (isLoading) {
     return (
       <section className="mt-8">
-        <h3 className="text-lg font-bold mb-2">🐶 닮은 아이들이 있어요</h3>
-        <div className="text-sm text-gray-400">닮은 아이 찾는 중...</div>
+        <h3 className="text-lg font-bold mb-2">닮은 아이들이 있어요</h3>
+        <div className="text-sm text-content-muted">닮은 아이 찾는 중...</div>
       </section>
     );
   }
@@ -55,8 +55,8 @@ export default function SimilarCandidatesSection({ postId }: { postId: string })
   if (!candidates || candidates.length === 0) {
     return (
       <section className="mt-8">
-        <h3 className="text-lg font-bold mb-2">🐶 닮은 아이들이 있어요</h3>
-        <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded border">
+        <h3 className="text-lg font-bold mb-2">닮은 아이들이 있어요</h3>
+        <div className="text-sm text-content-muted p-4 bg-surface-canvas rounded border">
           오늘 새로 입소한 구조동물 중엔 닮은 아이가 없었어요. 내일 다시 찾아볼게요.
         </div>
       </section>
@@ -65,8 +65,8 @@ export default function SimilarCandidatesSection({ postId }: { postId: string })
 
   return (
     <section className="mt-8">
-      <h3 className="text-lg font-bold mb-1">🐶 닮은 아이들이 있어요</h3>
-      <p className="text-xs text-gray-500 mb-3">
+      <h3 className="text-lg font-bold mb-1">닮은 아이들이 있어요</h3>
+      <p className="text-xs text-content-muted mb-3">
         AI가 사진을 훑어보고 비슷한 특징의 아이들을 찾았습니다.{" "}
         <b>최종 확인은 꼭 보호소에 직접 연락해주세요.</b>
       </p>
@@ -81,8 +81,8 @@ export default function SimilarCandidatesSection({ postId }: { postId: string })
 
 function CandidateCard({ c }: { c: MatchCandidate }) {
   return (
-    <div className="border rounded-lg p-3 bg-white relative">
-      <span className="absolute top-2 right-2 text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+    <div className="border rounded-lg p-3 bg-surface-raised relative">
+      <span className="absolute top-2 right-2 text-[10px] text-content-muted bg-surface-canvas px-2 py-0.5 rounded">
         참고용
       </span>
       {c.photoUrl && (
@@ -94,22 +94,22 @@ function CandidateCard({ c }: { c: MatchCandidate }) {
       )}
       <div className="mt-2">
         <div className="font-semibold text-sm">이 아이, 닮았나요?</div>
-        <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+        <div className="text-xs text-content-secondary mt-1 space-y-0.5">
           {c.kindCd && <div>{formatKindLabel(c.kindCd)}</div>}
-          {c.happenPlace && <div>📍 {c.happenPlace}</div>}
+          {c.happenPlace && <div>{c.happenPlace}</div>}
           {c.happenDt && (
-            <div>📅 {formatYYYYMMDD(c.happenDt)} 입소</div>
+            <div>{formatYYYYMMDD(c.happenDt)} 입소</div>
           )}
           {c.careNm && (
             <div>
-              🏥 {c.careNm}
+              {c.careNm}
               {c.careTel ? ` · ${c.careTel}` : ""}
             </div>
           )}
         </div>
         {c.reasoning && (
-          <div className="mt-2 text-xs bg-amber-50 border border-amber-100 rounded p-2">
-            🔍 {c.reasoning}
+          <div className="mt-2 text-xs bg-waiting/10 border border-waiting/40 rounded p-2">
+            {c.reasoning}
           </div>
         )}
       </div>

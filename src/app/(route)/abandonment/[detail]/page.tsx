@@ -222,13 +222,13 @@ export default async function AbandonmentDetailPage({
         </div>
 
         <div className="flex flex-col w-full h-full gap-10">
-          <div className="flex w-full sm:justify-between sm:flex-row sm:items-start items-center flex-col gap-6">
-            <div className="w-[300px] h-[300px] rounded-xl relative overflow-hidden bg-surface-canvas">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-10">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-surface-canvas">
               {pet.filename ? (
                 <Image
                   src={pet.filename}
                   fill
-                  sizes="300px"
+                  sizes="(min-width: 1024px) 26rem, 100vw"
                   alt={`${kind} - ${pet.happenPlace ?? ""} ${closed ? "공고 종료" : "보호중"}`}
                   className="object-cover"
                 />
@@ -237,12 +237,33 @@ export default async function AbandonmentDetailPage({
                   사진 없음
                 </div>
               )}
+              <span
+                className={`absolute left-4 top-4 rounded-full px-3 py-1 text-sm font-bold text-content-inverse ${closed ? "bg-state-archived" : "bg-state-found"}`}
+              >
+                {closed ? "공고 종료" : "보호 중"}
+              </span>
             </div>
-            <div className="flex flex-col sm:h-full sm:justify-between sm:gap-0 gap-2">
-              <Row label="품종" value={kind} />
-              <Row label="성별" value={formatSexLabel(pet.sexCd)} />
-              <Row label="나이" value={formatAgeLabel(pet.age)} />
-              <Row label="체중" value={formatWeightLabel(pet.weight)} />
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-extrabold tracking-tight text-content-primary sm:text-3xl">
+                {kind}
+              </h1>
+              {pet.careNm && (
+                <p className="mt-1.5 text-content-secondary">{pet.careNm}에서 보호하고 있어요</p>
+              )}
+              <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
+                <DetailFact label="품종" value={kind} />
+                <DetailFact label="성별" value={formatSexLabel(pet.sexCd)} />
+                <DetailFact label="나이" value={formatAgeLabel(pet.age)} />
+                <DetailFact label="체중" value={formatWeightLabel(pet.weight)} />
+              </dl>
+              {pet.careTel && !closed && (
+                <a
+                  href={`tel:${pet.careTel}`}
+                  className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action-primary px-6 font-semibold text-content-inverse transition-colors hover:bg-forest-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 lg:w-auto lg:px-8"
+                >
+                  보호소에 전화하기
+                </a>
+              )}
             </div>
           </div>
 
@@ -253,7 +274,7 @@ export default async function AbandonmentDetailPage({
           )}
 
           <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
-            <h2 className="font-editorial text-lg font-semibold text-content-primary mb-3">발견 정보</h2>
+            <h2 className="text-lg font-bold tracking-tight text-content-primary mb-3">발견 정보</h2>
             <div className="grid grid-cols-2 w-full gap-4 text-sm">
               <div>
                 <h3 className="font-semibold text-xs text-content-muted">발견 위치</h3>
@@ -268,7 +289,7 @@ export default async function AbandonmentDetailPage({
           </div>
 
           <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
-            <h2 className="font-editorial text-lg font-semibold text-content-primary mb-3">보호소 정보</h2>
+            <h2 className="text-lg font-bold tracking-tight text-content-primary mb-3">보호소 정보</h2>
             <div className="grid grid-cols-2 w-full gap-4 text-sm">
               <div>
                 <h3 className="font-semibold text-xs text-content-muted">보호소</h3>
@@ -294,7 +315,7 @@ export default async function AbandonmentDetailPage({
                     별도 보조 표기로 덧붙이되 기간 경과나 동물의 현재 상태를 추론하지 않는다. */}
                 <span>{pet.processState ?? "-"}</span>
                 {closed && (
-                  <span className="block text-xs text-amber-700">
+                  <span className="block text-xs text-waiting">
                     공고 종료{endedOn ? ` · 표시된 공고 종료일 ${endedOn}` : ""} · 현재 상태는 보호소 확인 필요
                   </span>
                 )}
@@ -316,13 +337,11 @@ export default async function AbandonmentDetailPage({
   );
 }
 
-function Row({ label, value }: { label: string; value: string | null }) {
+function DetailFact({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex justify-between items-center w-[300px]">
-      <span className="text-sm font-medium text-content-secondary">{label}</span>
-      <div className="w-[250px] h-[50px] rounded-md border border-border bg-surface-raised flex justify-center items-center px-2 text-sm text-content-primary">
-        {value ?? "-"}
-      </div>
+    <div>
+      <dt className="text-xs font-semibold text-content-muted">{label}</dt>
+      <dd className="mt-1 text-base font-medium text-content-primary">{value ?? "-"}</dd>
     </div>
   );
 }

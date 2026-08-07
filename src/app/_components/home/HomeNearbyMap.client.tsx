@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Map as KakaoMap, Circle, CustomOverlayMap } from "react-kakao-maps-sdk";
 
@@ -151,7 +152,7 @@ export default function HomeNearbyMap() {
           </div>
         </fieldset>
         <p className="mt-5 text-sm leading-6 text-content-secondary">
-          버튼을 누르면 좌표를 이번 조회를 위해 서버에 전송합니다. 프론트엔드는 좌표를 브라우저 저장소에 저장하지 않으며, 백엔드와 인프라의 보관 여부를 단정하지 않습니다.
+          버튼을 누를 때만 좌표를 이번 조회를 위해 서버로 전송해요. 브라우저 저장소에 저장하지 않고, 서버의 보관 여부는 개인정보 처리방침에서 확인할 수 있어요.
         </p>
         <button
           type="button"
@@ -177,10 +178,10 @@ export default function HomeNearbyMap() {
               <Circle
                 center={coordinate}
                 radius={radiusKm * 1000}
-                strokeColor="#D66F54"
+                strokeColor="#E5484D"
                 strokeOpacity={0.8}
                 strokeWeight={2}
-                fillColor="#D66F54"
+                fillColor="#E5484D"
                 fillOpacity={0.12}
               />
               {items.map((item, index) => (
@@ -197,6 +198,15 @@ export default function HomeNearbyMap() {
           </div>
         ) : null}
 
+        {items.length === 0 && !busy ? (
+          <div
+            aria-hidden="true"
+            className="hidden h-full min-h-72 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface-canvas text-content-muted lg:flex"
+          >
+            <MapPin aria-hidden className="size-7" strokeWidth={1.8} />
+            <p className="text-sm">위치 조회를 시작하면 지도와 가까운 소식이 여기에 보여요</p>
+          </div>
+        ) : null}
         {items.length > 0 ? (
           <ul className="space-y-3" aria-label="가까운 공개 위치 소식">
             {items.map((item, index) => (

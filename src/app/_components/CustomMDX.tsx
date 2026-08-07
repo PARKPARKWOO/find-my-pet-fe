@@ -44,7 +44,7 @@ const components = {
     </li>
   ),
   a: (props: any) => (
-    <a className="text-blue-400 underline text-[12px] sm:text-[16px]" target="_blank" {...props}>
+    <a className="text-forest underline text-[12px] sm:text-[16px]" target="_blank" {...props}>
       {props.children}
     </a>
   ),

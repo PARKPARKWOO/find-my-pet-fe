@@ -196,7 +196,7 @@ export default function PrivacyPage() {
       </Section>
 
       <Section id="public" no={3} title="게시물의 공개 범위와 주의사항">
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-foreground">
+        <div className="rounded-lg border border-waiting/40 bg-waiting/10 p-4 text-foreground">
           <p className="font-semibold">실종 신고 게시글은 누구에게나 공개됩니다.</p>
           <p className="mt-2 leading-relaxed text-muted-foreground">
             게시글에 입력한 <b className="text-foreground">휴대전화번호</b>, 실종 장소와 좌표, 실종

@@ -69,13 +69,13 @@ export default function HomeFeed({ lostSeed, abandonmentSeed }: HomeFeedProps) {
       </div>
       <section hidden={!showLost} className="w-full">
         {view === "all" && (
-          <h2 className="font-editorial text-xl font-semibold text-content-primary mb-4 px-1">집을 잃었어요</h2>
+          <h2 className="text-xl font-bold tracking-tight text-content-primary mb-4 px-1">집을 잃었어요</h2>
         )}
         <LostList initialPage={lostSeed} />
       </section>
       <section hidden={!showAbandonment} className="w-full">
         {view === "all" && (
-          <h2 className="font-editorial text-xl font-semibold text-content-primary mb-4 px-1 mt-2">
+          <h2 className="text-xl font-bold tracking-tight text-content-primary mb-4 px-1 mt-2">
             보호소에서 가족을 기다려요
           </h2>
         )}

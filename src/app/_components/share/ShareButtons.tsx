@@ -123,7 +123,7 @@ export default function ShareButtons({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
-        variant="outline"
+        variant="brand"
         size="sm"
         onClick={shareKakao}
         className="flex items-center gap-1.5"

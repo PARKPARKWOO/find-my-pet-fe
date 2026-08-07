@@ -4,68 +4,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * FMP 밝은 캔온 시스템 (2026-08-07 전면 리뉴얼)
+ * 기준선: 당근·토스·에어비앤비 옆에 놓여도 어색하지 않을 것.
+ * 흰 바탕 + 웜 그린 포인트. 상태색 구분 체계와 카카오 노랑은 브랜드 커미트먼트로 유지.
+ * 세만틱 변수 이름은 기존 이름을 그대로 유지한다 — 값만 새 시스템이다.
+ */
 @layer base {
   :root {
-    --fmp-canvas: 233 230 223; /* #E9E6DF */
-    --fmp-paper: 245 240 232; /* #F5F0E8 */
-    --fmp-raised: 255 253 248; /* #FFFDF8 */
-    --fmp-ink: 32 42 38; /* #202A26 */
-    --fmp-forest: 47 90 73; /* #2F5A49 */
-    --fmp-clay: 214 111 84; /* #D66F54 */
-    --fmp-accent-text: 154 62 41; /* #9A3E29: readable on paper/raised surfaces */
-    --fmp-wine: 112 69 65; /* #704541 */
-    --fmp-sighting: 75 127 163; /* #4B7FA3 */
-    --fmp-waiting: 185 137 59; /* #B9893B */
-    --fmp-kakao: 254 229 0; /* #FEE500 */
+    --fmp-canvas: 247 247 245; /* #F7F7F5 섹션 그라운드 (웜 라이트 그레이) */
+    --fmp-paper: 255 255 255; /* #FFFFFF 페이지 기본 */
+    --fmp-raised: 255 255 255; /* #FFFFFF 카드 서피스 */
+    --fmp-ink: 26 28 26; /* #1A1C1A 웜 블랙 */
+    --fmp-forest: 13 131 72; /* #0D8348 프라이머리 그린 (white 대비 4.8:1) */
+    --fmp-forest-strong: 10 107 59; /* #0A6B3B pressed */
+    --fmp-forest-tint: 232 247 239; /* #E8F7EF 그린 틴트 */
+    --fmp-clay: 229 72 77; /* #E5484D 웜 코랄 (긴급·찾는 중 계열) */
+    --fmp-accent-text: 200 48 53; /* #C83035 라이트 서피스에서 읽히는 코랄 텍스트 */
+    --fmp-wine: 176 82 34; /* #B05222 사례금 등 보조 웜 액센트 */
+    --fmp-sighting: 37 99 191; /* #2563BF 목격 블루 */
+    --fmp-waiting: 154 93 0; /* #9A5D00 대기 앰버 (white 대비 5.3:1) */
+    --fmp-kakao: 254 229 0; /* #FEE500 카카오 — 변경 불가 */
     --fmp-text-primary: var(--fmp-ink);
-    --fmp-text-secondary: 68 79 73;
-    --fmp-text-muted: 83 91 86;
-    --fmp-text-inverse: var(--fmp-raised);
+    --fmp-text-secondary: 70 76 71; /* #464C47 */
+    --fmp-text-muted: 108 114 109; /* #6C726D */
+    --fmp-text-inverse: 255 255 255;
     --fmp-action-primary: var(--fmp-forest);
     --fmp-action-secondary: var(--fmp-wine);
-    --fmp-action-destructive: 181 68 56;
+    --fmp-action-destructive: 205 43 49; /* #CD2B31 */
     --fmp-action-brand: var(--fmp-kakao);
     --fmp-state-searching: var(--fmp-accent-text);
-    --fmp-state-sighting: 59 109 143; /* #3B6D8F: readable status surface */
+    --fmp-state-sighting: var(--fmp-sighting);
     --fmp-state-found: var(--fmp-forest);
-    --fmp-state-protected: var(--fmp-wine);
+    --fmp-state-protected: var(--fmp-forest);
     --fmp-state-waiting: var(--fmp-waiting);
-    --fmp-state-archived: var(--fmp-text-muted);
+    --fmp-state-archived: 121 126 122; /* #797E7A */
     --fmp-map-missing-pin: var(--fmp-clay);
     --fmp-map-sighting-pin: var(--fmp-sighting);
-    --fmp-map-radius: 214 111 84;
+    --fmp-map-radius: 229 72 77;
     --fmp-map-selected: var(--fmp-ink);
-    --fmp-radius-sm: 0.625rem;
+    --fmp-radius-sm: 0.5rem;
     --fmp-radius-md: 0.75rem;
     --fmp-radius-lg: 1rem;
     --fmp-radius-xl: 1.25rem;
-    --fmp-shadow-raised: 0 12px 30px rgb(32 42 38 / 0.08);
+    --fmp-shadow-raised: 0 1px 2px rgb(26 28 26 / 0.04), 0 8px 24px rgb(26 28 26 / 0.06);
+    --fmp-shadow-lifted: 0 2px 4px rgb(26 28 26 / 0.05), 0 16px 40px rgb(26 28 26 / 0.1);
 
-    /* shadcn compatibility variables, mapped to the warm light system. */
-    --background: 37 39% 94%;
-    --foreground: 156 14% 15%;
-    --card: 43 100% 99%;
-    --card-foreground: 156 14% 15%;
-    --popover: 43 100% 99%;
-    --popover-foreground: 156 14% 15%;
-    --primary: 156 31% 27%;
-    --primary-foreground: 43 100% 99%;
-    --secondary: 5 24% 89%;
-    --secondary-foreground: 156 14% 15%;
-    --muted: 37 22% 89%;
-    --muted-foreground: 150 4% 43%;
-    --accent: 37 22% 89%;
-    --accent-foreground: 156 14% 15%;
-    --destructive: 6 53% 47%;
-    --destructive-foreground: 43 100% 99%;
-    --border: 36 16% 82%;
-    --input: 36 16% 82%;
-    --ring: 156 31% 27%;
-    --chart-1: 13 60% 58%;
-    --chart-2: 205 37% 47%;
-    --chart-3: 156 31% 27%;
-    --chart-4: 39 51% 48%;
-    --chart-5: 5 24% 35%;
+    /* shadcn 호환 변수 — 밝은 캔온 값으로 매핑 */
+    --background: 0 0% 100%;
+    --foreground: 120 4% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 120 4% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 4% 11%;
+    --primary: 150 82% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 150 33% 94%;
+    --secondary-foreground: 120 4% 11%;
+    --muted: 90 7% 96%;
+    --muted-foreground: 120 3% 44%;
+    --accent: 150 33% 94%;
+    --accent-foreground: 120 4% 11%;
+    --destructive: 358 65% 49%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 120 4% 91%;
+    --input: 120 4% 87%;
+    --ring: 150 82% 30%;
+    --chart-1: 358 65% 55%;
+    --chart-2: 216 68% 45%;
+    --chart-3: 150 82% 30%;
+    --chart-4: 38 100% 35%;
+    --chart-5: 21 63% 42%;
     --radius: var(--fmp-radius-md);
   }
 
@@ -73,15 +82,37 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     color: rgb(var(--fmp-ink));
-    background: rgb(var(--fmp-canvas));
-    font-family: var(--font-geist-sans), "Noto Sans KR", system-ui, sans-serif;
+    background: rgb(var(--fmp-paper));
+    font-family: var(--font-pretendard), "Pretendard Variable", Pretendard, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* 브라우저 서피스도 팔레트를 입는다 — 선택 영역, 캐럿, 포커스 링 */
+  ::selection {
+    background: rgb(var(--fmp-forest) / 0.18);
+    color: rgb(var(--fmp-ink));
+  }
+
+  input,
+  textarea {
+    caret-color: rgb(var(--fmp-forest));
   }
 
   :focus-visible {
     outline: 2px solid rgb(var(--fmp-forest));
-    outline-offset: 3px;
+    outline-offset: 2px;
+  }
+
+  time,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
   }
 }
 

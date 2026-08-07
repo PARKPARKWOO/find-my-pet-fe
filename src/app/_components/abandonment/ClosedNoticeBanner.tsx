@@ -22,33 +22,28 @@ type Tone = "good" | "sad";
  *
  * 여기 있는 값들은 **상류가 그렇다고 말한 사실**이므로 그대로 전해도 된다.
  */
-const REASON_COPY: Record<string, { icon: string; title: string; body: string; tone: Tone }> = {
+const REASON_COPY: Record<string, { title: string; body: string; tone: Tone }> = {
   입양: {
-    icon: "🏡",
     title: "가족을 만났어요",
     body: "이 아이는 입양되어 보호가 종료되었습니다.",
     tone: "good",
   },
   반환: {
-    icon: "🏡",
     title: "보호자에게 돌아갔어요",
     body: "이 아이는 원래 보호자를 찾아 돌아갔습니다.",
     tone: "good",
   },
   기증: {
-    icon: "🏡",
     title: "새 보금자리로 갔어요",
     body: "이 아이는 기증되어 보호가 종료되었습니다.",
     tone: "good",
   },
   자연사: {
-    icon: "🕊️",
     title: "무지개다리를 건넜어요",
     body: "안타깝게도 보호 중 세상을 떠났습니다.",
     tone: "sad",
   },
   안락사: {
-    icon: "🕊️",
     title: "보호가 종료되었습니다",
     body: "안타깝게도 이 아이는 세상을 떠났습니다.",
     tone: "sad",
@@ -86,19 +81,18 @@ export default function ClosedNoticeBanner({
   // 사유는 아는데 우리가 문구를 준비하지 않은 값(상류 신규 코드 등)이면 지어내지 말고 그대로 보여준다.
   const title =
     known?.title ?? (reason ? `보호가 종료되었습니다 (${reason})` : "공고가 종료되었습니다");
-  const icon = known?.icon ?? (reason ? "📄" : "⚠️");
 
   const palette =
     known?.tone === "good"
-      ? "border-emerald-500 bg-emerald-50 text-emerald-900"
+      ? "border-forest/40 bg-forest/10 text-forest-strong"
       : known?.tone === "sad"
-        ? "border-slate-400 bg-slate-50 text-slate-700"
-        : "border-amber-500 bg-amber-50 text-amber-900";
+        ? "border-border bg-surface-canvas text-content-secondary"
+        : "border-waiting/40 bg-waiting/10 text-waiting";
 
   return (
-    <div role="status" className={`w-full border-l-4 px-4 py-3 rounded-r-md text-sm ${palette}`}>
+    <div role="status" className={`w-full rounded-xl border px-4 py-3 text-sm ${palette}`}>
       <div className="font-bold">
-        {icon} {title}
+        {title}
       </div>
       <p className="mt-1 leading-relaxed">
         {known ? (
@@ -121,9 +115,9 @@ export default function ClosedNoticeBanner({
           {careTel && (
             <a
               href={`tel:${careTel}`}
-              className="inline-flex items-center rounded-md border border-current bg-white px-3 py-1 font-medium hover:opacity-80"
+              className="inline-flex items-center rounded-md border border-current bg-surface-raised px-3 py-1 font-medium hover:opacity-80"
             >
-              📞 {careTel}
+              {careTel}
             </a>
           )}
         </div>

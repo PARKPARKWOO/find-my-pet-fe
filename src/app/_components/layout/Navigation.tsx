@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PawPrint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,10 +33,10 @@ export default function Navigation() {
   };
 
   const registerCta = (className?: string) => {
-    const linkClassName = `inline-flex h-9 items-center justify-center rounded-md bg-forest px-3 text-sm font-medium text-white transition-colors hover:bg-forest/90 ${className ?? ""}`;
+    const linkClassName = `inline-flex h-10 items-center justify-center rounded-xl bg-action-primary px-4 text-sm font-semibold text-content-inverse transition-colors hover:bg-forest-strong ${className ?? ""}`;
     const button = (
       <Button
-        className={`bg-forest text-white hover:bg-forest/90 ${className ?? ""}`}
+        className={className}
         onClick={closeMenu}
       >
         소식 등록
@@ -52,18 +53,21 @@ export default function Navigation() {
   };
 
   return (
-    <header className="relative z-40 w-full border-b border-ink/10 bg-surface-raised text-ink">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-surface-raised/90 text-ink backdrop-blur-md">
       <nav aria-label="주 탐색" className="mx-auto flex h-16 w-full max-w-page items-center justify-between px-4 md:px-6">
-        <Link href="/" className="shrink-0 text-base font-bold tracking-tight text-ink">
-          Find My Pet
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight text-ink">
+          <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-xl bg-forest text-content-inverse">
+            <PawPrint className="size-5" strokeWidth={2.2} />
+          </span>
+          파인드마이펫
         </Link>
 
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
           {SITE_NAVIGATION.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-ink/80 transition-colors hover:text-forest"
+              className="rounded-lg px-3 py-2 text-[15px] font-medium text-content-secondary transition-colors hover:bg-surface-canvas hover:text-content-primary"
             >
               {item.label}
             </Link>

@@ -20,7 +20,7 @@ export default function AdFitSlot({ unit, width, height, className }: Props) {
   if (!unit) {
     return (
       <div
-        className={`flex items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400 ${className ?? ""}`}
+        className={`flex items-center justify-center rounded-md border border-dashed border-border bg-surface-canvas text-xs text-content-muted ${className ?? ""}`}
         style={{ width, height }}
       >
         AdFit 자리 (유닛 ID 미설정)

@@ -166,8 +166,8 @@ export default function FlyerStandaloneClient() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900">전단지 만들기</h1>
-      <p className="mt-2 text-sm leading-relaxed text-gray-600">
+      <h1 className="text-2xl font-bold tracking-tight text-content-primary">전단지 만들기</h1>
+      <p className="mt-2 text-sm leading-relaxed text-content-secondary">
         게시글을 올리지 않아도 바로 만들 수 있어요. 입력한 내용은 저장되지 않고 인쇄에만 쓰여요.
         오른쪽 미리보기가 실제 인쇄될 모습 그대로예요.
       </p>
@@ -188,7 +188,7 @@ export default function FlyerStandaloneClient() {
 
             <div>
               <Label htmlFor="flyer-title">
-                제목 <span className="text-red-500">*</span>
+                제목 <span className="text-action-destructive">*</span>
               </Label>
               <Input
                 id="flyer-title"
@@ -201,7 +201,7 @@ export default function FlyerStandaloneClient() {
 
             <div>
               <Label htmlFor="flyer-phone">
-                연락처 <span className="text-red-500">*</span>
+                연락처 <span className="text-action-destructive">*</span>
               </Label>
               <Input
                 id="flyer-phone"
@@ -288,7 +288,7 @@ export default function FlyerStandaloneClient() {
                 전단지 인쇄하기
               </Button>
             </FlyerPrintDialog>
-            <p role="status" aria-live="polite" className="mt-2 text-center text-xs text-gray-500">
+            <p role="status" aria-live="polite" className="mt-2 text-center text-xs text-content-muted">
               {ready
                 ? "인쇄 버튼을 누르면 템플릿을 고르고 바로 인쇄할 수 있어요."
                 : `다음을 입력해야 인쇄할 수 있어요: ${missingFieldsLabel}`}
@@ -313,16 +313,16 @@ function FormSection({
   children: ReactNode;
 }) {
   return (
-    <section className={cn("rounded-lg bg-white p-5", COMPACT_SHADOW)}>
+    <section className={cn("rounded-lg bg-surface-raised p-5", COMPACT_SHADOW)}>
       <div className="mb-1 flex items-center gap-2">
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-base font-semibold text-content-primary">{title}</h2>
         {optional && (
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+          <span className="rounded-full bg-surface-canvas px-2 py-0.5 text-[11px] font-medium text-content-muted">
             선택
           </span>
         )}
       </div>
-      <p className="mb-4 text-xs text-gray-500">{description}</p>
+      <p className="mb-4 text-xs text-content-muted">{description}</p>
       <div className="space-y-4">{children}</div>
     </section>
   );
@@ -365,7 +365,7 @@ function PhotoDropzone({
   return (
     <div>
       <Label id="flyer-photo-label" htmlFor="flyer-photo-input">
-        사진 <span className="text-red-500">*</span>
+        사진 <span className="text-action-destructive">*</span>
       </Label>
       <div
         onDragOver={(e) => {
@@ -416,10 +416,10 @@ function PhotoDropzone({
         ) : (
           <>
             <ImagePlus className="h-8 w-8 text-muted-foreground" aria-hidden />
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-sm font-medium text-content-secondary">
               사진을 끌어다 놓거나 클릭해서 선택하세요
             </p>
-            <p className="text-xs text-gray-500">멀리서도 알아볼 수 있는 사진일수록 좋아요</p>
+            <p className="text-xs text-content-muted">멀리서도 알아볼 수 있는 사진일수록 좋아요</p>
           </>
         )}
       </div>
@@ -437,7 +437,7 @@ function PhotoDropzone({
         }}
       />
       {error && (
-        <p role="alert" className="mt-1.5 text-xs text-red-600">
+        <p role="alert" className="mt-1.5 text-xs text-action-destructive">
           {error}
         </p>
       )}

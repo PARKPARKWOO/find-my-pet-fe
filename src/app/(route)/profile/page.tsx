@@ -14,7 +14,7 @@ export default function Profile(){
           <div className="w-full flex sm:flex-row flex-col gap-10">
             <div>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between border-b border-gray-200 py-3">
+                    <CardHeader className="flex flex-row items-center justify-between border-b border-border py-3">
                         <div className="font-bold text-lg">프로필</div>
                         <div className="flex justify-center items-center rounded-sm w-[30px] h-[30px] bg-[#FEE500]"><Image src={KakaoLogo} width="15" height="15" alt="카카오 로고"/></div>
                     </CardHeader> 

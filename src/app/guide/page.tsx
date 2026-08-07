@@ -154,15 +154,15 @@ export default function Guide() {
           <h2 id="수색" className="font-bold text-2xl mt-8">실종장소 주변 집중 수색하기</h2>
           반려견이 실종되었다면, 가장 먼저 실종 장소 주변을 빠르게 수색하는 것이 필수적입니다. <br />
           주변을 탐색할 때는 조용하고 신속하게 접근해야 반려견이 놀라지 않습니다.<br /><br />
-          <b>1️⃣ 강아지 이름 부르기:</b> 반려견은 두려움에 몸을 숨길 가능성이 높기 때문에 보호자의 목소리를 듣고 반응할 수 있습니다. <br /> 여러 사람이 동시에 부르면 혼란스러울 수 있으므로, 한 명이 조용하고 차분하게 이름을 부르는 것이 좋습니다. <br /> 만약 주 보호자가 없는 상황이라면, 보호자의 목소리를 녹음하여 반복 재생해 반려견이 소리를 듣고 나올 수 있도록 유도하는 것도 효과적입니다.<br /> <br />
-          <b>2️⃣ 보호자 체취가 묻은 옷 두기:</b> 보호자의 체취가 묻은 옷가지를 실종 장소에 두는 것은 반려견이 멀리 가지 않고 머무르게 하는 좋은 방법입니다. 여러 곳에 옷을 배치하면 반려견의 행동 반경을 제한하는 효과도 있어 실종 지역을 좁히는 데 도움이 됩니다. 반려견이 맡기 좋아하는 담요나 장난감을 함께 두는 것도 효과적일 수 있습니다.
+          <b>1. 강아지 이름 부르기:</b> 반려견은 두려움에 몸을 숨길 가능성이 높기 때문에 보호자의 목소리를 듣고 반응할 수 있습니다. <br /> 여러 사람이 동시에 부르면 혼란스러울 수 있으므로, 한 명이 조용하고 차분하게 이름을 부르는 것이 좋습니다. <br /> 만약 주 보호자가 없는 상황이라면, 보호자의 목소리를 녹음하여 반복 재생해 반려견이 소리를 듣고 나올 수 있도록 유도하는 것도 효과적입니다.<br /> <br />
+          <b>2. 보호자 체취가 묻은 옷 두기:</b> 보호자의 체취가 묻은 옷가지를 실종 장소에 두는 것은 반려견이 멀리 가지 않고 머무르게 하는 좋은 방법입니다. 여러 곳에 옷을 배치하면 반려견의 행동 반경을 제한하는 효과도 있어 실종 지역을 좁히는 데 도움이 됩니다. 반려견이 맡기 좋아하는 담요나 장난감을 함께 두는 것도 효과적일 수 있습니다.
           <div id="전단지" className="flex items-center gap-6 mt-8 mb-2">
             <h2 className="font-bold text-2xl">실종 전단지 제작 및 배포</h2>
             <FlyerButton />
           </div>
           주변의 도움을 받기 위해 강아지의 전단지를 빠르게 제작하고 배포하세요.<br />
-          <b>1️⃣ 전단지 필수 정보:</b> 전단지에는 강아지의 사진, 이름, 나이, 성별, 품종, 실종 장소, 실종 시간, 보호자 연락처, 사례금을 포함해야 합니다. 특히 최근에 찍은 사진을 사용하면 실종 당시 강아지의 모습을 보다 명확하게 전달할 수 있습니다.<br /><br />
-          <b>2️⃣ 전단지 배포 범위:</b> 전단지는 실종 장소 주변 상점, 공원, 산책로, 동물 병원 등 사람들이 자주 다니는 곳에 부착하면 효과적입니다. 지역 커뮤니티와 주민 센터에 배포 요청을 하거나, 이웃들에게도 전단지를 나눠주어 강아지에 대한 정보가 널리 퍼지도록 도와주세요.
+          <b>1. 전단지 필수 정보:</b> 전단지에는 강아지의 사진, 이름, 나이, 성별, 품종, 실종 장소, 실종 시간, 보호자 연락처, 사례금을 포함해야 합니다. 특히 최근에 찍은 사진을 사용하면 실종 당시 강아지의 모습을 보다 명확하게 전달할 수 있습니다.<br /><br />
+          <b>2. 전단지 배포 범위:</b> 전단지는 실종 장소 주변 상점, 공원, 산책로, 동물 병원 등 사람들이 자주 다니는 곳에 부착하면 효과적입니다. 지역 커뮤니티와 주민 센터에 배포 요청을 하거나, 이웃들에게도 전단지를 나눠주어 강아지에 대한 정보가 널리 퍼지도록 도와주세요.
           동물 병원에 미리 상황을 알리면 병원을 찾은 강아지와 빠르게 연결될 가능성이 생깁니다. <br /><br />
           <b>병원에 정보 전달:</b> 근처 동물 병원에 연락해 강아지의 실종 사실과 특징을 전달하세요. 병원은 강아지를 발견한 사람이 맡길 수 있는 대표적인 장소이므로, 실종 정보를 미리 공유해 두면 병원에서 보호자에게 연락할 가능성이 높아집니다.
           <h2 className="font-bold text-2xl mt-8">경찰서 및 119에 신고하기</h2>
@@ -174,35 +174,35 @@ export default function Guide() {
           인스타그램, 당근마켓, 포인핸드, 동물보호관리시스템, 지해피독 등의 플랫폼에 실종 사실을 게시하세요. 강아지 실종 정보가 널리 퍼지도록 돕고, 사람들의 댓글을 통해 목격 정보를 실시간으로 받을 수 있습니다. 온라인에서 목격 정보가 올라올 경우 빠르게 대응할 수 있도록 알림을 설정해 두는 것도 좋습니다.<br />
           <br />
           <div className="text-xl my-4 font-bold">실종 신고가 가능한 주요 페이지</div>
-          <div className="w-full p-2 rounded-md bg-gray-100 font-bold my-4 flex justify-between items-center">
-            <div>1️⃣ 지해피독 오픈채팅</div>
+          <div className="w-full p-2 rounded-md bg-surface-canvas font-bold my-4 flex justify-between items-center">
+            <div>1. 지해피독 오픈채팅</div>
             <Button size="sm"><Link target="_blank" href="https://open.kakao.com/o/gx9oEgcf"><LinkIcon size="16" /></Link></Button>
           </div>
-          <div className="border-l-2 border-gray-500 flex items-center p-2 text-sm">지해피독은 유실동물 구조 봉사모임입니다. 금전적인 요구를 하지 않으며, 실종 동물 구조에 함께 동참합니다.</div>
+          <div className="border-l-2 border-border flex items-center p-2 text-sm">지해피독은 유실동물 구조 봉사모임입니다. 금전적인 요구를 하지 않으며, 실종 동물 구조에 함께 동참합니다.</div>
           <div className="sm:flex justify-between">
             <Image src={guide_8} alt="포인핸드 실종신고 글쓰기" width={400} height={600} className="rounded-md my-10" />
             <Image src={guide_9} alt="포인핸드 실종신고 글쓰기" width={400} height={600} className="rounded-md my-10" />
           </div>
-          <div className="w-full p-2 rounded-md bg-gray-100 font-bold my-4 flex justify-between items-center">
-            <div>2️⃣ 포인핸드 앱 - 실종/제보</div>
+          <div className="w-full p-2 rounded-md bg-surface-canvas font-bold my-4 flex justify-between items-center">
+            <div>2. 포인핸드 앱 - 실종/제보</div>
             <Button size="sm"><Link target="_blank" href="https://pawinhand.kr/"><LinkIcon size="16" /></Link></Button>
           </div>
 
-          <div className="border-l-2 border-gray-500 flex items-center p-2 text-sm">포인핸드는 전국 보호소 유기동물, 실종동물 게시글을 통해 가족을 찾아주는 플랫폼 서비스입니다.<br />게시글 등록: 하단의 실종/제보 선택 - 글쓰기</div>
+          <div className="border-l-2 border-border flex items-center p-2 text-sm">포인핸드는 전국 보호소 유기동물, 실종동물 게시글을 통해 가족을 찾아주는 플랫폼 서비스입니다.<br />게시글 등록: 하단의 실종/제보 선택 - 글쓰기</div>
           <Image src={guide_2} alt="포인핸드 실종신고 글쓰기" width={400} height={600} className="rounded-md my-10" />
-          <div className="w-full p-2 rounded-md bg-gray-100 font-bold my-4 flex justify-between items-center">
-            <div>3️⃣ 당근마켓 앱 - 분실/실종</div>
+          <div className="w-full p-2 rounded-md bg-surface-canvas font-bold my-4 flex justify-between items-center">
+            <div>3. 당근마켓 앱 - 분실/실종</div>
             <Button size="sm"><Link target="_blank" href="https://www.daangn.com/kr"><LinkIcon size="16" /></Link></Button>
           </div>
-          <div className="border-l-2 border-gray-500 flex items-center p-2 text-sm">대한민국 대표적인 지역생활 어플리케이션으로 동네 이웃분들의 실종동물 목격 게시글을 확인할 수 있습니다. <br />게시글 등록: 하단의 동네생활 선택 - 탭 - 반려동물 - 글쓰기</div>
+          <div className="border-l-2 border-border flex items-center p-2 text-sm">대한민국 대표적인 지역생활 어플리케이션으로 동네 이웃분들의 실종동물 목격 게시글을 확인할 수 있습니다. <br />게시글 등록: 하단의 동네생활 선택 - 탭 - 반려동물 - 글쓰기</div>
           <Image src={guide_3} alt="당근마켓 실종신고 글쓰기" width={800} height={600} className="rounded-md my-10 object-fit" />
 
 
-          <div className="w-full p-2 rounded-md bg-gray-100 font-bold my-4 flex justify-between items-center">
-            <div>4️⃣ 동물보호관리시스템</div>
+          <div className="w-full p-2 rounded-md bg-surface-canvas font-bold my-4 flex justify-between items-center">
+            <div>4. 동물보호관리시스템</div>
             <Button size="sm"><Link target="_blank" href="https://www.animal.go.kr/front/awtis/public/publicList.do?menuNo=1000000055"><LinkIcon size="16" /></Link></Button>
           </div>
-          <div className="border-l-2 border-gray-500 flex items-center p-2 text-sm">반려동물 등록관리, 유기동물 정보제공, 동물보호센터 정보 등 다양한 정보 확인 가능<br />게시글 등록: 구조동물 - 동물분실 정보 공유게시판 - 게시글 작성</div>
+          <div className="border-l-2 border-border flex items-center p-2 text-sm">반려동물 등록관리, 유기동물 정보제공, 동물보호센터 정보 등 다양한 정보 확인 가능<br />게시글 등록: 구조동물 - 동물분실 정보 공유게시판 - 게시글 작성</div>
           <Image src={guide_4} alt="동물보호관리시스템 실종신고 글쓰기" width={800} height={600} className="rounded-md my-10" />
           <Image src={guide_5} alt="동물보호관리시스템 실종신고 글쓰기" width={800} height={600} className="rounded-md my-10" />
           <h2 className="font-bold text-2xl mt-8">국가동물보호정보시스템에 신고하기</h2>
@@ -216,7 +216,7 @@ export default function Guide() {
           <br />
           <br />
           <br />
-          <div className="p-6 bg-gray-100 rounded-md mb-10">
+          <div className="p-6 bg-surface-canvas rounded-md mb-10">
             <p>강아지를 잃어버린 상황에서 신속하게 행동하면 반려견을 찾을 가능성이 훨씬 높아집니다. 평소에도 실종에 대비해 강아지의 현재 위치를 확인할 수 있는 GPS 기기를 착용하게 하거나, 반려동물 등록제에 가입하여 관리하는 것이 안전한 방법입니다. 또한, 반려견이 실종되지 않도록 목줄을 잘 챙기고, 외출 시 환경을 주의하는 것이 반려견의 안전을 지키는 중요한 방법임을 잊지 마세요.</p>
           </div>
 

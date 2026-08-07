@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-08T00:00:00+09:00",
+  "title": "Design System: 파인드마이펫",
+  "extensions": {
+    "colorMeta": {
+      "forest": { "role": "primary", "displayName": "웜 포레스트 그린", "canonical": "#0D8348", "tonalRamp": ["#05301B", "#084526", "#0A6B3B", "#0D8348", "#2E9C63", "#63BA8C", "#A3D8BC", "#E8F7EF"] },
+      "clay": { "role": "secondary", "displayName": "클레이 코랄", "canonical": "#E5484D", "tonalRamp": ["#4A0E10", "#7A1A1E", "#A8272C", "#C83035", "#E5484D", "#EE7A7E", "#F5ADAF", "#FBE1E2"] },
+      "sighting": { "role": "tertiary", "displayName": "목격 블루", "canonical": "#2563BF", "tonalRamp": ["#0D2140", "#123467", "#1A4A90", "#2563BF", "#4B82D2", "#82A9E1", "#B6CCEF", "#E4EDFA"] },
+      "waiting": { "role": "tertiary", "displayName": "대기 앰버", "canonical": "#9A5D00", "tonalRamp": ["#331F00", "#573400", "#7A4A00", "#9A5D00", "#B57A1F", "#CFA050", "#E4C68F", "#F6E9D2"] },
+      "wine": { "role": "secondary", "displayName": "와인 (사례금)", "canonical": "#B05222", "tonalRamp": ["#38190A", "#5C2A11", "#863E19", "#B05222", "#C4713F", "#D69A73", "#E7C3AB", "#F6E7DC"] },
+      "kakao": { "role": "tertiary", "displayName": "카카오 옐로 (변경 불가)", "canonical": "#FEE500", "tonalRamp": ["#4A4300", "#7A6E00", "#A89800", "#D1BE00", "#FEE500", "#FEEC4D", "#FFF38C", "#FFFAD1"] },
+      "ink": { "role": "neutral", "displayName": "웜 잉크", "canonical": "#1A1C1A", "tonalRamp": ["#0A0B0A", "#1A1C1A", "#2E312E", "#464C47", "#6C726D", "#9AA09B", "#C6CAC7", "#F7F7F5"] },
+      "canvas": { "role": "neutral", "displayName": "웜 캔버스", "canonical": "#F7F7F5", "tonalRamp": ["#282826", "#4A4A47", "#6E6E6A", "#93938E", "#B8B8B3", "#D8D8D4", "#EBEBE8", "#F7F7F5"] },
+      "archived": { "role": "neutral", "displayName": "아카이브 그레이", "canonical": "#797E7A", "tonalRamp": ["#1C1E1C", "#333632", "#4B4F4B", "#636863", "#797E7A", "#9BA09B", "#C0C4C0", "#E5E7E5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "홈 히어로 h1 전용. break-keep + text-balance 동반." },
+      "headline": { "displayName": "Headline", "purpose": "섹션 h2. 아래에 14px 세컨더리 문장이 따라붙는 2줄 패턴." },
+      "title": { "displayName": "Title", "purpose": "카드 제목(16px/600)과 상세 h1(24→30px/800)." },
+      "body": { "displayName": "Body", "purpose": "본문. 전역 자간 -0.01em, 카드 본문은 14px." },
+      "label": { "displayName": "Label", "purpose": "상태 배지·칩·메타. 배지는 700 흰 글자." }
+    },
+    "shadows": [
+      { "name": "raised", "value": "0 1px 2px rgb(26 28 26 / 0.04), 0 8px 24px rgb(26 28 26 / 0.06)", "purpose": "카드·검색바의 기본 부양." },
+      { "name": "lifted", "value": "0 2px 4px rgb(26 28 26 / 0.05), 0 16px 40px rgb(26 28 26 / 0.1)", "purpose": "hover 응답 전용 상승 단계." }
+    ],
+    "motion": [
+      { "name": "hover-lift", "value": "transform/box-shadow 200ms + translateY(-2px~-4px)", "purpose": "클릭 가능한 카드의 공통 hover 문법." },
+      { "name": "image-zoom", "value": "transform 300ms, scale(1.03~1.05)", "purpose": "카드 사진의 group-hover 확대." },
+      { "name": "press", "value": "active:scale(0.98), 150ms", "purpose": "버튼 누름 피드백." },
+      { "name": "marquee", "value": "40px/s linear 무한 루프 (GSAP xPercent -50)", "purpose": "소식 레일. hover/포커스/일시정지 버튼에서 정지, reduced-motion 시 네이티브 스크롤 강등." }
+    ],
+    "breakpoints": [
+      { "name": "xs", "value": "480px" },
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "주 행동 버튼. forest 배경, hover는 forest-strong, 누르면 살짝 줄어든다.",
+      "html": "<button class=\"ds-btn-primary\">소식 등록</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; height: 44px; padding: 0 20px; border: none; border-radius: 12px; background: rgb(var(--fmp-forest, 13 131 72)); color: #fff; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; transition: background-color 150ms, transform 150ms, box-shadow 150ms; } .ds-btn-primary:hover { background: rgb(var(--fmp-forest-strong, 10 107 59)); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid rgb(var(--fmp-forest, 13 131 72)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "보조 행동. 헤어라인 보더, hover 시 그린으로 기운다.",
+      "html": "<button class=\"ds-btn-outline\">로그인</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; height: 44px; padding: 0 20px; border: 1px solid #D9DCD9; border-radius: 12px; background: #fff; color: rgb(var(--fmp-ink, 26 28 26)); font-size: 14px; font-weight: 600; cursor: pointer; transition: border-color 150ms, color 150ms, transform 150ms; } .ds-btn-outline:hover { border-color: rgb(var(--fmp-forest, 13 131 72) / 0.4); color: rgb(var(--fmp-forest, 13 131 72)); } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: 2px solid rgb(var(--fmp-forest, 13 131 72)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Kakao Button",
+      "kind": "button",
+      "refersTo": "button-kakao",
+      "description": "카카오 로그인·공유 전용. #FEE500은 이 버튼 밖에서 금지.",
+      "html": "<button class=\"ds-btn-kakao\">카카오로 시작하기</button>",
+      "css": ".ds-btn-kakao { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; height: 44px; padding: 0 20px; border: none; border-radius: 12px; background: rgb(var(--fmp-kakao, 254 229 0)); color: #191919; font-size: 14px; font-weight: 600; cursor: pointer; transition: filter 150ms, transform 150ms; } .ds-btn-kakao:hover { filter: brightness(0.95); } .ds-btn-kakao:active { transform: scale(0.98); } .ds-btn-kakao:focus-visible { outline: 2px solid rgb(var(--fmp-forest, 13 131 72)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Chips",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "상태색 5종. 틴트 배경 + 상태색 텍스트, 보호 중만 forest-strong 텍스트.",
+      "html": "<div class=\"ds-chip-row\"><span class=\"ds-chip ds-chip-searching\">찾는 중</span><span class=\"ds-chip ds-chip-sighting\">목격</span><span class=\"ds-chip ds-chip-protected\">보호 중</span><span class=\"ds-chip ds-chip-waiting\">대기</span><span class=\"ds-chip ds-chip-archived\">공고 종료</span></div>",
+      "css": ".ds-chip-row { display: flex; gap: 8px; flex-wrap: wrap; } .ds-chip { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 600; } .ds-chip-searching { background: rgb(var(--fmp-accent-text, 200 48 53) / 0.1); color: rgb(var(--fmp-accent-text, 200 48 53)); } .ds-chip-sighting { background: rgb(var(--fmp-sighting, 37 99 191) / 0.1); color: rgb(var(--fmp-sighting, 37 99 191)); } .ds-chip-protected { background: rgb(var(--fmp-forest, 13 131 72) / 0.1); color: rgb(var(--fmp-forest-strong, 10 107 59)); } .ds-chip-waiting { background: rgb(var(--fmp-waiting, 154 93 0) / 0.1); color: rgb(var(--fmp-waiting, 154 93 0)); } .ds-chip-archived { background: rgb(var(--fmp-state-archived, 121 126 122) / 0.12); color: rgb(var(--fmp-state-archived, 121 126 122)); }"
+    },
+    {
+      "name": "Pet Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "사진 우선 카드. 4:3 사진 위 상태 배지, hover에서 리프트 + 코랄 보더.",
+      "html": "<a href=\"#\" class=\"ds-card\"><span class=\"ds-card-photo\"><span class=\"ds-card-badge\">찾는 중</span></span><span class=\"ds-card-body\"><strong class=\"ds-card-title\">골든리트리버를 찾고 있어요</strong><span class=\"ds-card-meta\">서울 마포구 · 5.2km</span><span class=\"ds-card-desc\">공원 산책 중 목줄이 풀렸어요. 겁이 많아 부르면 도망갈 수 있어요.</span></span></a>",
+      "css": ".ds-card { display: flex; flex-direction: column; width: 280px; overflow: hidden; border: 1px solid #D9DCD9; border-radius: 16px; background: #fff; text-decoration: none; transition: transform 200ms, border-color 200ms, box-shadow 200ms; } .ds-card:hover { transform: translateY(-4px); border-color: rgb(var(--fmp-clay, 229 72 77) / 0.6); box-shadow: 0 1px 2px rgb(26 28 26 / 0.04), 0 8px 24px rgb(26 28 26 / 0.06); } .ds-card:focus-visible { outline: 2px solid rgb(var(--fmp-forest, 13 131 72)); outline-offset: 2px; } .ds-card-photo { position: relative; display: block; aspect-ratio: 4 / 3; background: rgb(var(--fmp-canvas, 247 247 245)); } .ds-card-badge { position: absolute; left: 12px; top: 12px; border-radius: 9999px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: #fff; background: rgb(var(--fmp-accent-text, 200 48 53)); } .ds-card-body { display: flex; flex-direction: column; gap: 6px; padding: 16px; } .ds-card-title { font-size: 16px; font-weight: 600; color: rgb(var(--fmp-ink, 26 28 26)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-card-meta { font-size: 14px; color: rgb(var(--fmp-text-secondary, 70 76 71)); } .ds-card-desc { font-size: 14px; line-height: 1.5; color: rgb(var(--fmp-text-muted, 108 114 109)); }"
+    },
+    {
+      "name": "Hero Search",
+      "kind": "input",
+      "refersTo": "search-hero",
+      "description": "히어로 검색바. 56px 높이, 내장 제출 버튼, forest 포커스 링.",
+      "html": "<form class=\"ds-search\" role=\"search\"><input class=\"ds-search-input\" type=\"search\" placeholder=\"지역, 품종, 특징으로 검색해보세요\" /><button class=\"ds-search-submit\" type=\"submit\">검색</button></form>",
+      "css": ".ds-search { position: relative; display: block; width: 100%; max-width: 480px; } .ds-search-input { width: 100%; height: 56px; padding: 0 88px 0 16px; border: 1px solid #D9DCD9; border-radius: 16px; background: #fff; font-size: 16px; color: rgb(var(--fmp-ink, 26 28 26)); box-shadow: 0 1px 2px rgb(26 28 26 / 0.04), 0 8px 24px rgb(26 28 26 / 0.06); caret-color: rgb(var(--fmp-forest, 13 131 72)); transition: border-color 150ms, box-shadow 150ms; } .ds-search-input::placeholder { color: rgb(var(--fmp-text-muted, 108 114 109) / 0.7); } .ds-search-input:focus { outline: none; border-color: rgb(var(--fmp-forest, 13 131 72)); box-shadow: 0 0 0 2px rgb(var(--fmp-forest, 13 131 72) / 0.35); } .ds-search-submit { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); height: 40px; padding: 0 20px; border: none; border-radius: 12px; background: rgb(var(--fmp-forest, 13 131 72)); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 150ms; } .ds-search-submit:hover { background: rgb(var(--fmp-forest-strong, 10 107 59)); }"
+    },
+    {
+      "name": "Purpose Card (Forest)",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "홈 히어로 시그니처. 유일한 솔리드 forest 서피스, 실사진 3장 스트립 동반.",
+      "html": "<a href=\"#\" class=\"ds-purpose\"><span class=\"ds-purpose-head\"><span><span class=\"ds-purpose-title\">집을 잃었어요</span><span class=\"ds-purpose-desc\">실종 소식을 등록하고 이웃과 함께 찾아요</span></span><span class=\"ds-purpose-arrow\" aria-hidden=\"true\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></span><span class=\"ds-purpose-strip\"><span class=\"ds-purpose-thumb\"></span><span class=\"ds-purpose-thumb\"></span><span class=\"ds-purpose-thumb\"></span></span></a>",
+      "css": ".ds-purpose { display: block; width: 360px; padding: 24px; border-radius: 16px; background: rgb(var(--fmp-forest, 13 131 72)); color: #fff; text-decoration: none; box-shadow: 0 1px 2px rgb(26 28 26 / 0.04), 0 8px 24px rgb(26 28 26 / 0.06); transition: transform 200ms, background-color 200ms, box-shadow 200ms; } .ds-purpose:hover { transform: translateY(-2px); background: rgb(var(--fmp-forest-strong, 10 107 59)); box-shadow: 0 2px 4px rgb(26 28 26 / 0.05), 0 16px 40px rgb(26 28 26 / 0.1); } .ds-purpose:focus-visible { outline: 2px solid rgb(var(--fmp-forest, 13 131 72)); outline-offset: 2px; } .ds-purpose-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; } .ds-purpose-title { display: block; font-size: 20px; font-weight: 700; } .ds-purpose-desc { display: block; margin-top: 4px; font-size: 14px; line-height: 1.5; } .ds-purpose-arrow { flex-shrink: 0; transition: transform 200ms; } .ds-purpose:hover .ds-purpose-arrow { transform: translateX(4px); } .ds-purpose-strip { display: flex; gap: 8px; margin-top: 16px; } .ds-purpose-thumb { display: block; width: calc((100% - 16px) / 3); aspect-ratio: 1; border-radius: 12px; background: rgb(var(--fmp-forest-strong, 10 107 59)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25); }"
+    },
+    {
+      "name": "Planned Pill",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "준비 중 기능의 고정 문법 — 점선 보더 알약.",
+      "html": "<span class=\"ds-planned\"><span>수색그룹과 팀 지도</span><span aria-hidden=\"true\">·</span><span>준비 중</span></span>",
+      "css": ".ds-planned { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed #D9DCD9; border-radius: 9999px; padding: 6px 12px; background: rgb(var(--fmp-canvas, 247 247 245)); font-size: 12px; font-weight: 500; color: rgb(var(--fmp-text-muted, 108 114 109)); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "밝은 동네 서비스",
+    "overview": "경황 중인 보호자가 3초 안에 다음 행동을 아는 것이 이 시스템의 존재 이유다. 어두운 감성 연출 대신 익숙한 한국 로컬 앱 문법(당근·토스·에어비앤비 옆에 놓여도 어색하지 않을 완성도)을 흠 없이 집행한다. 흰 바탕과 웜 라이트 그레이 섹션 위에서 동물 사진이 항상 주인공이고, UI는 받침이다. 세계는 하나의 웜 그린(#0D8348)과 다섯 가지 상태색, Pretendard 단일 서체의 무게 위계로 이루어진다.",
+    "keyCharacteristics": [
+      "흰 페이지(#FFFFFF) + 웜 그레이 섹션(#F7F7F5)의 교차 리듬",
+      "사진 우선 카드 — 4:3 사진 위 상태 배지가 정보의 첫 줄",
+      "단일 액센트 웜 그린 + 기능적 상태색 5종 (장식색 없음)",
+      "Pretendard 하나로 무게(400–800)만으로 위계를 만든다",
+      "16px 라운드 카드와 낮은 앰비언트 그림자, 하드 섀도 없음",
+      "브라우저 서피스까지 팔레트를 입는다 (::selection, 캐럿, 포커스 링)"
+    ],
+    "rules": [
+      { "name": "상태색 즉독 규칙", "body": "찾는 중(#C83035 코랄) / 목격(#2563BF 블루) / 보호 중·완료(#0D8348 그린) / 종료(#797E7A 그레이) / 대기(#9A5D00 앰버)는 언제나 색만으로 즉시 구분돼야 한다. 새 상태 표현은 이 다섯 매핑 밖의 색을 쓰지 않는다.", "section": "colors" },
+      { "name": "카카오 격리 규칙", "body": "#FEE500은 카카오 버튼(variant=\"brand\", 텍스트 #191919)에만 존재한다. 다른 어떤 강조·장식에도 노랑을 쓰지 않는다.", "section": "colors" },
+      { "name": "틴트 위 포레스트 강화 규칙", "body": "그린 틴트 배경(forest/10, forest-tint) 위의 그린 텍스트는 반드시 forest-strong(#0A6B3B)이다. #0D8348은 틴트 위에서 대비가 부족하다.", "section": "colors" },
+      { "name": "변수 이름 보존 규칙", "body": "세만틱 변수(--fmp-*)의 이름은 유지하고 값만 바꾼다. 상태색은 state-*, 행동색은 action-* 세만틱 토큰을 거쳐 쓴다.", "section": "colors" },
+      { "name": "단일 서체 규칙", "body": "서체는 Pretendard 하나. 위계가 부족하면 무게(400→600→700→800)와 색(primary→secondary→muted)으로 만든다. 세리프·디스플레이 서체 도입 금지.", "section": "typography" },
+      { "name": "숫자 정렬 규칙", "body": "time 요소와 [data-numeric]에는 tabular-nums가 전역 적용된다. 날짜·거리·건수 등 숫자 열은 이 경로를 태운다.", "section": "typography" },
+      { "name": "호버 리프트 규칙", "body": "클릭 가능한 카드의 hover는 항상 같은 문법이다: -translate-y-0.5(피드 카드는 -1) + 그림자 한 단계 상승 + (사진이 있으면) 이미지 scale(1.03~1.05), duration 200ms/300ms.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 섹션 그라운드를 페이퍼(#FFFFFF)와 캔버스(#F7F7F5)로 교대시켜 리듬을 만든다.",
+      "Do 카드형 정보는 사진(4:3) + 상태 배지 + 메타의 고정 위계로 조립한다 — 사진이 정보다.",
+      "Do 인터랙티브 요소에 44px 터치 타깃과 forest 포커스 링을 보장한다 (axe AA 게이트 회귀 금지).",
+      "Do 한국어 제목에 break-keep(+ 히어로는 text-balance)을 적용한다.",
+      "Do 자동 모션에는 일시정지 컨트롤과 reduced-motion 강등 경로를 함께 만든다.",
+      "Do 준비 중 기능은 점선 보더 알약 + \"준비 중\" 라벨로 정직하게 표기한다.",
+      "Do 토큰 값을 바꾸면 scripts/design-system-contract.test.mjs를 같은 커밋에서 갱신한다."
+    ],
+    "donts": [
+      "Don't 제목 위에 아이브로·키커(작은 라벨 줄)를 얹지 않는다 — 제목+세컨더리 문장 2줄 패턴이 유일한 섹션 헤더다.",
+      "Don't 색 있는 좌측 보더 탭(border-l-4)을 상태 표현에 쓰지 않는다 — 상태는 배지·칩·틴트 배경으로 말한다.",
+      "Don't 카카오 노랑(#FEE500)을 카카오 버튼 밖에서 쓰지 않는다.",
+      "Don't 그린 틴트 위에 #0D8348 텍스트를 놓지 않는다 — forest-strong(#0A6B3B)만 허용.",
+      "Don't 제2서체(세리프·디스플레이)나 글리프 장식을 도입하지 않는다.",
+      "Don't 상태색 5종 매핑 밖의 색으로 상태를 발명하지 않는다.",
+      "Don't 어두운 배경 섹션을 만들지 않는다 — 유일한 유채 솔리드 서피스는 히어로의 forest 목적 카드다."
+    ]
+  }
+}

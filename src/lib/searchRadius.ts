@@ -130,17 +130,18 @@ export function formatElapsed(iso: string): string {
 }
 
 export const STAGE_LABEL: Record<TimeStage, string> = {
-  GOLDEN: "골든타임 — 지도 반경부터 수색하세요",
-  EXTENDED: "반경 수색 + 전단지 병행",
-  DECLINING: "반경 의미가 낮아집니다. 보호소·공공DB 확인이 더 효과적",
-  FADING: "지리적 반경 < 제보 · 보호소 · 공공DB 체크",
-  EXPIRED: "지도 반경은 참고용. 다른 채널에 집중하세요",
+  GOLDEN: "골든타임이에요. 지도 반경부터 수색하세요",
+  EXTENDED: "반경 수색과 전단지를 병행하세요",
+  DECLINING: "반경의 의미가 낮아지고 있어요. 보호소와 공공DB 확인이 더 효과적이에요",
+  FADING: "이제 반경보다 제보, 보호소, 공공DB 확인이 중요해요",
+  EXPIRED: "지도 반경은 참고용이에요. 다른 채널에 집중하세요",
 };
 
+/** 단계별 톤 — 시간이 지날수록 안내(그린)에서 경고(코랄)로 옮겨간다. */
 export const STAGE_TONE: Record<TimeStage, string> = {
-  GOLDEN: "bg-blue-50 border-blue-300 text-blue-900",
-  EXTENDED: "bg-amber-50 border-amber-300 text-amber-900",
-  DECLINING: "bg-orange-50 border-orange-300 text-orange-900",
-  FADING: "bg-red-50 border-red-300 text-red-900",
-  EXPIRED: "bg-gray-100 border-gray-300 text-gray-700",
+  GOLDEN: "bg-forest/5 border-forest/30 text-forest-strong",
+  EXTENDED: "bg-waiting/10 border-waiting/40 text-waiting",
+  DECLINING: "bg-wine/10 border-wine/40 text-wine",
+  FADING: "bg-destructive/10 border-destructive/40 text-action-destructive",
+  EXPIRED: "bg-surface-canvas border-border text-content-secondary",
 };

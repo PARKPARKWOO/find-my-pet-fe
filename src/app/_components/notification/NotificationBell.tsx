@@ -91,12 +91,12 @@ export default function NotificationBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-canvas"
           aria-label="알림"
         >
           <Bell size={20} />
           {unread > 0 && (
-            <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-action-destructive text-content-inverse text-[10px] font-bold flex items-center justify-center">
               {unread > 99 ? "99+" : unread}
             </span>
           )}
@@ -104,7 +104,7 @@ export default function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-80 p-0 z-50 bg-white border rounded-md shadow-lg"
+        className="w-80 p-0 z-50 bg-surface-raised border rounded-md shadow-lg"
       >
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <span className="text-sm font-bold">알림</span>
@@ -112,14 +112,14 @@ export default function NotificationBell() {
             <button
               type="button"
               onClick={markAllRead}
-              className="text-xs text-blue-500 hover:underline"
+              className="text-xs text-forest hover:underline"
             >
               모두 읽음
             </button>
           )}
         </div>
         {items.length === 0 ? (
-          <div className="p-6 text-center text-sm text-gray-400">
+          <div className="p-6 text-center text-sm text-content-muted">
             새 알림이 없습니다.
           </div>
         ) : (
@@ -128,23 +128,23 @@ export default function NotificationBell() {
               <li
                 key={it.id}
                 onClick={() => handleClick(it)}
-                className={`px-3 py-2.5 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${
-                  it.isRead ? "" : "bg-blue-50/40"
+                className={`px-3 py-2.5 border-b last:border-b-0 cursor-pointer hover:bg-surface-canvas ${
+                  it.isRead ? "" : "bg-forest/5"
                 }`}
               >
                 <div className="flex gap-2">
                   {!it.isRead && (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-action-primary shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{it.title}</p>
                     {/* 알림 body 는 백엔드가 kindFullNm("[개] 말티즈 (발견장소)")로 조립한다. */}
                     {it.body && (
-                      <p className="text-xs text-gray-600 line-clamp-2">
+                      <p className="text-xs text-content-secondary line-clamp-2">
                         {formatKindLeadingText(it.body)}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-content-muted mt-0.5">
                       {formatRelative(it.createdAt)}
                     </p>
                   </div>
@@ -156,7 +156,7 @@ export default function NotificationBell() {
         <div className="border-t p-2 text-center">
           <Link
             href="/notifications"
-            className="text-xs text-gray-600 hover:underline"
+            className="text-xs text-content-secondary hover:underline"
             onClick={() => setOpen(false)}
           >
             전체 보기

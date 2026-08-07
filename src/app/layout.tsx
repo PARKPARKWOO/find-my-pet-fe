@@ -11,15 +11,11 @@ import AdFitScript from "@/app/_components/ads/AdFitScript";
 import { ADSENSE_CLIENT } from "@/app/_components/ads/adsenseClient";
 import KakaoMapScript from "@/app/_components/KakaoMapScript";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const pretendard = localFont({
+  src: "./fonts/PretendardVariable.woff2",
+  variable: "--font-pretendard",
+  weight: "45 920",
+  display: "swap",
 });
 
 const SITE_NAME = "파인드마이펫";
@@ -124,8 +120,23 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased w-full flex flex-col items-center`}
+        className={`${pretendard.variable} antialiased w-full flex flex-col items-center`}
       >
+        {/* eslint-disable-next-line react/no-danger */}
+        <div
+          hidden
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{
+            __html: `<!--
+THESIS: 경황 중인 보호자가 3초 안에 다음 행동을 아는 밝은 동네 서비스. 어두운 감성 연출 대신 익숙한 로컬 앱 문법을 흠 없이 집행하고, 사진과 상태색이 정보를 끌고 간다.
+OWN-WORLD: 흰 바탕(#FFF)과 웜 라이트 그레이 섹션(#F7F7F5), 프라이머리 웜 그린(#0D8348)과 틴트, 상태색 코랄/블루/그린/그레이, Pretendard 단일 서체의 무게 위계, 16px 라운드 카드와 부드러운 앰비언트 그림자, 카카오 노랑은 카카오 버튼에만.
+STORY: 방문자는 첫 화면에서 "잃어버렸다/찾아주고 싶다" 중 자기 상황을 고르고, 사진 카드 피드에서 동네의 실종·보호 소식을 훑고, 등록·공유·전화 중 하나를 실행한다.
+FIRST VIEWPORT: 좌측 큰 헤드라인+한 줄 서브텍스트+검색바, 우측 실사진 상황 카드 2장(집을 잃었어요/가족을 기다려요). 스크롤 없이 주행동 노출. 모바일은 세로 스택.
+FORM: 카테고리 표준(밝은 로컬 서비스 캔온), 사용자 지정 standing exit, seed key 09b74aa6.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_AND_SITE_JSONLD) }}

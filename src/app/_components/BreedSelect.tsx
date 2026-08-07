@@ -30,21 +30,21 @@ export default function BreedSelect({ animalType, value, onChange }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full text-left border rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-50"
+        className="w-full text-left border rounded-md px-3 py-2 text-sm bg-surface-raised hover:bg-surface-canvas"
       >
         {selected ? (
           <span>
             {selected.nameKo}{" "}
-            <span className="text-xs text-gray-500">({selected.sizeCategory})</span>
+            <span className="text-xs text-content-muted">({selected.sizeCategory})</span>
           </span>
         ) : (
-          <span className="text-gray-400">
+          <span className="text-content-muted">
             {isLoading ? "품종 불러오는 중..." : "품종 선택 (검색 가능 · 선택사항)"}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 border rounded-md bg-white shadow-lg max-h-72 overflow-auto z-20">
+        <div className="absolute top-full left-0 right-0 mt-1 border rounded-md bg-surface-raised shadow-lg max-h-72 overflow-auto z-20">
           <input
             type="text"
             autoFocus
@@ -55,7 +55,7 @@ export default function BreedSelect({ animalType, value, onChange }: Props) {
           />
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-50"
+            className="w-full text-left px-3 py-2 text-sm text-content-muted hover:bg-surface-canvas"
             onClick={() => {
               onChange(null);
               setOpen(false);
@@ -68,8 +68,8 @@ export default function BreedSelect({ animalType, value, onChange }: Props) {
             <button
               key={b.id}
               type="button"
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                value === b.id ? "bg-blue-50 font-semibold" : ""
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-canvas ${
+                value === b.id ? "bg-forest/10 font-semibold" : ""
               }`}
               onClick={() => {
                 onChange(b.id);
@@ -78,14 +78,14 @@ export default function BreedSelect({ animalType, value, onChange }: Props) {
               }}
             >
               <span>{b.nameKo}</span>{" "}
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-content-muted">
                 {b.sizeCategory}
                 {b.baseSpeedKmh ? ` · ${b.baseSpeedKmh}km/h` : ""}
               </span>
             </button>
           ))}
           {filtered.length === 0 && (
-            <div className="px-3 py-4 text-sm text-gray-400 text-center">
+            <div className="px-3 py-4 text-sm text-content-muted text-center">
               검색 결과 없음
             </div>
           )}

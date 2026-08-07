@@ -93,11 +93,11 @@ export default async function PostPage({ params }: { params: { slug: string[] } 
       <div className="flex flex-col gap-1 mb-[80px]">
         {/* 제목이 <div> 라 문서에 h1 이 없었다. 본문 최상위 헤딩은 MDX 의 ## 였다. */}
         <h1 className="sm:text-5xl font-semibold text-2xl">{post.title}</h1>
-        <p className="text-medium text-gray-500 dark:text-gray-300">{post.subtitle}</p>
+        <p className="text-medium text-content-muted">{post.subtitle}</p>
         <div className="flex gap-1">
           <time
             dateTime={post.date}
-            className="text-xs font-light text-gray-600 dark:text-gray-300"
+            className="text-xs font-light text-content-secondary"
           >
             {post.date}
           </time>

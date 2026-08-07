@@ -93,33 +93,33 @@ export default function SightingSection({ postId, center }: Props) {
   };
 
   return (
-    <section className="mt-8 p-4 border rounded-lg bg-white">
+    <section className="mt-8 p-4 border rounded-lg bg-surface-raised">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="font-bold text-base">👀 목격 제보</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="font-bold text-base">목격 제보</h3>
+          <p className="text-xs text-content-muted mt-0.5">
             이 아이를 어디선가 보셨다면 위치를 찍어주세요. 보호자가 바로 볼 수 있어요.
           </p>
         </div>
-        <div className="text-sm text-gray-600">{sightings.length}건</div>
+        <div className="text-sm text-content-secondary">{sightings.length}건</div>
       </div>
 
       <div className="mb-3">
         <button
           type="button"
           onClick={startReport}
-          className="px-3 py-2 bg-emerald-500 text-white rounded-md text-sm hover:bg-emerald-600 disabled:opacity-60"
+          className="px-3 py-2 bg-forest text-content-inverse rounded-md text-sm hover:bg-forest-strong disabled:opacity-60"
           disabled={!isLogin}
           title={!isLogin ? "로그인 필요" : ""}
         >
           + 여기서 봤어요
         </button>
-        {error && <span className="ml-2 text-xs text-red-500">{error}</span>}
+        {error && <span className="ml-2 text-xs text-action-destructive">{error}</span>}
       </div>
 
       {formOpen && (
-        <div className="mb-3 p-3 bg-gray-50 border rounded">
-          <label className="block text-xs mb-1 text-gray-600">메모 (선택)</label>
+        <div className="mb-3 p-3 bg-surface-canvas border rounded">
+          <label className="block text-xs mb-1 text-content-secondary">메모 (선택)</label>
           <input
             type="text"
             value={note}
@@ -131,7 +131,7 @@ export default function SightingSection({ postId, center }: Props) {
             <button
               type="button"
               onClick={submit}
-              className="px-3 py-1 bg-emerald-500 text-white rounded text-xs"
+              className="px-3 py-1 bg-forest text-content-inverse rounded text-xs"
             >
               제보하기
             </button>
@@ -142,7 +142,7 @@ export default function SightingSection({ postId, center }: Props) {
                 setPendingPos(null);
                 setNote("");
               }}
-              className="px-3 py-1 bg-gray-300 rounded text-xs"
+              className="px-3 py-1 bg-border rounded text-xs"
             >
               취소
             </button>
@@ -151,7 +151,7 @@ export default function SightingSection({ postId, center }: Props) {
       )}
 
       {!isLoading && sightings.length === 0 ? (
-        <div className="text-sm text-gray-400 py-4 text-center border-dashed border-2 rounded">
+        <div className="text-sm text-content-muted py-4 text-center border-dashed border-2 rounded">
           아직 목격 제보가 없습니다.
         </div>
       ) : (
@@ -165,7 +165,7 @@ export default function SightingSection({ postId, center }: Props) {
                   position={{ lat: s.lat, lng: s.lng }}
                 >
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow bg-emerald-500 text-white border-2 border-white"
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow bg-forest text-content-inverse border-2 border-white"
                     title={s.note ?? ""}
                   >
                     {idx + 1}
@@ -179,16 +179,16 @@ export default function SightingSection({ postId, center }: Props) {
             {sightings.map((s, idx) => (
               <li
                 key={s.id}
-                className="flex items-start gap-3 text-sm p-2 rounded border bg-white"
+                className="flex items-start gap-3 text-sm p-2 rounded border bg-surface-raised"
               >
-                <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                <div className="w-6 h-6 rounded-full bg-forest text-content-inverse flex items-center justify-center text-xs font-bold shrink-0">
                   {idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="truncate">
                     {s.note || `(${s.lat.toFixed(5)}, ${s.lng.toFixed(5)})`}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="text-xs text-content-muted mt-0.5">
                     {formatDateToKorean(s.sightedAt)} · {s.reporter ?? "익명"}
                   </div>
                 </div>
@@ -196,7 +196,7 @@ export default function SightingSection({ postId, center }: Props) {
                   <button
                     type="button"
                     onClick={() => remove(s)}
-                    className="text-xs text-red-500 hover:underline"
+                    className="text-xs text-action-destructive hover:underline"
                   >
                     삭제
                   </button>

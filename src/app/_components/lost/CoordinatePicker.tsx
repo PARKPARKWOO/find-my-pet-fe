@@ -45,7 +45,7 @@ export default function CoordinatePicker({ value, onChange, address, height = "3
       >
         {value && <MapMarker position={value} />}
       </Map>
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-content-muted">
         {value
           ? `선택된 좌표: ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`
           : "지도를 클릭해 정확한 실종 위치를 표시해 주세요."}

@@ -85,7 +85,7 @@ export default async function PostPage() {
           <div className="w-full h-full md:p-6 p-3 flex flex-col justify-center items-end md:gap-6 gap-3 break-keep">
             {/* 배너 문구가 이 화면의 유일한 제목이었는데 <p> 라 문서에 h1 이 없었다. */}
             <h1 className="font-bold md:text-xl lg:text-2xl text-sm text-right">{TITLE}</h1>
-            <p className="text-xs md:text-sm text-gray-600 text-right">
+            <p className="text-xs md:text-sm text-content-secondary text-right">
               소중한 반려동물을 위해 꼭 알아야 할 정보를 제공합니다.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default async function PostPage() {
                         posts.map((post) => {
                             return (
                                 <>
-                                    <div className='xs:w-[390px] rounded-md flex flex-col bg-gray-100 justify-between'>
+                                    <div className='xs:w-[390px] rounded-md flex flex-col bg-surface-canvas justify-between'>
                                         <div className='flex justify-center'>
                                           <div className="flex justify-center items-center relative w-full h-[220px] rounded-md">
                                               <Image src={post.thumbnail} layout="fill" objectFit="cover" alt={`${post.title} logo`} className="rounded-md"/>
@@ -110,7 +110,7 @@ export default async function PostPage() {
                                             <p className="h-[100px] text-sm">{truncate(post.description, 120)}</p>
                                             <div className='w-full flex justify-end'>
                                                 <Link aria-label={`Go to ${post.title} post`} href={post.slug}>
-                                                    <button aria-label={`Go to ${post.title} post`} className='bg-white border-none w-[80px] h-[40px] rounded-md cursor-pointer hover:bg-blue-400 transition-all ease-linear duration-200 flex justify-center items-center'>
+                                                    <button aria-label={`Go to ${post.title} post`} className='bg-surface-raised border-none w-[80px] h-[40px] rounded-md cursor-pointer hover:bg-forest/10 transition-all ease-linear duration-200 flex justify-center items-center'>
                                                     <ArrowRight />
                                                     </button>
                                                 </Link>

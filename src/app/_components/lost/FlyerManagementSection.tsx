@@ -103,15 +103,15 @@ export default function FlyerManagementSection({
   };
 
   return (
-    <section className="mt-8 p-4 border rounded-lg bg-white">
+    <section className="mt-8 p-4 border rounded-lg bg-surface-raised">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="font-bold text-base">🪧 전단지 관리</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="font-bold text-base">전단지 관리</h3>
+          <p className="text-xs text-content-muted mt-0.5">
             뿌린 위치를 기록해두고 회수할 때 편하게 찾으세요.
           </p>
         </div>
-        <div className="text-sm font-semibold text-gray-600">
+        <div className="text-sm font-semibold text-content-secondary">
           {flyers.length === 0 ? "0개" : `${collectedCount} / ${flyers.length} 회수`}
         </div>
       </div>
@@ -120,16 +120,16 @@ export default function FlyerManagementSection({
         <button
           type="button"
           onClick={addCurrentLocation}
-          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
+          className="px-3 py-2 bg-action-primary text-content-inverse rounded-md text-sm hover:bg-forest-strong"
         >
           + 현 위치에 전단지 등록
         </button>
-        {error && <span className="text-xs text-red-500 self-center">{error}</span>}
+        {error && <span className="text-xs text-action-destructive self-center">{error}</span>}
       </div>
 
       {openNoteForm && (
-        <div className="mb-3 p-3 bg-gray-50 border rounded">
-          <label className="block text-xs mb-1 text-gray-600">메모 (선택)</label>
+        <div className="mb-3 p-3 bg-surface-canvas border rounded">
+          <label className="block text-xs mb-1 text-content-secondary">메모 (선택)</label>
           <input
             type="text"
             value={note}
@@ -141,7 +141,7 @@ export default function FlyerManagementSection({
             <button
               type="button"
               onClick={confirmAdd}
-              className="px-3 py-1 bg-green-500 text-white rounded text-xs"
+              className="px-3 py-1 bg-forest text-content-inverse rounded text-xs"
             >
               등록
             </button>
@@ -152,7 +152,7 @@ export default function FlyerManagementSection({
                 setPendingPos(null);
                 setNote("");
               }}
-              className="px-3 py-1 bg-gray-300 rounded text-xs"
+              className="px-3 py-1 bg-border rounded text-xs"
             >
               취소
             </button>
@@ -161,7 +161,7 @@ export default function FlyerManagementSection({
       )}
 
       {!isLoading && flyers.length === 0 ? (
-        <div className="text-sm text-gray-400 py-4 text-center border-dashed border-2 rounded">
+        <div className="text-sm text-content-muted py-4 text-center border-dashed border-2 rounded">
           아직 등록된 전단지가 없습니다.
         </div>
       ) : (
@@ -178,8 +178,8 @@ export default function FlyerManagementSection({
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow ${
                       f.status === "COLLECTED"
-                        ? "bg-gray-400 text-white"
-                        : "bg-red-500 text-white"
+                        ? "bg-gray-400 text-content-inverse"
+                        : "bg-red-500 text-content-inverse"
                     }`}
                     title={f.note ?? ""}
                   >
@@ -195,7 +195,7 @@ export default function FlyerManagementSection({
               <li
                 key={f.id}
                 className={`flex items-center gap-2 text-sm p-2 rounded border ${
-                  f.status === "COLLECTED" ? "bg-gray-50 text-gray-500" : "bg-white"
+                  f.status === "COLLECTED" ? "bg-surface-canvas text-content-muted" : "bg-surface-raised"
                 }`}
               >
                 <input
@@ -212,8 +212,8 @@ export default function FlyerManagementSection({
                   onClick={() => toggleVisibility(f)}
                   className={`text-xs px-2 py-0.5 rounded border ${
                     f.visibility === "PUBLIC"
-                      ? "bg-blue-100 text-blue-700 border-blue-300"
-                      : "bg-gray-100 text-gray-600 border-gray-300"
+                      ? "bg-forest/10 text-forest-strong border-forest/40"
+                      : "bg-surface-canvas text-content-secondary border-border"
                   }`}
                   title="공개 전환 시 게시글 상세 페이지에 누구나 이 위치를 볼 수 있음"
                 >
@@ -222,7 +222,7 @@ export default function FlyerManagementSection({
                 <button
                   type="button"
                   onClick={() => remove(f)}
-                  className="text-xs text-red-500 hover:underline"
+                  className="text-xs text-action-destructive hover:underline"
                 >
                   삭제
                 </button>

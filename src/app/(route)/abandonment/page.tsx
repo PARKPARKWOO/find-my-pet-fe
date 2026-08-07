@@ -62,7 +62,7 @@ export default function AbandonmentIndexPage() {
       <p className="mt-2 text-sm text-muted-foreground">{DESCRIPTION}</p>
       <p className="mt-2 text-sm text-muted-foreground">
         공고 상태와 보호소의 최신 안내는 해당 보호소에 직접 확인해 주세요.{" "}
-        <Link href="/abandonment/region" className="text-blue-600 underline">
+        <Link href="/abandonment/region" className="text-forest underline">
           지역별 보호 공고 보기
         </Link>
       </p>

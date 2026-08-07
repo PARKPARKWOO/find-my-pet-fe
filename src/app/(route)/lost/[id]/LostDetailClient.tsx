@@ -104,7 +104,7 @@ export default function LostDetail({ params }: { params: { id: string } }) {
           }
         </div>
       </div>
-      {post.missingAnimalStatus === "FOUND" && <div className="w-full flex justify-center items-center bg-forest/10 text-forest py-4 my-4 rounded-xl font-bold">가족을 만나 완료된 게시물이에요.</div>}
+      {post.missingAnimalStatus === "FOUND" && <div className="w-full flex justify-center items-center bg-forest/10 text-forest-strong py-4 my-4 rounded-xl font-bold">가족을 만나 완료된 게시물이에요.</div>}
       {post.missingAnimalStatus !== "FOUND" && (
         <div className="mb-4">
           <ShareButtons
@@ -188,7 +188,7 @@ export default function LostDetail({ params }: { params: { id: string } }) {
 
         <div className="w-full flex flex-col rounded-xl border border-border bg-surface-raised p-4">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="font-editorial text-lg font-semibold text-content-primary">탐색 범위</h1>
+            <h1 className="text-lg font-bold tracking-tight text-content-primary">탐색 범위</h1>
             <span className="text-xs text-content-muted">{post.place}</span>
           </div>
           {post.coordinate ? (

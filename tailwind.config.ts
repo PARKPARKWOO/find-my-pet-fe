@@ -66,6 +66,8 @@ const config: Config = {
         },
         ink: "rgb(var(--fmp-ink) / <alpha-value>)",
         forest: "rgb(var(--fmp-forest) / <alpha-value>)",
+        "forest-strong": "rgb(var(--fmp-forest-strong) / <alpha-value>)",
+        "forest-tint": "rgb(var(--fmp-forest-tint) / <alpha-value>)",
         clay: "rgb(var(--fmp-clay) / <alpha-value>)",
         "accent-readable": "rgb(var(--fmp-accent-text) / <alpha-value>)",
         wine: "rgb(var(--fmp-wine) / <alpha-value>)",
@@ -100,8 +102,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "Noto Sans KR", "system-ui", "sans-serif"],
-        editorial: ["Noto Serif KR", "Noto Serif CJK KR", "Georgia", "serif"],
+        sans: ["var(--font-pretendard)", "Pretendard Variable", "Pretendard", "system-ui", "sans-serif"],
+        // 리뉴얼로 세리프 디스플레이는 은퇴 — 기존 font-editorial 사용처는 같은 산세리프의
+        // 무게·자간 위계로 수렴한다 (클래스 삭제 대신 토큰 재정의로 전 화면 일괄 전환).
+        editorial: ["var(--font-pretendard)", "Pretendard Variable", "Pretendard", "system-ui", "sans-serif"],
       },
       maxWidth: {
         page: "80rem",
@@ -109,6 +113,7 @@ const config: Config = {
       },
       boxShadow: {
         raised: "var(--fmp-shadow-raised)",
+        lifted: "var(--fmp-shadow-lifted)",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<MarqueeItem["kind"], string> = {
 const STATUS_CHIP_CLASS: Record<MarqueeItem["kind"], string> = {
   SEARCHING: "bg-state-searching/10 text-state-searching",
   SEEN: "bg-state-sighting/10 text-state-sighting",
-  PROTECTED: "bg-forest/10 text-forest",
+  PROTECTED: "bg-forest/10 text-forest-strong",
 };
 
 interface RailDimensions {

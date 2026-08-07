@@ -62,7 +62,7 @@ export function LegalTable({
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-left text-xs" style={{ minWidth }}>
-        <thead className="bg-gray-50 text-foreground">
+        <thead className="bg-surface-canvas text-foreground">
           <tr>
             {head.map((h) => (
               <th key={h} className="px-3 py-2 font-semibold">

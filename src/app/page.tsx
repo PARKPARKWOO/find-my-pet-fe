@@ -11,27 +11,26 @@ import { getHomeFeedSnapshot } from "@/lib/homeFeed.server";
 export default async function Home() {
   const snapshot = await getHomeFeedSnapshot();
   const marqueeItems = toMarqueeItems(snapshot);
+  const heroPhotoItems = marqueeItems.filter((item) => item.key.startsWith("abandoned:"));
+  const heroLostPhotoItems = marqueeItems.filter((item) => item.key.startsWith("lost:"));
   const lostSeed = toLostSeed(snapshot.lost);
   const abandonmentSeed = toAbandonmentSeed(snapshot.abandonment);
 
   return (
-    <PageShell data-home-motion-root surface="paper" className="overflow-hidden rounded-3xl">
+    <PageShell data-home-motion-root surface="paper">
       <HomeMotionRuntime />
       <div data-home-motion="hero">
-        <HomeHero />
-      </div>
-      <section aria-label="통합 검색" data-home-motion="search" data-native-scroll className="px-4 pb-10 lg:px-8">
-        <div className="mx-auto max-w-2xl">
+        <HomeHero photoItems={heroPhotoItems} lostPhotoItems={heroLostPhotoItems}>
           <SearchBar variant="hero" />
-        </div>
-      </section>
+        </HomeHero>
+      </div>
       <div data-home-motion="latest">
         <LatestPetMarquee items={marqueeItems} />
       </div>
       <div data-home-motion="nearby">
         <NearbyDiscovery />
       </div>
-      <div data-home-motion="feed" className="px-4 py-12 lg:px-8">
+      <div data-home-motion="feed" className="mx-auto w-full max-w-page px-4 py-14 md:px-6">
         <HomeFeed lostSeed={lostSeed} abandonmentSeed={abandonmentSeed} />
       </div>
     </PageShell>

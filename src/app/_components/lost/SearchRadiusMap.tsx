@@ -133,8 +133,8 @@ export default function SearchRadiusMap({
       </Map>
 
       {animalType === "CAT" && (
-        <div className="mt-2 text-xs p-2 bg-amber-50 border border-amber-200 rounded">
-          💡 고양이는 대부분 <b>150m 이내</b>에 숨어있습니다. 반경 외곽보다 창고·차 밑·좁은 틈을 먼저 살펴보세요.
+        <div className="mt-2 text-xs p-2 bg-waiting/10 border border-waiting/40 rounded">
+          고양이는 대부분 <b>150m 이내</b>에 숨어있습니다. 반경 외곽보다 창고·차 밑·좁은 틈을 먼저 살펴보세요.
         </div>
       )}
 
@@ -227,7 +227,7 @@ function Legend({
   mode: "polygon" | "circle";
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 text-xs text-gray-600 flex-wrap">
+    <div className="mt-2 flex items-center gap-3 text-xs text-content-secondary flex-wrap">
       <span className="flex items-center gap-1">
         <span className="w-3 h-3 rounded-full inline-block" style={{ background: COLORS.CORE.fill, border: `1px solid ${COLORS.CORE.stroke}` }} />
         Core (가장 확률 높음)
@@ -240,12 +240,12 @@ function Legend({
         <span className="w-3 h-3 rounded-full inline-block" style={{ background: COLORS.POSSIBLE.fill, border: `1px solid ${COLORS.POSSIBLE.stroke}` }} />
         Possible
       </span>
-      <span className="text-gray-400">·</span>
-      <span className="text-gray-400">
+      <span className="text-content-muted">·</span>
+      <span className="text-content-muted">
         {mode === "polygon" ? "실제 도로망 기반 (ORS)" : "평지 기준 원형 추정"}
       </span>
       {stage === "EXPIRED" && (
-        <span className="ml-auto text-red-600 font-semibold">⛔ 참고용</span>
+        <span className="ml-auto text-action-destructive font-semibold">참고용</span>
       )}
     </div>
   );

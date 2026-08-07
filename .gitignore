@@ -43,3 +43,6 @@ next-env.d.ts
 .indexnow-state.json
 
 .env
+
+# impeccable 결정 페이지 임시 산출물 (세션 로컬)
+.impeccable/questions/
